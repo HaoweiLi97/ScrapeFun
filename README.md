@@ -4,6 +4,8 @@ Next-generation, cloud-drive-native scraping and media management platform.
 
 Scrapefun is an integrated system for WebDAV/AList media libraries: scraping, subtitle operations, playback compatibility, and library administration in one workflow.
 
+<img width="2196" height="1246" alt="image" src="https://github.com/user-attachments/assets/96ad1f61-0423-4def-9a35-d61d71984489" />
+
 ## Core Capabilities
 
 - Custom scrapers with scriptable `search / scrape / getVideoUrl` pipelines.
@@ -22,8 +24,6 @@ Scrapefun is an integrated system for WebDAV/AList media libraries: scraping, su
 
 
 ## Images
-
-<img width="2196" height="1246" alt="image" src="https://github.com/user-attachments/assets/96ad1f61-0423-4def-9a35-d61d71984489" />
 
 <img width="2199" height="1248" alt="image" src="https://github.com/user-attachments/assets/2ee1d93c-6f12-4985-8093-36cc3671047f" />
 
