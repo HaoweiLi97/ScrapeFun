@@ -25,8 +25,6 @@ Scrapefun is an integrated system for WebDAV/AList media libraries: scraping, su
 
 <img width="2196" height="1246" alt="image" src="https://github.com/user-attachments/assets/96ad1f61-0423-4def-9a35-d61d71984489" />
 
-<img width="1402" height="913" alt="image" src="https://github.com/user-attachments/assets/84b0ce20-7b1a-478f-a60f-ecc10d929dea" />
-
 <img width="2199" height="1248" alt="image" src="https://github.com/user-attachments/assets/2ee1d93c-6f12-4985-8093-36cc3671047f" />
 
 <img width="2197" height="1215" alt="image" src="https://github.com/user-attachments/assets/5acbe9cc-7a40-4fe8-8580-c8416cec4aa8" />
