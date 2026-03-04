@@ -2,7 +2,7 @@
 
 Next-generation, cloud-drive-native scraping and media management platform.
 
-Scrapefun (project codename: `scrapeTab`) is an integrated system for WebDAV/AList media libraries: scraping, subtitle operations, playback compatibility, and library administration in one workflow.
+Scrapefun is an integrated system for WebDAV/AList media libraries: scraping, subtitle operations, playback compatibility, and library administration in one workflow.
 
 ## Closed-Source Notice
 
