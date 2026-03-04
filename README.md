@@ -29,11 +29,3 @@ Scrapefun is built for users who organize media in cloud drives and want:
 - compatibility with existing player ecosystems,
 - and centralized management of users, libraries, and playback state.
 
-## Architecture Snapshot
-
-- Frontend: React + TypeScript (Vite), with mobile/client packaging support.
-- Backend: Node.js + Express + Prisma, realtime events via Socket.IO.
-- Storage: SQLite (default) with media mapping for WebDAV paths.
-- Integration: WebDAV, AList direct-link resolution, optional FlareSolverr.
-- Compatibility API: `/emby` + Jellyfin-style routes for legacy player support.
-- Optional services: license server and billing service modules.
