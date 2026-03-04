@@ -20,12 +20,4 @@ Scrapefun is an integrated system for WebDAV/AList media libraries: scraping, su
 - Library management with scraper binding, ordering, and scoped visibility.
 - Jellyfin/Emby compatibility layer for traditional clients such as Infuse, VidHub, SenPlayer, and Yamby, plus other compatible clients.
 
-## Product Positioning
-
-Scrapefun is built for users who organize media in cloud drives and want:
-
-- reliable metadata scraping with flexible customization,
-- better subtitle automation,
-- compatibility with existing player ecosystems,
-- and centralized management of users, libraries, and playback state.
 
