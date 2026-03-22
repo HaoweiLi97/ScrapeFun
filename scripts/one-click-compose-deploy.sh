@@ -126,6 +126,8 @@ resolve_app_host_port() {
     local requested_port
     printf "Deploy to which host port? [4000]: " > /dev/tty
     IFS= read -r requested_port < /dev/tty || true
+    requested_port="${requested_port//$'\r'/}"
+    requested_port="${requested_port//[[:space:]]/}"
     requested_port="${requested_port:-4000}"
 
     if [[ ! "${requested_port}" =~ ^[0-9]+$ ]] || (( requested_port < 1 || requested_port > 65535 )); then
