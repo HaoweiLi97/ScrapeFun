@@ -13,6 +13,7 @@ REPOSITORY="${REPOSITORY:-haoweil/scrapefun}"
 GITHUB_REPO="${GITHUB_REPO:-HaoweiLi97/ScrapeFun}"
 GITHUB_BRANCH="${GITHUB_BRANCH:-main}"
 COMPOSE_URL="${COMPOSE_URL:-https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/docker-compose.remote.yml}"
+COMPOSE_API_URL="${COMPOSE_API_URL:-https://api.github.com/repos/${GITHUB_REPO}/contents/docker-compose.remote.yml?ref=${GITHUB_BRANCH}}"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -59,18 +60,52 @@ fi
 
 mkdir -p "${DEPLOY_DIR}"
 
-if [[ -f "${COMPOSE_SOURCE}" ]]; then
-  cp "${COMPOSE_SOURCE}" "${COMPOSE_TARGET}"
-else
-  if command -v curl >/dev/null 2>&1; then
-    curl -fsSL "${COMPOSE_URL}" -o "${COMPOSE_TARGET}"
-  elif command -v wget >/dev/null 2>&1; then
-    wget -qO "${COMPOSE_TARGET}" "${COMPOSE_URL}"
-  else
-    echo -e "${RED}Error: neither curl nor wget is available to download ${COMPOSE_URL}.${NC}"
-    exit 1
+download_compose() {
+  if [[ -f "${COMPOSE_SOURCE}" ]]; then
+    cp "${COMPOSE_SOURCE}" "${COMPOSE_TARGET}"
+    return
   fi
-fi
+
+  if command -v curl >/dev/null 2>&1; then
+    if curl -fsSL "${COMPOSE_URL}" -o "${COMPOSE_TARGET}"; then
+      return
+    fi
+    rm -f "${COMPOSE_TARGET}"
+  elif command -v wget >/dev/null 2>&1; then
+    if wget -qO "${COMPOSE_TARGET}" "${COMPOSE_URL}"; then
+      return
+    fi
+    rm -f "${COMPOSE_TARGET}"
+  fi
+
+  if command -v python3 >/dev/null 2>&1; then
+    python3 - "${COMPOSE_API_URL}" "${COMPOSE_TARGET}" <<'PY'
+import base64
+import json
+import sys
+import urllib.request
+
+url = sys.argv[1]
+target = sys.argv[2]
+
+with urllib.request.urlopen(url) as response:
+    payload = json.load(response)
+
+content = base64.b64decode(payload["content"])
+with open(target, "wb") as file:
+    file.write(content)
+PY
+    return
+  fi
+
+  echo -e "${RED}Error: failed to download docker-compose.remote.yml from GitHub.${NC}"
+  echo -e "${RED}Tried raw URL: ${COMPOSE_URL}${NC}"
+  echo -e "${RED}Tried API URL: ${COMPOSE_API_URL}${NC}"
+  echo -e "${RED}Install curl, wget, or python3 and try again.${NC}"
+  exit 1
+}
+
+download_compose
 
 TAG="latest"
 if [[ "${CHANNEL}" == "beta" ]]; then
