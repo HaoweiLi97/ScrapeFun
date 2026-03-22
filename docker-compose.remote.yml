@@ -2,17 +2,20 @@ services:
   app:
     image: ${SCRAPETAB_IMAGE:-haoweil/scrapefun:latest}
     container_name: scrapefun
-    network_mode: "host"
     env_file:
       - ./server.env
     environment:
       - NODE_ENV=production
+      - PORT=4000
       - DATABASE_URL=file:/app/data/db/dev.db
-      # With network_mode: host, we access other containers via localhost ports
-      - FLARESOLVERR_URL=http://127.0.0.1:8191/v1
+      - FLARESOLVERR_URL=${FLARESOLVERR_URL:-http://host.docker.internal:8191/v1}
       - UPDATE_CURRENT_TAG=${UPDATE_CURRENT_TAG:-latest}
-      - UPDATE_WEBHOOK_URL=${UPDATE_WEBHOOK_URL:-http://127.0.0.1:4182/update}
+      - UPDATE_WEBHOOK_URL=${UPDATE_WEBHOOK_URL:-http://updater:4182/update}
       - UPDATE_WEBHOOK_TOKEN=${SCRAPETAB_UPDATER_TOKEN:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "${APP_HOST_PORT:-4000}:4000"
     volumes:
       - scrapefun_db:/app/data/db
       - scrapefun_images:/app/data/images
@@ -31,7 +34,7 @@ services:
       - UPDATER_PROJECT_DIR=/workspace
       - UPDATER_COMPOSE_FILE=/workspace/docker-compose.remote.yml
       - UPDATER_SERVICE_NAME=app
-      - UPDATER_HEALTHCHECK_URL=http://127.0.0.1:4000/health
+      - UPDATER_HEALTHCHECK_URL=http://app:4000/health
       - UPDATER_STATE_ENV_FILE=/workspace/.updater.env
       - UPDATER_REPOSITORY=${UPDATE_DOCKERHUB_REPO:-haoweil/scrapefun}
     volumes:
