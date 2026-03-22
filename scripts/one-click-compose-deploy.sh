@@ -9,12 +9,14 @@ COMPOSE_SOURCE="${ROOT_DIR}/docker-compose.remote.yml"
 COMPOSE_TARGET="${DEPLOY_DIR}/docker-compose.remote.yml"
 SERVER_ENV_FILE="${DEPLOY_DIR}/server.env"
 UPDATER_ENV_FILE="${DEPLOY_DIR}/.updater.env"
+DEFAULT_DATA_DIR="${HOME}/scrapefun-data"
 REPOSITORY="${REPOSITORY:-haoweil/scrapefun}"
 GITHUB_REPO="${GITHUB_REPO:-HaoweiLi97/ScrapeFun}"
 GITHUB_BRANCH="${GITHUB_BRANCH:-main}"
 COMPOSE_URL="${COMPOSE_URL:-https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/docker-compose.remote.yml}"
 COMPOSE_API_URL="${COMPOSE_API_URL:-https://api.github.com/repos/${GITHUB_REPO}/contents/docker-compose.remote.yml?ref=${GITHUB_BRANCH}}"
 APP_HOST_PORT="${APP_HOST_PORT:-}"
+SCRAPEFUN_DATA_DIR="${SCRAPEFUN_DATA_DIR:-}"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -139,8 +141,32 @@ resolve_app_host_port() {
   fi
 }
 
+resolve_data_dir() {
+  if [[ -n "${SCRAPEFUN_DATA_DIR}" ]]; then
+    return
+  fi
+
+  if [[ -f "${UPDATER_ENV_FILE}" ]]; then
+    local existing_data_dir
+    existing_data_dir="$(sed -n 's/^SCRAPEFUN_DATA_DIR=//p' "${UPDATER_ENV_FILE}" | tail -n 1)"
+    if [[ -n "${existing_data_dir}" ]]; then
+      SCRAPEFUN_DATA_DIR="${existing_data_dir}"
+      return
+    fi
+  fi
+
+  SCRAPEFUN_DATA_DIR="${DEFAULT_DATA_DIR}"
+}
+
 download_compose
 resolve_app_host_port
+resolve_data_dir
+
+mkdir -p \
+  "${SCRAPEFUN_DATA_DIR}/db" \
+  "${SCRAPEFUN_DATA_DIR}/images" \
+  "${SCRAPEFUN_DATA_DIR}/config" \
+  "${SCRAPEFUN_DATA_DIR}/local-subtitles"
 
 TAG="latest"
 if [[ "${CHANNEL}" == "beta" ]]; then
@@ -170,6 +196,7 @@ cat > "${UPDATER_ENV_FILE}" <<EOF
 SCRAPETAB_IMAGE=${REPOSITORY}:${TAG}
 UPDATE_CURRENT_TAG=${TAG}
 APP_HOST_PORT=${APP_HOST_PORT}
+SCRAPEFUN_DATA_DIR=${SCRAPEFUN_DATA_DIR}
 EOF
 
 echo -e "${GREEN}========================================${NC}"
@@ -178,6 +205,7 @@ echo -e "${GREEN}========================================${NC}"
 echo -e "Channel: ${YELLOW}${CHANNEL}${NC}"
 echo -e "Image: ${YELLOW}${REPOSITORY}:${TAG}${NC}"
 echo -e "Host port: ${YELLOW}${APP_HOST_PORT}${NC}"
+echo -e "Data dir: ${YELLOW}${SCRAPEFUN_DATA_DIR}${NC}"
 echo -e "Deploy dir: ${YELLOW}${DEPLOY_DIR}${NC}"
 echo ""
 

@@ -17,10 +17,10 @@ services:
     ports:
       - "${APP_HOST_PORT:-4000}:4000"
     volumes:
-      - scrapefun_db:/app/data/db
-      - scrapefun_images:/app/data/images
-      - scrapefun_config:/app/data/config
-      - scrapefun_local_subtitles:/app/data/local-subtitles
+      - ${SCRAPEFUN_DATA_DIR:-./scrapefun-data}/db:/app/data/db
+      - ${SCRAPEFUN_DATA_DIR:-./scrapefun-data}/images:/app/data/images
+      - ${SCRAPEFUN_DATA_DIR:-./scrapefun-data}/config:/app/data/config
+      - ${SCRAPEFUN_DATA_DIR:-./scrapefun-data}/local-subtitles:/app/data/local-subtitles
     restart: unless-stopped
 
   updater:
@@ -43,9 +43,3 @@ services:
     ports:
       - "127.0.0.1:4182:4182"
     restart: unless-stopped
-
-volumes:
-  scrapefun_db:
-  scrapefun_images:
-  scrapefun_config:
-  scrapefun_local_subtitles:
