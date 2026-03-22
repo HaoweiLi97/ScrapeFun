@@ -10,6 +10,9 @@ COMPOSE_TARGET="${DEPLOY_DIR}/docker-compose.remote.yml"
 SERVER_ENV_FILE="${DEPLOY_DIR}/server.env"
 UPDATER_ENV_FILE="${DEPLOY_DIR}/.updater.env"
 REPOSITORY="${REPOSITORY:-haoweil/scrapefun}"
+GITHUB_REPO="${GITHUB_REPO:-HaoweiLi97/ScrapeFun}"
+GITHUB_BRANCH="${GITHUB_BRANCH:-main}"
+COMPOSE_URL="${COMPOSE_URL:-https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/docker-compose.remote.yml}"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -55,7 +58,19 @@ if ! docker compose version >/dev/null 2>&1; then
 fi
 
 mkdir -p "${DEPLOY_DIR}"
-cp "${COMPOSE_SOURCE}" "${COMPOSE_TARGET}"
+
+if [[ -f "${COMPOSE_SOURCE}" ]]; then
+  cp "${COMPOSE_SOURCE}" "${COMPOSE_TARGET}"
+else
+  if command -v curl >/dev/null 2>&1; then
+    curl -fsSL "${COMPOSE_URL}" -o "${COMPOSE_TARGET}"
+  elif command -v wget >/dev/null 2>&1; then
+    wget -qO "${COMPOSE_TARGET}" "${COMPOSE_URL}"
+  else
+    echo -e "${RED}Error: neither curl nor wget is available to download ${COMPOSE_URL}.${NC}"
+    exit 1
+  fi
+fi
 
 TAG="latest"
 if [[ "${CHANNEL}" == "beta" ]]; then
