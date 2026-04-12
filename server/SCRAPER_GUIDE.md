@@ -334,7 +334,7 @@ API shape:
 {
   "name": "Virtual Anime",
   "type": "tv",
-  "scraper": "hanime1",
+  "scraper": "ExampleCatalog",
   "sourceMode": "virtual_scraper",
   "virtualConfig": {
     "seedQuery": "2026"
@@ -400,8 +400,8 @@ Request shape:
 {
   "items": [
     "22444",
-    "https://hanime1.me/watch?v=22444",
-    "hanime1_22444.mp4"
+    "https://example.com/watch?id=22444",
+    "example_22444.mp4"
   ]
 }
 ```
