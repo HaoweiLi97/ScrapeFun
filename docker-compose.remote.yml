@@ -1,3 +1,5 @@
+name: scrapefun
+
 services:
   app:
     image: ${SCRAPETAB_IMAGE:-haoweil/scrapefun:latest}
