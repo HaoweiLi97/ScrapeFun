@@ -128,23 +128,7 @@ curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/o
 ## 相关文档
 
 - [Docker 部署指南](./DOCKER_GUIDE.md)
-- [Docker 快速参考](./DOCKER_QUICK_REF.md)
-- [Docker Hub README](./DOCKER_HUB_README.md)
-- [macOS Client 构建说明](./desktop/scrapefun-client-macos/README.md)
-- [Windows Desktop 构建说明](./desktop/scrapefun-windows/README.md)
-- [用户部署说明](./CUSTOMER_DEPLOYMENT_MANUAL.md)
-- [更新指南](./UPDATE_GUIDE.md)
 - [自定义 Scraper 开发指南](./server/SCRAPER_GUIDE.md)
-
-## 授权说明
-
-ScrapeFun 提供基础能力与扩展能力的分层使用方式。  
-部分播放器兼容、授权绑定与商业化相关功能依赖产品授权体系。
-
-如果你用于客户交付或商业部署，建议先阅读：
-
-- [用户部署说明](./CUSTOMER_DEPLOYMENT_MANUAL.md)
-- [授权接口说明](./server/AUTH_SERVER_API.md)
 
 ## 联系方式
 
