@@ -2,7 +2,7 @@
   <img src="./docs/images/favicon.png" alt="ScrapeFun Logo" width="96" />
   <h1>ScrapeFun</h1>
   <p>自带刮削引擎、原生 WebDAV 支持与播放器兼容层的媒体库管理平台</p>
-  <img src="./docs/images/dashboard.png" alt="ScrapeFun Preview" width="860" />
+  <img src="./docs/images/preview.png" alt="ScrapeFun Preview" width="860" />
 </div>
 
 ScrapeFun 面向以网盘、WebDAV、AList 为核心存储方式的媒体库场景，提供从刮削、整理、字幕处理、播放兼容到多用户管理的一体化工作流。
