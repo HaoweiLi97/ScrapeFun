@@ -1,331 +1,448 @@
 # ScrapeFun Docker 部署指南
 
-## 快速开始
+这份文档对应当前公开仓库中的 Docker Compose 部署方式。
 
-### 使用 Docker Compose（推荐）
+当前推荐方案：
 
-```bash
-# 启动所有服务
-docker-compose up -d
+- 使用 `docker compose`
+- 使用 `docker-compose.remote.yml`
+- 使用 Docker Hub 镜像 `haoweil/scrapefun`
+- 通过 `latest` / `beta` 频道更新
+- 持久化到宿主机目录 `scrapefun-data`
 
-# 查看日志
-docker-compose logs -f app
+## 1. 运行前提
 
-# 停止服务
-docker-compose down
+部署前请先确认：
 
-# 停止并删除所有数据（谨慎使用！）
-docker-compose down -v
-```
+- 已安装 Docker
+- 已安装 Docker Compose Plugin
+- `docker info` 可以正常执行
+- 如果要启用部分站点刮削，宿主机或局域网中有可访问的 FlareSolverr
 
-### 使用 Docker Hub 镜像
+建议环境：
 
-```bash
-# 拉取最新镜像
-docker pull haoweil/scrapetab:latest
+- Linux 服务器
+- 2 GB 以上可用内存
+- 足够的磁盘空间用于数据库、图片缓存和字幕持久化
 
-# 运行容器
-docker run -d \
-  --name scrapetab \
-  -p 4000:4000 \
-  -v scrapefun_db:/app/data/db \
-  -v scrapefun_images:/app/data/images \
-  -v scrapefun_config:/app/data/config \
-  -v scrapefun_local_subtitles:/app/data/local-subtitles \
-  -e FLARESOLVERR_URL=http://your-flaresolverr:8191/v1 \
-  haoweil/scrapetab:latest
-```
+## 2. 推荐部署方式
 
-## 数据持久化
+### 方式一：一键部署
 
-ScrapeFun 使用 Docker volumes 来持久化以下数据：
-
-### 1. **数据库** (`scrapefun_db`)
-- **路径**: `/app/data/db`
-- **包含内容**:
-  - `dev.db` - SQLite 数据库文件
-  - 媒体元数据（标题、年份、评分、简介等）
-  - Custom Scrapers（自定义刮削器代码）
-  - Cleaning Rules（清理规则）
-  - Custom Scraper Configurations（刮削器配置）
-  - Composite Scrapers（组合刮削器）
-  - 系统设置
-
-### 2. **图片** (`scrapefun_images`)
-- **路径**: `/app/data/images`
-- **包含内容**:
-  - 海报图片（Posters）
-  - 背景图片（Backdrops/Fanart）
-  - 缩略图（Thumbnails）
-  - 其他媒体图片
-
-### 3. **配置** (`scrapefun_config`)
-- **路径**: `/app/data/config`
-- **包含内容**:
-  - 运行时配置文件
-  - 安装态相关持久数据
-
-### 4. **本地化字幕** (`scrapefun_local_subtitles`)
-- **路径**: `/app/data/local-subtitles`
-- **包含内容**:
-  - 通过“字幕本地化”保存的字幕文件
-  - 按媒体目录散列归档的本地字幕内容
-
-如果你用 Docker 更新镜像或重建容器，但没有持久化这个目录，本地化字幕会丢失。
-也可以通过 `LOCAL_SUBTITLE_DIR` 把它改到你自己的挂载路径。
-
-### 5. **系统刮削器** (`scrapetab_scrapers`)
-- **路径**: `/app/server/src/scrapers`
-- **包含内容**:
-  - 内置刮削器代码（如 TMDB）
-  - 刮削器基类和工具
-
-## 数据备份与恢复
-
-### 方法 1: 使用应用内置的备份功能
-
-应用提供了完整的备份和恢复功能，可以导出/导入所有数据：
-
-1. 打开 ScrapeFun 设置页面
-2. 点击 "Export Data" 导出所有数据（包括数据库、图片、刮削器）
-3. 保存备份文件到安全位置
-4. 需要恢复时，点击 "Import Data" 并选择备份文件
-
-### 方法 2: 手动备份 Docker Volumes
+默认部署 `stable` 频道：
 
 ```bash
-# 备份数据库
-docker run --rm \
-  -v scrapefun_db:/data \
-  -v $(pwd):/backup \
-  alpine tar czf /backup/scrapefun_db_backup.tar.gz -C /data .
-
-# 备份图片
-docker run --rm \
-  -v scrapefun_images:/data \
-  -v $(pwd):/backup \
-  alpine tar czf /backup/scrapefun_images_backup.tar.gz -C /data .
-
-# 备份刮削器
-docker run --rm \
-  -v scrapefun_local_subtitles:/data \
-  -v $(pwd):/backup \
-  alpine tar czf /backup/scrapefun_local_subtitles_backup.tar.gz -C /data .
+curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-compose-deploy.sh | bash
 ```
 
-### 恢复备份
+部署 `beta` 频道：
 
 ```bash
-# 恢复数据库
-docker run --rm \
-  -v scrapefun_db:/data \
-  -v $(pwd):/backup \
-  alpine sh -c "cd /data && tar xzf /backup/scrapefun_db_backup.tar.gz"
-
-# 恢复图片
-docker run --rm \
-  -v scrapefun_images:/data \
-  -v $(pwd):/backup \
-  alpine sh -c "cd /data && tar xzf /backup/scrapefun_images_backup.tar.gz"
-
-# 恢复刮削器
-docker run --rm \
-  -v scrapefun_local_subtitles:/data \
-  -v $(pwd):/backup \
-  alpine sh -c "cd /data && tar xzf /backup/scrapefun_local_subtitles_backup.tar.gz"
+curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-compose-deploy.sh | bash -s -- beta
 ```
 
-## 数据迁移
+默认部署目录是：
 
-### 从本地开发环境迁移到 Docker
+```text
+~/scrapefun
+```
+
+默认持久化目录是：
+
+```text
+~/scrapefun-data
+```
+
+脚本会自动完成这些事情：
+
+- 下载 `docker-compose.remote.yml`
+- 创建部署目录
+- 创建数据目录
+- 生成 `server.env`
+- 生成 `.updater.env`
+- 拉取镜像并启动 `app` 与 `updater`
+
+### 方式二：手动部署
+
+先准备目录：
 
 ```bash
-# 1. 停止 Docker 容器
-docker-compose down
-
-# 2. 复制数据库
-docker run --rm \
-  -v scrapetab_data:/data \
-  -v $(pwd)/server/prisma:/source \
-  alpine cp /source/dev.db /data/dev.db
-
-# 3. 复制图片
-docker run --rm \
-  -v scrapetab_images:/data \
-  -v $(pwd)/server/public/images:/source \
-  alpine sh -c "cp -r /source/* /data/"
-
-# 4. 复制刮削器（如果有自定义修改）
-docker run --rm \
-  -v scrapetab_scrapers:/data \
-  -v $(pwd)/server/src/scrapers:/source \
-  alpine sh -c "cp -r /source/* /data/"
-
-# 5. 重启容器
-docker-compose up -d
+mkdir -p ~/scrapefun
+cd ~/scrapefun
 ```
 
-### 从 Docker 导出到本地
+下载 compose 文件：
 
 ```bash
-# 导出数据库
-docker run --rm \
-  -v scrapetab_data:/data \
-  -v $(pwd):/backup \
-  alpine cp /data/dev.db /backup/dev.db
-
-# 导出图片
-docker run --rm \
-  -v scrapetab_images:/data \
-  -v $(pwd):/backup \
-  alpine sh -c "cp -r /data /backup/images"
+curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/docker-compose.remote.yml -o docker-compose.remote.yml
 ```
 
-## 环境变量
+创建 `server.env`：
 
-可以通过环境变量配置应用：
-
-```yaml
-environment:
-  - NODE_ENV=production
-  - PORT=4000
-  - FLARESOLVERR_URL=http://flaresolverr:8191/v1
-  # 添加其他环境变量...
+```env
+NODE_ENV=production
+DATABASE_URL=file:/app/data/db/dev.db
+FLARESOLVERR_URL=http://host.docker.internal:8191/v1
+SCRAPETAB_UPDATER_TOKEN=replace_with_a_random_token
+UPDATE_DOCKERHUB_REPO=haoweil/scrapefun
+UPDATE_DEFAULT_CHANNEL=stable
 ```
 
-## 更新应用
+创建 `.updater.env`：
 
-### 使用 Docker Compose
+```env
+SCRAPETAB_IMAGE=haoweil/scrapefun:latest
+UPDATE_CURRENT_TAG=latest
+APP_HOST_PORT=4000
+SCRAPEFUN_DATA_DIR=./scrapefun-data
+COMPOSE_PROJECT_NAME=scrapefun
+```
+
+创建持久化目录：
 
 ```bash
-# 拉取最新代码
-git pull
-
-# 重新构建并启动
-docker-compose up -d --build
+mkdir -p ./scrapefun-data/db
+mkdir -p ./scrapefun-data/images
+mkdir -p ./scrapefun-data/config
+mkdir -p ./scrapefun-data/local-subtitles
 ```
 
-### 使用 Docker Hub 镜像
+启动服务：
 
 ```bash
-# 拉取最新镜像
-docker pull haoweil/scrapetab:latest
-
-# 停止并删除旧容器
-docker stop scrapetab
-docker rm scrapetab
-
-# 启动新容器（数据会保留在 volumes 中）
-docker run -d \
-  --name scrapetab \
-  -p 4000:4000 \
-  -v scrapefun_db:/app/data/db \
-  -v scrapefun_images:/app/data/images \
-  -v scrapefun_config:/app/data/config \
-  -v scrapefun_local_subtitles:/app/data/local-subtitles \
-  -e FLARESOLVERR_URL=http://your-flaresolverr:8191/v1 \
-  haoweil/scrapetab:latest
+docker compose --env-file .updater.env -f docker-compose.remote.yml pull
+docker compose --env-file .updater.env -f docker-compose.remote.yml up -d
 ```
 
-## 故障排查
+启动后默认访问：
 
-### 查看日志
+```text
+http://<server-ip>:4000
+```
+
+## 3. 当前 Compose 结构
+
+当前 `docker-compose.remote.yml` 包含两个服务：
+
+### `app`
+
+主应用服务，负责：
+
+- Web UI
+- API
+- 媒体库管理
+- WebDAV / AList 访问
+- 字幕处理
+- 播放兼容接口
+
+### `updater`
+
+内置 sidecar 更新服务，负责：
+
+- 接收应用内“立即更新”请求
+- 根据 `latest` 或 `beta` 拉取目标镜像
+- 重建 `app` 服务
+- 保留现有持久化数据
+
+## 4. 数据持久化
+
+当前默认持久化目录结构：
+
+```text
+scrapefun-data/
+  db/
+  images/
+  config/
+  local-subtitles/
+```
+
+各目录作用如下：
+
+### `db`
+
+路径：
+
+```text
+/app/data/db
+```
+
+包含：
+
+- SQLite 数据库
+- 媒体元数据
+- 用户数据
+- 配置数据
+
+### `images`
+
+路径：
+
+```text
+/app/data/images
+```
+
+包含：
+
+- 海报
+- 背景图
+- 缩略图
+- 其他媒体图片缓存
+
+### `config`
+
+路径：
+
+```text
+/app/data/config
+```
+
+包含：
+
+- 安装态配置
+- 实例级持久状态
+- 更新器相关运行状态
+
+### `local-subtitles`
+
+路径：
+
+```text
+/app/data/local-subtitles
+```
+
+包含：
+
+- 本地化字幕文件
+- 通过字幕本地化功能保存的持久内容
+
+如果不持久化这个目录，重建容器后字幕本地化结果会丢失。
+
+## 5. 端口与网络
+
+默认映射：
+
+```text
+4000 -> 4000
+```
+
+也就是：
+
+- 容器内应用端口：`4000`
+- 宿主机默认访问端口：`4000`
+
+如果你想改宿主机端口，可以在 `.updater.env` 中修改：
+
+```env
+APP_HOST_PORT=4000
+```
+
+例如改成 `8080`：
+
+```env
+APP_HOST_PORT=8080
+```
+
+然后重新启动：
 
 ```bash
-# Docker Compose
-docker-compose logs -f app
-
-# Docker
-docker logs -f scrapetab
+docker compose --env-file .updater.env -f docker-compose.remote.yml up -d
 ```
 
-### 进入容器调试
+## 6. FlareSolverr 配置
+
+当前 compose 默认值：
+
+```env
+FLARESOLVERR_URL=http://host.docker.internal:8191/v1
+```
+
+这表示容器会尝试访问宿主机上的 FlareSolverr。
+
+如果你的 FlareSolverr 不在宿主机，而是在局域网另一台机器，请把 `server.env` 改成：
+
+```env
+FLARESOLVERR_URL=http://<your-flaresolverr-ip>:8191/v1
+```
+
+修改后重启：
 
 ```bash
-# Docker Compose
-docker-compose exec app sh
-
-# Docker
-docker exec -it scrapetab sh
+docker compose --env-file .updater.env -f docker-compose.remote.yml up -d
 ```
 
-### 检查 volumes
+## 7. 更新与频道切换
+
+### 更新 `stable`
+
+如果你当前使用稳定版，通常 `latest` 就是稳定版镜像。
+
+手动更新：
 
 ```bash
-# 列出所有 volumes
-docker volume ls
-
-# 检查 volume 详情
-docker volume inspect scrapefun_db
-docker volume inspect scrapefun_images
-docker volume inspect scrapefun_config
-docker volume inspect scrapefun_local_subtitles
+cd ~/scrapefun
+docker compose --env-file .updater.env -f docker-compose.remote.yml pull
+docker compose --env-file .updater.env -f docker-compose.remote.yml up -d
 ```
 
-### 重置数据库
+### 切换到 `beta`
+
+把 `.updater.env` 改成：
+
+```env
+SCRAPETAB_IMAGE=haoweil/scrapefun:beta
+UPDATE_CURRENT_TAG=beta
+APP_HOST_PORT=4000
+SCRAPEFUN_DATA_DIR=./scrapefun-data
+COMPOSE_PROJECT_NAME=scrapefun
+```
+
+并把 `server.env` 改成：
+
+```env
+UPDATE_DEFAULT_CHANNEL=beta
+```
+
+然后执行：
 
 ```bash
-# 进入容器
-docker-compose exec app sh
-
-# 重置数据库
-cd /app/server
-npx prisma migrate reset --force
-npx prisma generate
+docker compose --env-file .updater.env -f docker-compose.remote.yml pull
+docker compose --env-file .updater.env -f docker-compose.remote.yml up -d
 ```
 
-## 多平台支持
+### 切回 `stable`
 
-镜像支持以下平台：
-- `linux/amd64` - x86_64 架构（Intel/AMD）
-- `linux/arm64` - ARM64 架构（Apple Silicon, Raspberry Pi 4+）
+把 `.updater.env` 改回：
 
-Docker 会自动选择适合您系统的镜像。
-
-## 端口说明
-
-- `4000` - ScrapeFun 主应用
-- `8191` - FlareSolverr（用于绕过 Cloudflare）
-- `5432` - PostgreSQL（用于 R18Dev 数据库，可选）
-
-## 安全建议
-
-1. **定期备份**: 使用应用内置备份功能或手动备份 volumes
-2. **访问控制**: 如果暴露到公网，建议使用反向代理（如 Nginx）并配置认证
-3. **更新镜像**: 定期拉取最新镜像以获取安全更新
-4. **环境变量**: 敏感信息（如数据库密码）使用 Docker secrets 或 .env 文件
-
-## 性能优化
-
-### 限制资源使用
-
-```yaml
-services:
-  app:
-    # ... 其他配置
-    deploy:
-      resources:
-        limits:
-          cpus: '2'
-          memory: 2G
-        reservations:
-          cpus: '1'
-          memory: 1G
+```env
+SCRAPETAB_IMAGE=haoweil/scrapefun:latest
+UPDATE_CURRENT_TAG=latest
 ```
 
-### 使用本地绑定挂载（开发环境）
+并把 `server.env` 改回：
 
-如果需要实时编辑代码，可以使用绑定挂载：
-
-```yaml
-volumes:
-  - ./server/prisma:/app/server/prisma
-  - ./server/public/images:/app/server/public/images
-  - ./server/src/scrapers:/app/server/src/scrapers
+```env
+UPDATE_DEFAULT_CHANNEL=stable
 ```
 
-## 支持
+再执行：
 
-如有问题，请访问：
-- GitHub Issues: [项目地址]
-- 文档: [文档地址]
+```bash
+docker compose --env-file .updater.env -f docker-compose.remote.yml up -d
+```
+
+### 在应用内更新
+
+如果 `updater` 服务正常运行，你也可以直接在应用的设置页中：
+
+- 切换 `Stable / Beta`
+- 点击“立即更新”
+
+## 8. 常用命令
+
+查看容器状态：
+
+```bash
+docker compose --env-file .updater.env -f docker-compose.remote.yml ps
+```
+
+查看主应用日志：
+
+```bash
+docker compose --env-file .updater.env -f docker-compose.remote.yml logs -f app
+```
+
+查看更新器日志：
+
+```bash
+docker compose --env-file .updater.env -f docker-compose.remote.yml logs -f updater
+```
+
+重启服务：
+
+```bash
+docker compose --env-file .updater.env -f docker-compose.remote.yml restart
+```
+
+停止服务：
+
+```bash
+docker compose --env-file .updater.env -f docker-compose.remote.yml down
+```
+
+进入主应用容器：
+
+```bash
+docker exec -it scrapefun sh
+```
+
+## 9. 备份建议
+
+最简单的做法是定期备份整个数据目录：
+
+```bash
+tar czf scrapefun-data-backup.tar.gz ./scrapefun-data
+```
+
+恢复时解压回原目录即可。
+
+建议重点保留：
+
+- `db`
+- `images`
+- `config`
+- `local-subtitles`
+
+## 10. 故障排查
+
+### 页面打不开
+
+先看容器状态：
+
+```bash
+docker compose --env-file .updater.env -f docker-compose.remote.yml ps
+```
+
+再看日志：
+
+```bash
+docker compose --env-file .updater.env -f docker-compose.remote.yml logs -f app
+```
+
+### 更新失败
+
+先看 updater 日志：
+
+```bash
+docker compose --env-file .updater.env -f docker-compose.remote.yml logs -f updater
+```
+
+再确认：
+
+- `server.env` 中的 `SCRAPETAB_UPDATER_TOKEN` 已设置
+- `server.env` 中的 `UPDATE_DOCKERHUB_REPO` 正确
+- `.updater.env` 中的 `SCRAPETAB_IMAGE` 与 `UPDATE_CURRENT_TAG` 匹配
+- 宿主机 Docker daemon 正常
+
+### 刮削相关站点无法访问
+
+优先检查：
+
+- `FLARESOLVERR_URL` 是否正确
+- FlareSolverr 服务是否真的可访问
+- 宿主机防火墙是否拦截
+
+### 重建后数据丢失
+
+这通常说明你没有正确持久化 `scrapefun-data` 目录，或部署时修改了 `SCRAPEFUN_DATA_DIR`。
+
+建议检查：
+
+```bash
+cat .updater.env
+```
+
+确认其中的：
+
+```env
+SCRAPEFUN_DATA_DIR=./scrapefun-data
+```
