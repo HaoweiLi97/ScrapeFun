@@ -3,8 +3,11 @@
   <h1>ScrapeFun</h1>
   <p>自带刮削引擎、原生 WebDAV 支持与播放器兼容层的媒体库管理平台</p>
   <p>
-    <a href="https://hub.docker.com/repository/docker/haoweil/scrapefun">
-      <img src="https://img.shields.io/badge/Docker-Hub-2496ED?logo=docker&logoColor=white" alt="Docker Hub" />
+    <a href="https://hub.docker.com/r/haoweil/scrapefun/tags">
+      <img src="https://img.shields.io/badge/Docker-latest-2496ED?logo=docker&logoColor=white" alt="Docker latest" />
+    </a>
+    <a href="https://hub.docker.com/r/haoweil/scrapefun/tags?page=&name=beta">
+      <img src="https://img.shields.io/badge/Docker-beta-1D63ED?logo=docker&logoColor=white" alt="Docker beta" />
     </a>
     <a href="https://github.com/HaoweiLi97/scrapefun-desktop-macos/releases/latest">
       <img src="https://img.shields.io/github/v/release/HaoweiLi97/scrapefun-desktop-macos?label=macOS&logo=apple" alt="macOS Latest Release" />
