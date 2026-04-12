@@ -137,7 +137,8 @@ curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/o
 ## 相关文档
 
 - [Docker 部署指南](./DOCKER_GUIDE.md)
-- [自定义 Scraper 开发指南](./server/SCRAPER_GUIDE.md)
+- [Custom Scraper Development Guide (EN)](./server/SCRAPER_GUIDE.md)
+- [自定义 Scraper 开发指南（中文）](./server/SCRAPER_GUIDE.zh-CN.md)
 
 ## 联系方式
 
