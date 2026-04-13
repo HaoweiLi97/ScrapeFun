@@ -8,7 +8,7 @@ services:
       - ./server.env
     environment:
       - NODE_ENV=production
-      - PORT=4000
+      - PORT=8096
       - DATABASE_URL=file:/app/data/db/dev.db
       - FLARESOLVERR_URL=${FLARESOLVERR_URL:-http://host.docker.internal:8191/v1}
       - UPDATE_CURRENT_TAG=${UPDATE_CURRENT_TAG:-latest}
@@ -17,7 +17,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
-      - "${APP_HOST_PORT:-4000}:4000"
+      - "${APP_HOST_PORT:-8096}:8096"
     volumes:
       - ${SCRAPEFUN_DATA_DIR:-./scrapefun-data}/db:/app/data/db
       - ${SCRAPEFUN_DATA_DIR:-./scrapefun-data}/images:/app/data/images
@@ -36,7 +36,7 @@ services:
       - UPDATER_PROJECT_DIR=/workspace
       - UPDATER_COMPOSE_FILE=/workspace/docker-compose.remote.yml
       - UPDATER_SERVICE_NAME=app
-      - UPDATER_HEALTHCHECK_URL=http://app:4000/health
+      - UPDATER_HEALTHCHECK_URL=http://app:8096/health
       - UPDATER_STATE_ENV_FILE=/workspace/.updater.env
       - UPDATER_REPOSITORY=${UPDATE_DOCKERHUB_REPO:-haoweil/scrapefun}
     volumes:

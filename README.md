@@ -93,7 +93,7 @@ curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/o
 1. 准备 Docker 与 Docker Compose
 2. 参考 [`docker-compose.remote.yml`](./docker-compose.remote.yml)
 3. 根据需要配置环境变量
-4. 启动服务并访问 `http://<server-ip>:4000`
+4. 启动服务并访问 `http://<server-ip>:8096`
 
 ## 使用说明
 
@@ -111,7 +111,7 @@ curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/o
 
 常见配置可参考 [`.env.example`](./.env.example)：
 
-- `PORT`：服务端口，默认 `4000`
+- `PORT`：服务端口，默认 `8096`
 - `FLARESOLVERR_URL`：用于部分站点的反爬处理
 - `TMDB_API_KEY`：可选的 TMDB 数据源配置
 - `WEBDAV_URL` / `WEBDAV_USERNAME` / `WEBDAV_PASSWORD`：可选的 WebDAV 默认配置

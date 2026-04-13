@@ -122,15 +122,15 @@ resolve_app_host_port() {
     fi
   fi
 
-  APP_HOST_PORT="4000"
+  APP_HOST_PORT="8096"
 
   if [[ -t 1 && -r /dev/tty ]]; then
     local requested_port
-    printf "Deploy to which host port? [4000]: " > /dev/tty
+    printf "Deploy to which host port? [8096]: " > /dev/tty
     IFS= read -r requested_port < /dev/tty || true
     requested_port="${requested_port//$'\r'/}"
     requested_port="${requested_port//[[:space:]]/}"
-    requested_port="${requested_port:-4000}"
+    requested_port="${requested_port:-8096}"
 
     if [[ ! "${requested_port}" =~ ^[0-9]+$ ]] || (( requested_port < 1 || requested_port > 65535 )); then
       echo -e "${RED}Error: port must be a number between 1 and 65535.${NC}"
@@ -197,6 +197,7 @@ SCRAPETAB_IMAGE=${REPOSITORY}:${TAG}
 UPDATE_CURRENT_TAG=${TAG}
 APP_HOST_PORT=${APP_HOST_PORT}
 SCRAPEFUN_DATA_DIR=${SCRAPEFUN_DATA_DIR}
+COMPOSE_PROJECT_NAME=scrapefun
 EOF
 
 echo -e "${GREEN}========================================${NC}"
