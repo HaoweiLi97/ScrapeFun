@@ -93,7 +93,7 @@ UPDATE_DEFAULT_CHANNEL=stable
 ```env
 SCRAPETAB_IMAGE=haoweil/scrapefun:latest
 UPDATE_CURRENT_TAG=latest
-APP_HOST_PORT=4000
+APP_HOST_PORT=8096
 SCRAPEFUN_DATA_DIR=./scrapefun-data
 COMPOSE_PROJECT_NAME=scrapefun
 ```
@@ -117,7 +117,7 @@ docker compose --env-file .updater.env -f docker-compose.remote.yml up -d
 启动后默认访问：
 
 ```text
-http://<server-ip>:4000
+http://<server-ip>:8096
 ```
 
 ## 3. 当前 Compose 结构
@@ -222,18 +222,18 @@ scrapefun-data/
 默认映射：
 
 ```text
-4000 -> 4000
+8096 -> 8096
 ```
 
 也就是：
 
-- 容器内应用端口：`4000`
-- 宿主机默认访问端口：`4000`
+- 容器内应用端口：`8096`
+- 宿主机默认访问端口：`8096`
 
 如果你想改宿主机端口，可以在 `.updater.env` 中修改：
 
 ```env
-APP_HOST_PORT=4000
+APP_HOST_PORT=8096
 ```
 
 例如改成 `8080`：
@@ -291,7 +291,7 @@ docker compose --env-file .updater.env -f docker-compose.remote.yml up -d
 ```env
 SCRAPETAB_IMAGE=haoweil/scrapefun:beta
 UPDATE_CURRENT_TAG=beta
-APP_HOST_PORT=4000
+APP_HOST_PORT=8096
 SCRAPEFUN_DATA_DIR=./scrapefun-data
 COMPOSE_PROJECT_NAME=scrapefun
 ```
