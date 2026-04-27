@@ -28,6 +28,7 @@ ScrapeFun 面向以网盘、WebDAV、AList 为核心存储方式的媒体库场�
 
 ## 相关文档
 
+- [Docker Compose 部署文档](./DOCKER_COMPOSE_DEPLOYMENT.md)
 - [Docker 部署指南](./DOCKER_GUIDE.md)
 - [Custom Scraper Development Guide (EN)](./server/SCRAPER_GUIDE.md)
 - [自定义 Scraper 开发指南（中文）](./server/SCRAPER_GUIDE.zh-CN.md)
