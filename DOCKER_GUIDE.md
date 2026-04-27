@@ -1,130 +1,43 @@
 # ScrapeFun Docker 部署指南
 
-这份文档对应当前公开仓库中的 Docker Compose 部署方式。
+当前推荐使用 Docker Compose 部署。NAS Docker、群晖 Container Manager、绿联 Docker、飞牛 Docker、CasaOS、1Panel 等环境，建议直接复制 Compose 内容创建项目。
 
-当前推荐方案：
+如果你只需要可复制的 Compose 文件，请看：
 
-- 使用 `docker compose`
-- 使用 `docker-compose.remote.yml`
-- 使用 Docker Hub 镜像 `haoweil/scrapefun`
-- 通过 `latest` / `beta` 频道更新
-- 持久化到宿主机目录 `scrapefun-data`
+- [Docker Compose 部署文档](./DOCKER_COMPOSE_DEPLOYMENT.md)
 
-端口说明：`0.1.3` 之前默认使用 `4000` 端口，`0.1.3` 及之后默认使用 `8096` 端口。
+## 1. 推荐部署方式
 
-## 1. 运行前提
+推荐使用 `DOCKER_COMPOSE_DEPLOYMENT.md` 中的 Compose 内容部署。
 
-部署前请先确认：
+这种方式不需要额外创建：
 
-- 已安装 Docker
-- 已安装 Docker Compose Plugin
-- `docker info` 可以正常执行
-- 如果要启用部分站点刮削，宿主机或局域网中有可访问的 FlareSolverr
+- `server.env`
+- `.env`
+- `.updater.env`
 
-建议环境：
+常用环境变量已经写在 Compose 的 `environment` 里。NAS 面板创建 Compose 项目时，只需要粘贴 YAML 内容，然后选择一个固定项目目录即可。
 
-- Linux 服务器
-- 2 GB 以上可用内存
-- 足够的磁盘空间用于数据库、图片缓存和字幕持久化
-
-## 2. 推荐部署方式
-
-### 方式一：一键部署
-
-默认部署 `stable` 频道：
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-compose-deploy.sh | bash
-```
-
-部署 `beta` 频道：
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-compose-deploy.sh | bash -s -- beta
-```
-
-默认部署目录是：
+推荐项目目录示例：
 
 ```text
-~/scrapefun
+/volume1/docker/scrapefun
 ```
 
-默认持久化目录是：
+Compose 会在项目目录下使用这些持久化目录：
 
 ```text
-~/scrapefun-data
+scrapefun-data/db
+scrapefun-data/images
+scrapefun-data/config
+scrapefun-data/local-subtitles
 ```
 
-脚本会自动完成这些事情：
+如果 NAS 面板不会自动创建挂载目录，再手动创建上面四个目录即可。
 
-- 下载 `docker-compose.remote.yml`
-- 创建部署目录
-- 创建数据目录
-- 生成 `server.env`
-- 生成 `.updater.env`
-- 拉取镜像并启动 `app` 与 `updater`
+## 2. Compose 服务说明
 
-### 方式二：手动部署
-
-先准备目录：
-
-```bash
-mkdir -p ~/scrapefun
-cd ~/scrapefun
-```
-
-下载 compose 文件：
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/docker-compose.remote.yml -o docker-compose.remote.yml
-```
-
-创建 `server.env`：
-
-```env
-NODE_ENV=production
-DATABASE_URL=file:/app/data/db/dev.db
-FLARESOLVERR_URL=http://host.docker.internal:8191/v1
-SCRAPETAB_UPDATER_TOKEN=replace_with_a_random_token
-UPDATE_DOCKERHUB_REPO=haoweil/scrapefun
-UPDATE_DEFAULT_CHANNEL=stable
-```
-
-创建 `.updater.env`：
-
-```env
-SCRAPETAB_IMAGE=haoweil/scrapefun:latest
-UPDATE_CURRENT_TAG=latest
-APP_HOST_PORT=8096
-SCRAPEFUN_DATA_DIR=./scrapefun-data
-COMPOSE_PROJECT_NAME=scrapefun
-```
-
-创建持久化目录：
-
-```bash
-mkdir -p ./scrapefun-data/db
-mkdir -p ./scrapefun-data/images
-mkdir -p ./scrapefun-data/config
-mkdir -p ./scrapefun-data/local-subtitles
-```
-
-启动服务：
-
-```bash
-docker compose --env-file .updater.env -f docker-compose.remote.yml pull
-docker compose --env-file .updater.env -f docker-compose.remote.yml up -d
-```
-
-启动后默认访问：
-
-```text
-http://<server-ip>:8096
-```
-
-## 3. 当前 Compose 结构
-
-当前 `docker-compose.remote.yml` 包含两个服务：
+推荐 Compose 包含两个服务：
 
 ### `app`
 
@@ -137,18 +50,75 @@ http://<server-ip>:8096
 - 字幕处理
 - 播放兼容接口
 
+默认访问端口：
+
+```text
+8096
+```
+
+访问地址：
+
+```text
+http://NAS_IP:8096
+```
+
 ### `updater`
 
-内置 sidecar 更新服务，负责：
+内置更新服务，负责：
 
 - 接收应用内“立即更新”请求
-- 根据 `latest` 或 `beta` 拉取目标镜像
-- 重建 `app` 服务
+- 拉取 `latest` 或 `beta` 镜像
+- 重建 `app` 容器
 - 保留现有持久化数据
+
+`updater` 需要挂载 Docker socket：
+
+```yaml
+- /var/run/docker.sock:/var/run/docker.sock
+```
+
+这是为了让 updater 调用宿主机 Docker 去更新 `app` 服务，不需要用户手动创建这个文件。
+
+`updater` 还会挂载当前 Compose 项目目录：
+
+```yaml
+- ./:/workspace
+```
+
+这里的 `/workspace` 是容器内部路径，不需要用户创建。它只用来让 updater 读取当前项目的 `docker-compose.yml`。
+
+## 3. 端口
+
+当前版本默认端口是 `8096`。
+
+默认 Compose：
+
+```yaml
+ports:
+  - "8096:8096"
+```
+
+如果 NAS 上 `8096` 被占用，只改左边的宿主机端口：
+
+```yaml
+ports:
+  - "18096:8096"
+```
+
+访问地址变为：
+
+```text
+http://NAS_IP:18096
+```
+
+历史版本说明：
+
+- `0.1.3` 之前默认端口是 `4000`
+- `0.1.3` 及之后默认端口是 `8096`
 
 ## 4. 数据持久化
 
-当前默认持久化目录结构：
+推荐持久化目录：
 
 ```text
 scrapefun-data/
@@ -158,298 +128,151 @@ scrapefun-data/
   local-subtitles/
 ```
 
-各目录作用如下：
+目录作用：
 
-### `db`
+- `db`：SQLite 数据库、媒体元数据、用户数据、配置数据
+- `images`：海报、背景图、演员图等图片缓存
+- `config`：实例配置和运行状态
+- `local-subtitles`：本地化字幕文件
 
-路径：
+备份时备份整个 `scrapefun-data` 目录即可。
 
-```text
-/app/data/db
+## 5. 环境变量
+
+推荐 Compose 已经内置常用环境变量，不需要单独创建 env 文件。
+
+常见可改项：
+
+```yaml
+environment:
+  NODE_ENV: production
+  PORT: 8096
+  DATABASE_URL: file:/app/data/db/dev.db
+  FLARESOLVERR_URL: http://host.docker.internal:8191/v1
+  UPDATE_CURRENT_TAG: latest
+  UPDATE_WEBHOOK_URL: http://updater:4182/update
+  UPDATE_WEBHOOK_TOKEN: ""
+  UPDATE_DOCKERHUB_REPO: haoweil/scrapefun
 ```
 
-包含：
+可选配置：
 
-- SQLite 数据库
-- 媒体元数据
-- 用户数据
-- 配置数据
-
-### `images`
-
-路径：
-
-```text
-/app/data/images
+```yaml
+# TMDB_API_KEY: your_tmdb_api_key
+# WEBDAV_URL: https://your-webdav.example.com
+# WEBDAV_USERNAME: your_username
+# WEBDAV_PASSWORD: your_password
 ```
 
-包含：
+### 是否需要 `server.env` / `.updater.env`
 
-- 海报
-- 背景图
-- 缩略图
-- 其他媒体图片缓存
+不需要。
 
-### `config`
+推荐的 NAS Compose 部署方式已经把配置写进 YAML，不要求用户创建 `server.env`、`.env` 或 `.updater.env`。
 
-路径：
+只有旧版 `docker-compose.remote.yml` 或旧的一键脚本部署方式，才可能会看到：
 
-```text
-/app/data/config
+- `server.env`
+- `.updater.env`
+
+如果你使用本文推荐的 Compose 内容，可以忽略这些文件。
+
+## 6. 更新 Token
+
+更新 token 是可选的。
+
+默认：
+
+```yaml
+UPDATE_WEBHOOK_TOKEN: ""
+UPDATER_TOKEN: ""
 ```
 
-包含：
+为空表示不校验 token，部署和应用内更新都可以正常使用。
 
-- 安装态配置
-- 实例级持久状态
-- 更新器相关运行状态
+如果你想限制更新接口调用，可以设置同一个随机字符串：
 
-### `local-subtitles`
-
-路径：
-
-```text
-/app/data/local-subtitles
+```yaml
+UPDATE_WEBHOOK_TOKEN: your-random-token
+UPDATER_TOKEN: your-random-token
 ```
 
-包含：
+两个值必须一致。
 
-- 本地化字幕文件
-- 通过字幕本地化功能保存的持久内容
+## 7. FlareSolverr
 
-如果不持久化这个目录，重建容器后字幕本地化结果会丢失。
+推荐 Compose 默认：
 
-## 5. 端口与网络
-
-版本差异说明：
-
-- `0.1.3` 之前默认端口是 `4000`
-- `0.1.3` 及之后默认端口是 `8096`
-
-默认映射：
-
-```text
-8096 -> 8096
+```yaml
+FLARESOLVERR_URL: http://host.docker.internal:8191/v1
 ```
 
-也就是：
+这表示 ScrapeFun 会尝试访问宿主机上的 FlareSolverr。
 
-- 容器内应用端口：`8096`
-- 宿主机默认访问端口：`8096`
+如果 FlareSolverr 在同一个 Compose 项目里，服务名叫 `flaresolverr`，改成：
 
-如果你想改宿主机端口，可以在 `.updater.env` 中修改：
-
-```env
-APP_HOST_PORT=8096
+```yaml
+FLARESOLVERR_URL: http://flaresolverr:8191/v1
 ```
 
-例如改成 `8080`：
+如果 FlareSolverr 在另一台机器，改成：
 
-```env
-APP_HOST_PORT=8080
+```yaml
+FLARESOLVERR_URL: http://192.168.1.50:8191/v1
 ```
 
-然后重新启动：
+如果暂时不使用需要 FlareSolverr 的 scraper，可以先保持默认。
 
-```bash
-docker compose --env-file .updater.env -f docker-compose.remote.yml up -d
+## 8. 镜像频道
+
+稳定版：
+
+```yaml
+image: haoweil/scrapefun:latest
+UPDATE_CURRENT_TAG: latest
 ```
 
-## 6. FlareSolverr 配置
+测试版：
 
-当前 compose 默认值：
-
-```env
-FLARESOLVERR_URL=http://host.docker.internal:8191/v1
+```yaml
+image: haoweil/scrapefun:beta
+UPDATE_CURRENT_TAG: beta
 ```
 
-这表示容器会尝试访问宿主机上的 FlareSolverr。
+如果切换频道，`app` 和 `updater` 两个服务的镜像标签都要一起改。
 
-如果你的 FlareSolverr 不在宿主机，而是在局域网另一台机器，请把 `server.env` 改成：
-
-```env
-FLARESOLVERR_URL=http://<your-flaresolverr-ip>:8191/v1
-```
-
-修改后重启：
-
-```bash
-docker compose --env-file .updater.env -f docker-compose.remote.yml up -d
-```
-
-## 7. 更新与频道切换
-
-### 更新 `stable`
-
-如果你当前使用稳定版，通常 `latest` 就是稳定版镜像。
-
-手动更新：
-
-```bash
-cd ~/scrapefun
-docker compose --env-file .updater.env -f docker-compose.remote.yml pull
-docker compose --env-file .updater.env -f docker-compose.remote.yml up -d
-```
-
-### 切换到 `beta`
-
-把 `.updater.env` 改成：
-
-```env
-SCRAPETAB_IMAGE=haoweil/scrapefun:beta
-UPDATE_CURRENT_TAG=beta
-APP_HOST_PORT=8096
-SCRAPEFUN_DATA_DIR=./scrapefun-data
-COMPOSE_PROJECT_NAME=scrapefun
-```
-
-并把 `server.env` 改成：
-
-```env
-UPDATE_DEFAULT_CHANNEL=beta
-```
-
-然后执行：
-
-```bash
-docker compose --env-file .updater.env -f docker-compose.remote.yml pull
-docker compose --env-file .updater.env -f docker-compose.remote.yml up -d
-```
-
-### 切回 `stable`
-
-把 `.updater.env` 改回：
-
-```env
-SCRAPETAB_IMAGE=haoweil/scrapefun:latest
-UPDATE_CURRENT_TAG=latest
-```
-
-并把 `server.env` 改回：
-
-```env
-UPDATE_DEFAULT_CHANNEL=stable
-```
-
-再执行：
-
-```bash
-docker compose --env-file .updater.env -f docker-compose.remote.yml up -d
-```
-
-### 在应用内更新
-
-如果 `updater` 服务正常运行，你也可以直接在应用的设置页中：
-
-- 切换 `Stable / Beta`
-- 点击“立即更新”
-
-## 8. 常用命令
-
-查看容器状态：
-
-```bash
-docker compose --env-file .updater.env -f docker-compose.remote.yml ps
-```
-
-查看主应用日志：
-
-```bash
-docker compose --env-file .updater.env -f docker-compose.remote.yml logs -f app
-```
-
-查看更新器日志：
-
-```bash
-docker compose --env-file .updater.env -f docker-compose.remote.yml logs -f updater
-```
-
-重启服务：
-
-```bash
-docker compose --env-file .updater.env -f docker-compose.remote.yml restart
-```
-
-停止服务：
-
-```bash
-docker compose --env-file .updater.env -f docker-compose.remote.yml down
-```
-
-进入主应用容器：
-
-```bash
-docker exec -it scrapefun sh
-```
-
-## 9. 备份建议
-
-最简单的做法是定期备份整个数据目录：
-
-```bash
-tar czf scrapefun-data-backup.tar.gz ./scrapefun-data
-```
-
-恢复时解压回原目录即可。
-
-建议重点保留：
-
-- `db`
-- `images`
-- `config`
-- `local-subtitles`
-
-## 10. 故障排查
+## 9. 常见问题
 
 ### 页面打不开
 
-先看容器状态：
+检查：
 
-```bash
-docker compose --env-file .updater.env -f docker-compose.remote.yml ps
-```
-
-再看日志：
-
-```bash
-docker compose --env-file .updater.env -f docker-compose.remote.yml logs -f app
-```
+- NAS 防火墙是否放行端口
+- Compose 项目是否正常启动
+- `app` 容器日志是否有报错
+- 端口映射是否仍是 `8096:8096` 或你修改后的端口
 
 ### 更新失败
 
-先看 updater 日志：
+检查：
 
-```bash
-docker compose --env-file .updater.env -f docker-compose.remote.yml logs -f updater
-```
-
-再确认：
-
-- `server.env` 中的 `SCRAPETAB_UPDATER_TOKEN` 已设置
-- `server.env` 中的 `UPDATE_DOCKERHUB_REPO` 正确
-- `.updater.env` 中的 `SCRAPETAB_IMAGE` 与 `UPDATE_CURRENT_TAG` 匹配
-- 宿主机 Docker daemon 正常
-
-### 刮削相关站点无法访问
-
-优先检查：
-
-- `FLARESOLVERR_URL` 是否正确
-- FlareSolverr 服务是否真的可访问
-- 宿主机防火墙是否拦截
+- `updater` 容器是否正常运行
+- 是否挂载了 `/var/run/docker.sock`
+- 如果设置了 token，`UPDATE_WEBHOOK_TOKEN` 和 `UPDATER_TOKEN` 是否一致
+- NAS Docker 是否允许容器访问 Docker socket
 
 ### 重建后数据丢失
 
-这通常说明你没有正确持久化 `scrapefun-data` 目录，或部署时修改了 `SCRAPEFUN_DATA_DIR`。
+通常是项目目录或挂载目录变了。
 
-建议检查：
+确认 Compose 仍然挂载到同一个数据目录：
 
-```bash
-cat .updater.env
+```yaml
+volumes:
+  - ./scrapefun-data/db:/app/data/db
+  - ./scrapefun-data/images:/app/data/images
+  - ./scrapefun-data/config:/app/data/config
+  - ./scrapefun-data/local-subtitles:/app/data/local-subtitles
 ```
 
-确认其中的：
-
-```env
-SCRAPEFUN_DATA_DIR=./scrapefun-data
-```
+只要 `scrapefun-data` 目录保留，重建容器不会清空数据。
