@@ -1,9 +1,5 @@
 # Docker Compose 部署
 
-本文只提供 Docker Compose 部署内容，适合 Linux 服务器、NAS Docker、群晖 Container Manager、绿联 Docker、飞牛 Docker、CasaOS、1Panel 等支持 Compose 的环境。
-
-在 NAS 面板里创建 Compose 项目时，把下面的内容作为 `docker-compose.yml` 粘贴进去即可。
-
 ## 推荐 Compose
 
 ```yaml
