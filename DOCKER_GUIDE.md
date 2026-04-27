@@ -1,22 +1,44 @@
 # ScrapeFun Docker 部署指南
 
-当前推荐使用 Docker Compose 部署。NAS Docker、群晖 Container Manager、绿联 Docker、飞牛 Docker、CasaOS、1Panel 等环境，建议直接复制 Compose 内容创建项目。
+当前推荐使用 Docker Compose 部署。服务器优先使用一键命令；NAS Docker、群晖 Container Manager、绿联 Docker、飞牛 Docker、CasaOS、1Panel 等环境，可以复制 Compose 内容创建项目。
 
 如果你只需要可复制的 Compose 文件，请看：
 
 - [Docker Compose 部署文档](./DOCKER_COMPOSE_DEPLOYMENT.md)
 
-## 1. 推荐部署方式
+## 1. 一键部署（推荐）
 
-推荐使用 `DOCKER_COMPOSE_DEPLOYMENT.md` 中的 Compose 内容部署。
+Linux 服务器上推荐使用一键命令部署：
 
-这种方式不需要额外创建：
+```bash
+curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-compose-deploy.sh | bash
+```
 
-- `server.env`
-- `.env`
-- `.updater.env`
+默认部署 stable 频道，应用端口为 `8096`。
 
-常用环境变量已经写在 Compose 的 `environment` 里。NAS 面板创建 Compose 项目时，只需要粘贴 YAML 内容，然后选择一个固定项目目录即可。
+部署 beta 频道：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-compose-deploy.sh | bash -s -- beta
+```
+
+指定部署目录：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-compose-deploy.sh | bash -s -- stable /opt/scrapefun
+```
+
+部署完成后访问：
+
+```text
+http://服务器IP:8096
+```
+
+## 2. NAS / 面板 Compose 部署
+
+NAS 面板创建 Compose 项目时，使用 [Docker Compose 部署文档](./DOCKER_COMPOSE_DEPLOYMENT.md) 里的 YAML 内容。
+
+创建项目时只需要粘贴 Compose 内容，然后选择一个固定项目目录即可。
 
 推荐项目目录示例：
 
@@ -35,7 +57,7 @@ scrapefun-data/local-subtitles
 
 如果 NAS 面板不会自动创建挂载目录，再手动创建上面四个目录即可。
 
-## 2. Compose 服务说明
+## 3. Compose 服务说明
 
 推荐 Compose 包含两个服务：
 
@@ -87,7 +109,7 @@ http://NAS_IP:8096
 
 这里的 `/workspace` 是容器内部路径，不需要用户创建。它只用来让 updater 读取当前项目的 `docker-compose.yml`。
 
-## 3. 端口
+## 4. 端口
 
 当前版本默认端口是 `8096`。
 
@@ -116,7 +138,7 @@ http://NAS_IP:18096
 - `0.1.3` 之前默认端口是 `4000`
 - `0.1.3` 及之后默认端口是 `8096`
 
-## 4. 数据持久化
+## 5. 数据持久化
 
 推荐持久化目录：
 
@@ -137,9 +159,9 @@ scrapefun-data/
 
 备份时备份整个 `scrapefun-data` 目录即可。
 
-## 5. 环境变量
+## 6. 环境变量
 
-推荐 Compose 已经内置常用环境变量，不需要单独创建 env 文件。
+常用环境变量在 Compose 的 `environment` 中配置。
 
 常见可改项：
 
@@ -164,20 +186,7 @@ environment:
 # WEBDAV_PASSWORD: your_password
 ```
 
-### 是否需要 `server.env` / `.updater.env`
-
-不需要。
-
-推荐的 NAS Compose 部署方式已经把配置写进 YAML，不要求用户创建 `server.env`、`.env` 或 `.updater.env`。
-
-只有旧版 `docker-compose.remote.yml` 或旧的一键脚本部署方式，才可能会看到：
-
-- `server.env`
-- `.updater.env`
-
-如果你使用本文推荐的 Compose 内容，可以忽略这些文件。
-
-## 6. 更新 Token
+## 7. 更新 Token
 
 更新 token 是可选的。
 
@@ -199,7 +208,7 @@ UPDATER_TOKEN: your-random-token
 
 两个值必须一致。
 
-## 7. FlareSolverr
+## 8. FlareSolverr
 
 推荐 Compose 默认：
 
@@ -223,7 +232,7 @@ FLARESOLVERR_URL: http://192.168.1.50:8191/v1
 
 如果暂时不使用需要 FlareSolverr 的 scraper，可以先保持默认。
 
-## 8. 镜像频道
+## 9. 镜像频道
 
 稳定版：
 
@@ -241,7 +250,7 @@ UPDATE_CURRENT_TAG: beta
 
 如果切换频道，`app` 和 `updater` 两个服务的镜像标签都要一起改。
 
-## 9. 常见问题
+## 10. 常见问题
 
 ### 页面打不开
 
