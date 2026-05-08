@@ -73,10 +73,35 @@ read_env_value() {
   sed -n "s/^${key}=//p" "${file}" | tail -n 1
 }
 
+print_permission_help() {
+  local path="$1"
+  local chown_paths="${DEPLOY_DIR}"
+
+  if [[ -n "${SCRAPEFUN_DATA_DIR:-}" ]]; then
+    chown_paths="${chown_paths} ${SCRAPEFUN_DATA_DIR}"
+  fi
+
+  echo -e "${RED}Error: cannot write ${path}.${NC}"
+  echo -e "${RED}The deployment directory may be owned by root from an earlier sudo run.${NC}"
+  echo -e "Fix permissions, then run this script again:"
+  echo -e "  ${YELLOW}sudo chown -R $(id -u):$(id -g) ${chown_paths}${NC}"
+}
+
 upsert_env_value() {
   local key="$1"
   local value="$2"
   local file="$3"
+  local current_value
+  current_value="$(read_env_value "${key}" "${file}")"
+
+  if [[ "${current_value}" == "${value}" ]]; then
+    return
+  fi
+
+  if [[ ! -w "${file}" ]]; then
+    print_permission_help "${file}"
+    exit 1
+  fi
 
   if grep -q "^${key}=" "${file}"; then
     local escaped_value
@@ -105,6 +130,34 @@ resolve_channel() {
   CHANNEL="stable"
 }
 
+replace_file_if_changed() {
+  local tmp_file="$1"
+  local target_file="$2"
+
+  if [[ -f "${target_file}" ]] && cmp -s "${tmp_file}" "${target_file}"; then
+    rm -f "${tmp_file}"
+    return
+  fi
+
+  if ! mv "${tmp_file}" "${target_file}" 2>/dev/null; then
+    rm -f "${tmp_file}"
+    print_permission_help "${target_file}"
+    exit 1
+  fi
+}
+
+create_deploy_tmp_file() {
+  local prefix="$1"
+  local tmp_file
+
+  tmp_file="$(mktemp "${TMPDIR:-/tmp}/${prefix}.XXXXXX")" || {
+    echo -e "${RED}Error: failed to create a temporary file.${NC}"
+    exit 1
+  }
+
+  printf '%s\n' "${tmp_file}"
+}
+
 if ! command -v docker >/dev/null 2>&1; then
   echo -e "${RED}Error: docker is not installed.${NC}"
   exit 1
@@ -131,25 +184,35 @@ if [[ "${ACTION}" == "update" && ! -f "${COMPOSE_TARGET}" && ! -f "${UPDATER_ENV
 fi
 
 download_compose() {
+  local tmp_file
+  tmp_file="$(create_deploy_tmp_file ".docker-compose.remote.yml.tmp")"
+
   if [[ -f "${COMPOSE_SOURCE}" ]]; then
-    cp "${COMPOSE_SOURCE}" "${COMPOSE_TARGET}"
+    cp "${COMPOSE_SOURCE}" "${tmp_file}" || {
+      rm -f "${tmp_file}"
+      print_permission_help "${DEPLOY_DIR}"
+      exit 1
+    }
+    replace_file_if_changed "${tmp_file}" "${COMPOSE_TARGET}"
     return
   fi
 
   if command -v curl >/dev/null 2>&1; then
-    if curl -fsSL "${COMPOSE_URL}" -o "${COMPOSE_TARGET}"; then
+    if curl -fsSL "${COMPOSE_URL}" -o "${tmp_file}"; then
+      replace_file_if_changed "${tmp_file}" "${COMPOSE_TARGET}"
       return
     fi
-    rm -f "${COMPOSE_TARGET}"
+    rm -f "${tmp_file}"
   elif command -v wget >/dev/null 2>&1; then
-    if wget -qO "${COMPOSE_TARGET}" "${COMPOSE_URL}"; then
+    if wget -qO "${tmp_file}" "${COMPOSE_URL}"; then
+      replace_file_if_changed "${tmp_file}" "${COMPOSE_TARGET}"
       return
     fi
-    rm -f "${COMPOSE_TARGET}"
+    rm -f "${tmp_file}"
   fi
 
   if command -v python3 >/dev/null 2>&1; then
-    python3 - "${COMPOSE_API_URL}" "${COMPOSE_TARGET}" <<'PY'
+    if python3 - "${COMPOSE_API_URL}" "${tmp_file}" <<'PY'
 import base64
 import json
 import sys
@@ -165,7 +228,11 @@ content = base64.b64decode(payload["content"])
 with open(target, "wb") as file:
     file.write(content)
 PY
-    return
+    then
+      replace_file_if_changed "${tmp_file}" "${COMPOSE_TARGET}"
+      return
+    fi
+    rm -f "${tmp_file}"
   fi
 
   echo -e "${RED}Error: failed to download docker-compose.remote.yml from GitHub.${NC}"
@@ -205,6 +272,31 @@ resolve_app_host_port() {
     fi
 
     APP_HOST_PORT="${requested_port}"
+  fi
+}
+
+write_updater_env_file() {
+  local tmp_file
+  tmp_file="$(create_deploy_tmp_file ".updater.env.tmp")"
+
+  cat > "${tmp_file}" <<EOF
+SCRAPETAB_IMAGE=${REPOSITORY}:${TAG}
+UPDATE_CURRENT_TAG=${TAG}
+APP_HOST_PORT=${APP_HOST_PORT}
+SCRAPEFUN_DATA_DIR=${SCRAPEFUN_DATA_DIR}
+COMPOSE_PROJECT_NAME=scrapefun
+EOF
+
+  if [[ -f "${UPDATER_ENV_FILE}" ]] && cmp -s "${tmp_file}" "${UPDATER_ENV_FILE}"; then
+    rm -f "${tmp_file}"
+    echo -e "${YELLOW}Keeping existing ${UPDATER_ENV_FILE}${NC}"
+    return
+  fi
+
+  if ! mv "${tmp_file}" "${UPDATER_ENV_FILE}" 2>/dev/null; then
+    rm -f "${tmp_file}"
+    print_permission_help "${UPDATER_ENV_FILE}"
+    exit 1
   fi
 }
 
@@ -261,13 +353,7 @@ else
   upsert_env_value "UPDATE_DEFAULT_CHANNEL" "${CHANNEL}" "${SERVER_ENV_FILE}"
 fi
 
-cat > "${UPDATER_ENV_FILE}" <<EOF
-SCRAPETAB_IMAGE=${REPOSITORY}:${TAG}
-UPDATE_CURRENT_TAG=${TAG}
-APP_HOST_PORT=${APP_HOST_PORT}
-SCRAPEFUN_DATA_DIR=${SCRAPEFUN_DATA_DIR}
-COMPOSE_PROJECT_NAME=scrapefun
-EOF
+write_updater_env_file
 
 echo -e "${GREEN}========================================${NC}"
 if [[ "${ACTION}" == "update" ]]; then
