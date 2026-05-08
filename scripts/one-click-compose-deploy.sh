@@ -3,8 +3,20 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-CHANNEL="${1:-stable}"
-DEPLOY_DIR="${2:-$HOME/scrapefun}"
+ACTION="deploy"
+if [[ "${1:-}" == "install" || "${1:-}" == "deploy" || "${1:-}" == "update" ]]; then
+  ACTION="$1"
+  shift
+fi
+
+CHANNEL=""
+DEPLOY_DIR="${HOME}/scrapefun"
+if [[ "${1:-}" == "stable" || "${1:-}" == "beta" ]]; then
+  CHANNEL="$1"
+  DEPLOY_DIR="${2:-${DEPLOY_DIR}}"
+elif [[ -n "${1:-}" ]]; then
+  DEPLOY_DIR="$1"
+fi
 COMPOSE_SOURCE="${ROOT_DIR}/docker-compose.remote.yml"
 COMPOSE_TARGET="${DEPLOY_DIR}/docker-compose.remote.yml"
 SERVER_ENV_FILE="${DEPLOY_DIR}/server.env"
@@ -26,25 +38,72 @@ NC='\033[0m'
 usage() {
   cat <<EOF
 Usage:
-  ./scripts/one-click-compose-deploy.sh [stable|beta] [deploy_dir]
+  ./scripts/one-click-compose-deploy.sh [install|deploy|update] [stable|beta] [deploy_dir]
 
 Examples:
   ./scripts/one-click-compose-deploy.sh
   ./scripts/one-click-compose-deploy.sh beta
   ./scripts/one-click-compose-deploy.sh stable /opt/scrapefun
+  ./scripts/one-click-compose-deploy.sh update
+  ./scripts/one-click-compose-deploy.sh update beta
+  ./scripts/one-click-compose-deploy.sh update stable /opt/scrapefun
+  ./scripts/one-click-compose-deploy.sh update /opt/scrapefun
 EOF
 }
 
-if [[ "${CHANNEL}" == "-h" || "${CHANNEL}" == "--help" ]]; then
+if [[ "${ACTION}" == "-h" || "${ACTION}" == "--help" || "${CHANNEL}" == "-h" || "${CHANNEL}" == "--help" ]]; then
   usage
   exit 0
 fi
 
-if [[ "${CHANNEL}" != "stable" && "${CHANNEL}" != "beta" ]]; then
+if [[ -n "${CHANNEL}" && "${CHANNEL}" != "stable" && "${CHANNEL}" != "beta" ]]; then
   echo -e "${RED}Error: channel must be 'stable' or 'beta'.${NC}"
   usage
   exit 1
 fi
+
+read_env_value() {
+  local key="$1"
+  local file="$2"
+
+  if [[ ! -f "${file}" ]]; then
+    return
+  fi
+
+  sed -n "s/^${key}=//p" "${file}" | tail -n 1
+}
+
+upsert_env_value() {
+  local key="$1"
+  local value="$2"
+  local file="$3"
+
+  if grep -q "^${key}=" "${file}"; then
+    local escaped_value
+    escaped_value="$(printf '%s' "${value}" | sed 's/[&/\]/\\&/g')"
+    sed -i.bak "s/^${key}=.*/${key}=${escaped_value}/" "${file}"
+    rm -f "${file}.bak"
+  else
+    printf '%s=%s\n' "${key}" "${value}" >> "${file}"
+  fi
+}
+
+resolve_channel() {
+  if [[ -n "${CHANNEL}" ]]; then
+    return
+  fi
+
+  if [[ -f "${UPDATER_ENV_FILE}" ]]; then
+    local existing_tag
+    existing_tag="$(read_env_value "UPDATE_CURRENT_TAG" "${UPDATER_ENV_FILE}")"
+    if [[ "${existing_tag}" == "beta" ]]; then
+      CHANNEL="beta"
+      return
+    fi
+  fi
+
+  CHANNEL="stable"
+}
 
 if ! command -v docker >/dev/null 2>&1; then
   echo -e "${RED}Error: docker is not installed.${NC}"
@@ -62,6 +121,14 @@ if ! docker compose version >/dev/null 2>&1; then
 fi
 
 mkdir -p "${DEPLOY_DIR}"
+resolve_channel
+
+if [[ "${ACTION}" == "update" && ! -f "${COMPOSE_TARGET}" && ! -f "${UPDATER_ENV_FILE}" ]]; then
+  echo -e "${RED}Error: no existing ScrapeFun deployment found in ${DEPLOY_DIR}.${NC}"
+  echo -e "${RED}Run install first, or pass the correct deploy_dir.${NC}"
+  usage
+  exit 1
+fi
 
 download_compose() {
   if [[ -f "${COMPOSE_SOURCE}" ]]; then
@@ -115,7 +182,7 @@ resolve_app_host_port() {
 
   if [[ -f "${UPDATER_ENV_FILE}" ]]; then
     local existing_port
-    existing_port="$(sed -n 's/^APP_HOST_PORT=//p' "${UPDATER_ENV_FILE}" | tail -n 1)"
+    existing_port="$(read_env_value "APP_HOST_PORT" "${UPDATER_ENV_FILE}")"
     if [[ -n "${existing_port}" ]]; then
       APP_HOST_PORT="${existing_port}"
       return
@@ -148,7 +215,7 @@ resolve_data_dir() {
 
   if [[ -f "${UPDATER_ENV_FILE}" ]]; then
     local existing_data_dir
-    existing_data_dir="$(sed -n 's/^SCRAPEFUN_DATA_DIR=//p' "${UPDATER_ENV_FILE}" | tail -n 1)"
+    existing_data_dir="$(read_env_value "SCRAPEFUN_DATA_DIR" "${UPDATER_ENV_FILE}")"
     if [[ -n "${existing_data_dir}" ]]; then
       SCRAPEFUN_DATA_DIR="${existing_data_dir}"
       return
@@ -190,6 +257,8 @@ EOF
   echo -e "${YELLOW}Created ${SERVER_ENV_FILE}${NC}"
 else
   echo -e "${YELLOW}Keeping existing ${SERVER_ENV_FILE}${NC}"
+  upsert_env_value "UPDATE_DOCKERHUB_REPO" "${REPOSITORY}" "${SERVER_ENV_FILE}"
+  upsert_env_value "UPDATE_DEFAULT_CHANNEL" "${CHANNEL}" "${SERVER_ENV_FILE}"
 fi
 
 cat > "${UPDATER_ENV_FILE}" <<EOF
@@ -201,8 +270,13 @@ COMPOSE_PROJECT_NAME=scrapefun
 EOF
 
 echo -e "${GREEN}========================================${NC}"
-echo -e "${GREEN}ScrapeFun Compose Deploy${NC}"
+if [[ "${ACTION}" == "update" ]]; then
+  echo -e "${GREEN}ScrapeFun Compose Update${NC}"
+else
+  echo -e "${GREEN}ScrapeFun Compose Deploy${NC}"
+fi
 echo -e "${GREEN}========================================${NC}"
+echo -e "Action: ${YELLOW}${ACTION}${NC}"
 echo -e "Channel: ${YELLOW}${CHANNEL}${NC}"
 echo -e "Image: ${YELLOW}${REPOSITORY}:${TAG}${NC}"
 echo -e "Host port: ${YELLOW}${APP_HOST_PORT}${NC}"
@@ -216,12 +290,16 @@ docker compose --env-file "${UPDATER_ENV_FILE}" -f "${COMPOSE_TARGET}" pull
 docker compose --env-file "${UPDATER_ENV_FILE}" -f "${COMPOSE_TARGET}" up -d
 
 echo ""
-echo -e "${GREEN}Deployment complete.${NC}"
+if [[ "${ACTION}" == "update" ]]; then
+  echo -e "${GREEN}Update complete.${NC}"
+else
+  echo -e "${GREEN}Deployment complete.${NC}"
+fi
 echo -e "Open: ${YELLOW}http://<your-server-ip>:${APP_HOST_PORT}${NC}"
 echo -e "Compose file: ${YELLOW}${COMPOSE_TARGET}${NC}"
 echo -e "Server env: ${YELLOW}${SERVER_ENV_FILE}${NC}"
 echo -e "Updater env: ${YELLOW}${UPDATER_ENV_FILE}${NC}"
 echo ""
-echo -e "Later switch channel by running:"
-echo -e "  ${YELLOW}cd ${DEPLOY_DIR} && docker compose --env-file .updater.env -f docker-compose.remote.yml up -d${NC}"
+echo -e "Later update by running:"
+echo -e "  ${YELLOW}curl -fsSL https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/scripts/one-click-compose-deploy.sh | bash -s -- update ${CHANNEL} ${DEPLOY_DIR}${NC}"
 echo -e "Or use the app Settings page to switch Stable/Beta and click Update."
