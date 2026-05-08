@@ -300,6 +300,25 @@ EOF
   fi
 }
 
+remove_legacy_container_if_needed() {
+  local container_name="$1"
+  local container_id
+  container_id="$(docker ps -aq --filter "name=^/${container_name}$" | head -n 1)"
+
+  if [[ -z "${container_id}" ]]; then
+    return
+  fi
+
+  local project_label
+  project_label="$(docker inspect -f '{{ index .Config.Labels "com.docker.compose.project" }}' "${container_id}" 2>/dev/null || true)"
+  if [[ "${project_label}" == "scrapefun" ]]; then
+    return
+  fi
+
+  echo -e "${YELLOW}Removing legacy container ${container_name} (${container_id}) before starting Compose services.${NC}"
+  docker rm -f "${container_id}" >/dev/null
+}
+
 resolve_data_dir() {
   if [[ -n "${SCRAPEFUN_DATA_DIR}" ]]; then
     return
@@ -373,6 +392,8 @@ echo ""
 cd "${DEPLOY_DIR}"
 
 docker compose --env-file "${UPDATER_ENV_FILE}" -f "${COMPOSE_TARGET}" pull
+remove_legacy_container_if_needed "scrapefun"
+remove_legacy_container_if_needed "scrapefun-updater"
 docker compose --env-file "${UPDATER_ENV_FILE}" -f "${COMPOSE_TARGET}" up -d
 
 echo ""
