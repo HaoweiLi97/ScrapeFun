@@ -28,16 +28,16 @@ curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/o
 curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-compose-deploy.sh | bash -s -- stable /opt/scrapefun
 ```
 
-更新已部署实例：
+更新已部署实例时，继续运行同一个一键命令即可。脚本会自动判断已有部署，先停止容器，再拉取最新镜像并重新启动：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-compose-deploy.sh | bash -s -- update
+curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-compose-deploy.sh | bash
 ```
 
 更新时默认使用已安装目录中的频道、端口和数据目录配置。如果安装在自定义目录，需要继续传入部署目录：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-compose-deploy.sh | bash -s -- update /opt/scrapefun
+curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-compose-deploy.sh | bash -s -- /opt/scrapefun
 ```
 
 部署完成后访问：

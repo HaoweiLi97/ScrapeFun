@@ -97,10 +97,10 @@ curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/o
 - 初始化持久化数据目录
 - 启动应用与 updater
 
-后续更新可以继续运行同一个脚本，脚本会复用已有端口、数据目录和更新频道：
+后续更新继续运行同一个命令即可。脚本会自动判断已有部署，先停止容器，再拉取最新镜像并重新启动，同时复用已有端口、数据目录和更新频道：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-compose-deploy.sh | bash -s -- update
+curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-compose-deploy.sh | bash
 ```
 
 ### 方式二：手动部署

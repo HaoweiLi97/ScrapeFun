@@ -4,14 +4,16 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 ACTION="deploy"
-if [[ "${1:-}" == "install" || "${1:-}" == "deploy" || "${1:-}" == "update" ]]; then
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
   ACTION="$1"
-  shift
 fi
 
 CHANNEL=""
 DEPLOY_DIR="${HOME}/scrapefun"
-if [[ "${1:-}" == "stable" || "${1:-}" == "beta" ]]; then
+if [[ "${ACTION}" == "-h" || "${ACTION}" == "--help" ]]; then
+  :
+elif [[ "${1:-}" == "stable" || "${1:-}" == "beta" ]]; then
   CHANNEL="$1"
   DEPLOY_DIR="${2:-${DEPLOY_DIR}}"
 elif [[ -n "${1:-}" ]]; then
@@ -38,16 +40,12 @@ NC='\033[0m'
 usage() {
   cat <<EOF
 Usage:
-  ./scripts/one-click-compose-deploy.sh [install|deploy|update] [stable|beta] [deploy_dir]
+  ./scripts/one-click-compose-deploy.sh [stable|beta] [deploy_dir]
 
 Examples:
   ./scripts/one-click-compose-deploy.sh
   ./scripts/one-click-compose-deploy.sh beta
   ./scripts/one-click-compose-deploy.sh stable /opt/scrapefun
-  ./scripts/one-click-compose-deploy.sh update
-  ./scripts/one-click-compose-deploy.sh update beta
-  ./scripts/one-click-compose-deploy.sh update stable /opt/scrapefun
-  ./scripts/one-click-compose-deploy.sh update /opt/scrapefun
 EOF
 }
 
@@ -174,14 +172,10 @@ if ! docker compose version >/dev/null 2>&1; then
 fi
 
 mkdir -p "${DEPLOY_DIR}"
-resolve_channel
-
-if [[ "${ACTION}" == "update" && ! -f "${COMPOSE_TARGET}" && ! -f "${UPDATER_ENV_FILE}" ]]; then
-  echo -e "${RED}Error: no existing ScrapeFun deployment found in ${DEPLOY_DIR}.${NC}"
-  echo -e "${RED}Run install first, or pass the correct deploy_dir.${NC}"
-  usage
-  exit 1
+if [[ -f "${COMPOSE_TARGET}" || -f "${UPDATER_ENV_FILE}" ]]; then
+  ACTION="update"
 fi
+resolve_channel
 
 download_compose() {
   local tmp_file
@@ -391,6 +385,11 @@ echo ""
 
 cd "${DEPLOY_DIR}"
 
+if [[ "${ACTION}" == "update" ]]; then
+  echo -e "${YELLOW}Stopping existing Compose services before update...${NC}"
+  docker compose --env-file "${UPDATER_ENV_FILE}" -f "${COMPOSE_TARGET}" down
+fi
+
 docker compose --env-file "${UPDATER_ENV_FILE}" -f "${COMPOSE_TARGET}" pull
 remove_legacy_container_if_needed "scrapefun"
 remove_legacy_container_if_needed "scrapefun-updater"
@@ -407,6 +406,6 @@ echo -e "Compose file: ${YELLOW}${COMPOSE_TARGET}${NC}"
 echo -e "Server env: ${YELLOW}${SERVER_ENV_FILE}${NC}"
 echo -e "Updater env: ${YELLOW}${UPDATER_ENV_FILE}${NC}"
 echo ""
-echo -e "Later update by running:"
-echo -e "  ${YELLOW}curl -fsSL https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/scripts/one-click-compose-deploy.sh | bash -s -- update ${CHANNEL} ${DEPLOY_DIR}${NC}"
+echo -e "Later update by running the same one-click command again:"
+echo -e "  ${YELLOW}curl -fsSL https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/scripts/one-click-compose-deploy.sh | bash -s -- ${CHANNEL} ${DEPLOY_DIR}${NC}"
 echo -e "Or use the app Settings page to switch Stable/Beta and click Update."
