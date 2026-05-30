@@ -55,7 +55,7 @@ Examples:
 
 Environment variables:
   IMAGE_REPOSITORIES       Space or comma separated image repositories to try.
-                           Example: "haoweil/scrapefun ghcr.io/haoweili97/scrapefun"
+                           Example: "haoweil/scrapefun registry.example.com/scrapefun"
   IMAGE_BUNDLE_BASE_URL    Base URL for GitHub Release docker load bundles.
   IMAGE_BUNDLE_URL         Exact docker load bundle URL. Overrides IMAGE_BUNDLE_BASE_URL.
   SCRAPEFUN_SKIP_IMAGE_BUNDLE=1
