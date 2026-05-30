@@ -19,12 +19,18 @@ elif [[ "${1:-}" == "stable" || "${1:-}" == "beta" ]]; then
 elif [[ -n "${1:-}" ]]; then
   DEPLOY_DIR="$1"
 fi
+
 COMPOSE_SOURCE="${ROOT_DIR}/docker-compose.remote.yml"
 COMPOSE_TARGET="${DEPLOY_DIR}/docker-compose.remote.yml"
 SERVER_ENV_FILE="${DEPLOY_DIR}/server.env"
 UPDATER_ENV_FILE="${DEPLOY_DIR}/.updater.env"
 DEFAULT_DATA_DIR="${HOME}/scrapefun-data"
 REPOSITORY="${REPOSITORY:-haoweil/scrapefun}"
+IMAGE_REPOSITORIES="${IMAGE_REPOSITORIES:-$REPOSITORY}"
+IMAGE_BUNDLE_REPOSITORY="${IMAGE_BUNDLE_REPOSITORY:-$REPOSITORY}"
+IMAGE_BUNDLE_BASE_URL="${IMAGE_BUNDLE_BASE_URL:-https://github.com/HaoweiLi97/scrapefun-desktop-macos/releases/latest/download}"
+IMAGE_BUNDLE_URL="${IMAGE_BUNDLE_URL:-}"
+SCRAPEFUN_SKIP_IMAGE_BUNDLE="${SCRAPEFUN_SKIP_IMAGE_BUNDLE:-0}"
 GITHUB_REPO="${GITHUB_REPO:-HaoweiLi97/ScrapeFun}"
 GITHUB_BRANCH="${GITHUB_BRANCH:-main}"
 COMPOSE_URL="${COMPOSE_URL:-https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/docker-compose.remote.yml}"
@@ -46,6 +52,14 @@ Examples:
   ./scripts/one-click-compose-deploy.sh
   ./scripts/one-click-compose-deploy.sh beta
   ./scripts/one-click-compose-deploy.sh stable /opt/scrapefun
+
+Environment variables:
+  IMAGE_REPOSITORIES       Space or comma separated image repositories to try.
+                           Example: "haoweil/scrapefun ghcr.io/haoweili97/scrapefun"
+  IMAGE_BUNDLE_BASE_URL    Base URL for GitHub Release docker load bundles.
+  IMAGE_BUNDLE_URL         Exact docker load bundle URL. Overrides IMAGE_BUNDLE_BASE_URL.
+  SCRAPEFUN_SKIP_IMAGE_BUNDLE=1
+                           Disable offline bundle fallback.
 EOF
 }
 
@@ -154,6 +168,24 @@ create_deploy_tmp_file() {
   }
 
   printf '%s\n' "${tmp_file}"
+}
+
+download_file() {
+  local url="$1"
+  local target="$2"
+
+  if command -v curl >/dev/null 2>&1; then
+    curl -fL "${url}" -o "${target}"
+    return
+  fi
+
+  if command -v wget >/dev/null 2>&1; then
+    wget -O "${target}" "${url}"
+    return
+  fi
+
+  echo -e "${RED}Error: curl or wget is required to download ${url}.${NC}"
+  exit 1
 }
 
 if ! command -v docker >/dev/null 2>&1; then
@@ -269,13 +301,64 @@ resolve_app_host_port() {
   fi
 }
 
+resolve_data_dir() {
+  if [[ -n "${SCRAPEFUN_DATA_DIR}" ]]; then
+    return
+  fi
+
+  if [[ -f "${UPDATER_ENV_FILE}" ]]; then
+    local existing_data_dir
+    existing_data_dir="$(read_env_value "SCRAPEFUN_DATA_DIR" "${UPDATER_ENV_FILE}")"
+    if [[ -n "${existing_data_dir}" ]]; then
+      SCRAPEFUN_DATA_DIR="${existing_data_dir}"
+      return
+    fi
+  fi
+
+  SCRAPEFUN_DATA_DIR="${DEFAULT_DATA_DIR}"
+}
+
+normalize_repository_list() {
+  printf '%s\n' "${IMAGE_REPOSITORIES//,/ }"
+}
+
+write_server_env_file() {
+  local repository="$1"
+
+  if [[ ! -f "${SERVER_ENV_FILE}" ]]; then
+    if command -v openssl >/dev/null 2>&1; then
+      UPDATER_TOKEN="$(openssl rand -hex 24)"
+    else
+      UPDATER_TOKEN="$(date +%s | sha256sum | cut -d' ' -f1 | cut -c1-48)"
+    fi
+
+    cat > "${SERVER_ENV_FILE}" <<EOF
+NODE_ENV=production
+DATABASE_URL=file:/app/data/db/dev.db
+SCRAPETAB_UPDATER_TOKEN=${UPDATER_TOKEN}
+UPDATE_REPOSITORY=${repository}
+UPDATE_DOCKERHUB_REPO=${repository}
+UPDATE_DEFAULT_CHANNEL=${CHANNEL}
+EOF
+    echo -e "${YELLOW}Created ${SERVER_ENV_FILE}${NC}"
+  else
+    echo -e "${YELLOW}Keeping existing ${SERVER_ENV_FILE}${NC}"
+    upsert_env_value "UPDATE_REPOSITORY" "${repository}" "${SERVER_ENV_FILE}"
+    upsert_env_value "UPDATE_DOCKERHUB_REPO" "${repository}" "${SERVER_ENV_FILE}"
+    upsert_env_value "UPDATE_DEFAULT_CHANNEL" "${CHANNEL}" "${SERVER_ENV_FILE}"
+  fi
+}
+
 write_updater_env_file() {
+  local repository="$1"
   local tmp_file
   tmp_file="$(create_deploy_tmp_file ".updater.env.tmp")"
 
   cat > "${tmp_file}" <<EOF
-SCRAPETAB_IMAGE=${REPOSITORY}:${TAG}
+SCRAPETAB_IMAGE=${repository}:${TAG}
 UPDATE_CURRENT_TAG=${TAG}
+UPDATE_REPOSITORY=${repository}
+UPDATE_DOCKERHUB_REPO=${repository}
 APP_HOST_PORT=${APP_HOST_PORT}
 SCRAPEFUN_DATA_DIR=${SCRAPEFUN_DATA_DIR}
 COMPOSE_PROJECT_NAME=scrapefun
@@ -283,7 +366,6 @@ EOF
 
   if [[ -f "${UPDATER_ENV_FILE}" ]] && cmp -s "${tmp_file}" "${UPDATER_ENV_FILE}"; then
     rm -f "${tmp_file}"
-    echo -e "${YELLOW}Keeping existing ${UPDATER_ENV_FILE}${NC}"
     return
   fi
 
@@ -313,21 +395,78 @@ remove_legacy_container_if_needed() {
   docker rm -f "${container_id}" >/dev/null
 }
 
-resolve_data_dir() {
-  if [[ -n "${SCRAPEFUN_DATA_DIR}" ]]; then
+try_pull_images() {
+  local repository
+  local pull_failed=1
+
+  for repository in $(normalize_repository_list); do
+    [[ -n "${repository}" ]] || continue
+    echo -e "${YELLOW}Trying image source: ${repository}:${TAG}${NC}"
+    write_updater_env_file "${repository}"
+
+    if docker compose --env-file "${UPDATER_ENV_FILE}" -f "${COMPOSE_TARGET}" pull; then
+      SELECTED_REPOSITORY="${repository}"
+      return 0
+    fi
+
+    pull_failed=1
+    echo -e "${YELLOW}Image source failed: ${repository}:${TAG}${NC}"
+  done
+
+  return "${pull_failed}"
+}
+
+detect_bundle_arch() {
+  local machine
+  machine="$(uname -m)"
+
+  case "${machine}" in
+    x86_64|amd64) echo "amd64" ;;
+    aarch64|arm64) echo "arm64" ;;
+    *)
+      echo -e "${RED}Error: unsupported architecture for offline bundle: ${machine}.${NC}" >&2
+      return 1
+      ;;
+  esac
+}
+
+resolve_bundle_url() {
+  if [[ -n "${IMAGE_BUNDLE_URL}" ]]; then
+    printf '%s\n' "${IMAGE_BUNDLE_URL}"
     return
   fi
 
-  if [[ -f "${UPDATER_ENV_FILE}" ]]; then
-    local existing_data_dir
-    existing_data_dir="$(read_env_value "SCRAPEFUN_DATA_DIR" "${UPDATER_ENV_FILE}")"
-    if [[ -n "${existing_data_dir}" ]]; then
-      SCRAPEFUN_DATA_DIR="${existing_data_dir}"
-      return
-    fi
+  local arch
+  arch="$(detect_bundle_arch)"
+  printf '%s/scrapefun-image-linux-%s-%s.tar.gz\n' "${IMAGE_BUNDLE_BASE_URL%/}" "${arch}" "${CHANNEL}"
+}
+
+load_image_bundle() {
+  if [[ "${SCRAPEFUN_SKIP_IMAGE_BUNDLE}" == "1" ]]; then
+    return 1
   fi
 
-  SCRAPEFUN_DATA_DIR="${DEFAULT_DATA_DIR}"
+  local bundle_url
+  bundle_url="$(resolve_bundle_url)" || return 1
+
+  local bundle_file
+  bundle_file="$(create_deploy_tmp_file ".scrapefun-image.tar.gz")"
+
+  echo -e "${YELLOW}Trying offline image bundle: ${bundle_url}${NC}"
+  if ! download_file "${bundle_url}" "${bundle_file}"; then
+    rm -f "${bundle_file}"
+    return 1
+  fi
+
+  if ! gzip -dc "${bundle_file}" | docker load; then
+    rm -f "${bundle_file}"
+    return 1
+  fi
+  rm -f "${bundle_file}"
+
+  SELECTED_REPOSITORY="${IMAGE_BUNDLE_REPOSITORY}"
+  write_updater_env_file "${SELECTED_REPOSITORY}"
+  return 0
 }
 
 download_compose
@@ -345,28 +484,8 @@ if [[ "${CHANNEL}" == "beta" ]]; then
   TAG="beta"
 fi
 
-if [[ ! -f "${SERVER_ENV_FILE}" ]]; then
-  if command -v openssl >/dev/null 2>&1; then
-    UPDATER_TOKEN="$(openssl rand -hex 24)"
-  else
-    UPDATER_TOKEN="$(date +%s | sha256sum | cut -d' ' -f1 | cut -c1-48)"
-  fi
-
-  cat > "${SERVER_ENV_FILE}" <<EOF
-NODE_ENV=production
-DATABASE_URL=file:/app/data/db/dev.db
-SCRAPETAB_UPDATER_TOKEN=${UPDATER_TOKEN}
-UPDATE_DOCKERHUB_REPO=${REPOSITORY}
-UPDATE_DEFAULT_CHANNEL=${CHANNEL}
-EOF
-  echo -e "${YELLOW}Created ${SERVER_ENV_FILE}${NC}"
-else
-  echo -e "${YELLOW}Keeping existing ${SERVER_ENV_FILE}${NC}"
-  upsert_env_value "UPDATE_DOCKERHUB_REPO" "${REPOSITORY}" "${SERVER_ENV_FILE}"
-  upsert_env_value "UPDATE_DEFAULT_CHANNEL" "${CHANNEL}" "${SERVER_ENV_FILE}"
-fi
-
-write_updater_env_file
+SELECTED_REPOSITORY="${REPOSITORY}"
+write_server_env_file "${SELECTED_REPOSITORY}"
 
 echo -e "${GREEN}========================================${NC}"
 if [[ "${ACTION}" == "update" ]]; then
@@ -377,7 +496,7 @@ fi
 echo -e "${GREEN}========================================${NC}"
 echo -e "Action: ${YELLOW}${ACTION}${NC}"
 echo -e "Channel: ${YELLOW}${CHANNEL}${NC}"
-echo -e "Image: ${YELLOW}${REPOSITORY}:${TAG}${NC}"
+echo -e "Image sources: ${YELLOW}${IMAGE_REPOSITORIES}${NC}"
 echo -e "Host port: ${YELLOW}${APP_HOST_PORT}${NC}"
 echo -e "Data dir: ${YELLOW}${SCRAPEFUN_DATA_DIR}${NC}"
 echo -e "Deploy dir: ${YELLOW}${DEPLOY_DIR}${NC}"
@@ -385,12 +504,21 @@ echo ""
 
 cd "${DEPLOY_DIR}"
 
+if ! try_pull_images; then
+  echo -e "${YELLOW}All image sources failed. Falling back to downloadable image bundle...${NC}"
+  load_image_bundle || {
+    echo -e "${RED}Error: failed to pull Docker image and failed to load offline bundle.${NC}"
+    exit 1
+  }
+fi
+
+write_server_env_file "${SELECTED_REPOSITORY}"
+
 if [[ "${ACTION}" == "update" ]]; then
   echo -e "${YELLOW}Stopping existing Compose services before update...${NC}"
   docker compose --env-file "${UPDATER_ENV_FILE}" -f "${COMPOSE_TARGET}" down
 fi
 
-docker compose --env-file "${UPDATER_ENV_FILE}" -f "${COMPOSE_TARGET}" pull
 remove_legacy_container_if_needed "scrapefun"
 remove_legacy_container_if_needed "scrapefun-updater"
 docker compose --env-file "${UPDATER_ENV_FILE}" -f "${COMPOSE_TARGET}" up -d
@@ -401,6 +529,7 @@ if [[ "${ACTION}" == "update" ]]; then
 else
   echo -e "${GREEN}Deployment complete.${NC}"
 fi
+echo -e "Image: ${YELLOW}${SELECTED_REPOSITORY}:${TAG}${NC}"
 echo -e "Open: ${YELLOW}http://<your-server-ip>:${APP_HOST_PORT}${NC}"
 echo -e "Compose file: ${YELLOW}${COMPOSE_TARGET}${NC}"
 echo -e "Server env: ${YELLOW}${SERVER_ENV_FILE}${NC}"

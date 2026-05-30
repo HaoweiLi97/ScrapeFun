@@ -38,7 +38,7 @@ services:
       - UPDATER_SERVICE_NAME=app
       - UPDATER_HEALTHCHECK_URL=http://app:8096/health
       - UPDATER_STATE_ENV_FILE=/workspace/.updater.env
-      - UPDATER_REPOSITORY=${UPDATE_DOCKERHUB_REPO:-haoweil/scrapefun}
+      - UPDATER_REPOSITORY=${UPDATE_REPOSITORY:-haoweil/scrapefun}
     volumes:
       - ./:/workspace
       - /var/run/docker.sock:/var/run/docker.sock
