@@ -95,7 +95,11 @@ curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/o
 - 拉取镜像
 - 生成部署目录
 - 初始化持久化数据目录
+- 首次部署时让你选择 GPU 模式，并在后续更新时复用这个选择
+- 生成 `server.env` 与 `.updater.env`
 - 启动应用与 updater
+
+如果 Docker Hub 拉取失败，脚本还会自动尝试下载对应架构的离线镜像 bundle 并执行 `docker load`，所以在网络不稳定或拉取受限的环境里也更稳。
 
 后续更新继续运行同一个命令即可。脚本会自动判断已有部署，先停止容器，再拉取最新镜像并重新启动，同时复用已有端口、数据目录和更新频道：
 
@@ -103,12 +107,36 @@ curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/o
 curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-compose-deploy.sh | bash
 ```
 
+如果你不想交互选择 GPU，也可以直接传环境变量：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-compose-deploy.sh | \
+  SCRAPEFUN_GPU_MODE=nvidia bash
+```
+
+可选值：
+
+- `none`：不透传 GPU，默认最稳
+- `dri`：Intel / AMD / 大多数 NAS 集显，透传 `/dev/dri`
+- `amd`：在 `dri` 基础上再加 `/dev/kfd`
+- `nvidia`：为 Docker Compose 注入 `gpus: all`
+
 ### 方式二：手动部署
 
 1. 准备 Docker 与 Docker Compose
 2. 参考 [`docker-compose.remote.yml`](./docker-compose.remote.yml)
 3. 根据需要配置环境变量
 4. 启动服务并访问 `http://<server-ip>:8096`
+
+## Docker 镜像现状
+
+- Docker 镜像当前默认发布 `linux/amd64` 和 `linux/arm64`
+- 镜像里已内置 `waifu2x_fast` 图像增强运行时
+- Docker 环境下只开放 `waifu2x_fast`，不会再暴露 `realcugan` / `realesrgan`
+
+如果你只是普通 CPU 部署，直接使用默认镜像即可。
+
+如果你希望图像增强真正使用宿主机 GPU，还需要在部署侧额外透传 GPU 设备，见下方 GPU 说明。
 
 ## 使用说明
 
@@ -129,8 +157,20 @@ curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/o
 - `PORT`：服务端口，默认 `8096`
 - `FLARESOLVERR_URL`：用于部分站点的反爬处理
 - `TMDB_API_KEY`：可选的 TMDB 数据源配置
+- `BANGUMI_API_KEY`：可选的 Bangumi 漫画数据源配置，默认留空
 - `WEBDAV_URL` / `WEBDAV_USERNAME` / `WEBDAV_PASSWORD`：可选的 WebDAV 默认配置
 - `LOCAL_SUBTITLE_DIR`：本地字幕持久化目录
+
+## GPU 说明
+
+Docker 镜像虽然已经包含 `waifu2x_fast` 和 Vulkan 相关运行时，但容器能不能真正拿到宿主机 GPU，取决于你的部署方式。
+
+- Intel / AMD / 大多数 NAS 集显：通常至少要透传 `/dev/dri`
+- 部分 AMD 设备：还需要 `/dev/kfd`
+- NVIDIA：除了设备透传，还需要宿主机安装 `NVIDIA Container Toolkit`
+- 一键脚本首次部署时会提示你选择 `none` / `dri` / `amd` / `nvidia`，并把结果保存到 `.updater.env`
+
+如果没有这些设备映射，ScrapeFun 在 Docker 里通常只能回退到 CPU，或者直接拿不到 Vulkan 设备。
 
 ## 持久化建议
 

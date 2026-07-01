@@ -16,6 +16,13 @@ curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/o
 
 默认部署 stable 频道，应用端口为 `8096`。
 
+一键脚本的实际行为：
+
+- 首次部署会创建部署目录、`server.env`、`.updater.env` 和持久化数据目录
+- 首次部署会交互选择 GPU 模式，更新时会保留已有端口、数据目录、频道和 GPU 设置
+- 优先从 Docker Hub 拉镜像
+- 如果 Docker Hub 拉取失败，会自动尝试下载离线镜像 bundle 并执行 `docker load`
+
 部署 beta 频道：
 
 ```bash
@@ -45,6 +52,41 @@ curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/o
 ```text
 http://服务器IP:8096
 ```
+
+## 1.1 一键脚本支持的频道和离线 bundle
+
+stable：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-compose-deploy.sh | bash -s -- stable
+```
+
+beta：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-compose-deploy.sh | bash -s -- beta
+```
+
+如果需要关闭离线镜像 bundle fallback：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-compose-deploy.sh | \
+  SCRAPEFUN_SKIP_IMAGE_BUNDLE=1 bash -s -- beta
+```
+
+如果你希望跳过 GPU 交互选择，也可以直接传环境变量：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-compose-deploy.sh | \
+  SCRAPEFUN_GPU_MODE=dri bash
+```
+
+支持值：
+
+- `none`：不透传 GPU
+- `dri`：透传 `/dev/dri`，适合 Intel / AMD / 大多数 NAS 集显
+- `amd`：透传 `/dev/dri` 和 `/dev/kfd`
+- `nvidia`：为 Compose 注入 `gpus: all`
 
 ## 2. NAS / 面板 Compose 部署
 
@@ -193,6 +235,7 @@ environment:
 
 ```yaml
 # TMDB_API_KEY: your_tmdb_api_key
+# BANGUMI_API_KEY:
 # WEBDAV_URL: https://your-webdav.example.com
 # WEBDAV_USERNAME: your_username
 # WEBDAV_PASSWORD: your_password
@@ -243,6 +286,40 @@ FLARESOLVERR_URL: http://192.168.1.50:8191/v1
 ```
 
 如果暂时不使用需要 FlareSolverr 的 scraper，可以先保持默认。
+
+## 8.1 图像增强与 GPU
+
+当前 Docker 镜像有几个和图像增强相关的事实：
+
+- 镜像默认发布 `linux/amd64` 和 `linux/arm64`
+- 镜像里已内置 `waifu2x_fast`
+- Docker 环境下只开放 `waifu2x_fast`
+
+但“镜像里有图像增强运行时”不等于“容器自动能用宿主机 GPU”。
+
+如果你希望真正用到 GPU，还需要在部署侧透传设备：
+
+Intel / AMD / 大多数 NAS：
+
+```yaml
+services:
+  app:
+    devices:
+      - /dev/dri:/dev/dri
+    group_add:
+      - render
+      - video
+```
+
+部分 AMD 设备还需要：
+
+```yaml
+      - /dev/kfd:/dev/kfd
+```
+
+NVIDIA 还需要宿主机额外安装 `NVIDIA Container Toolkit`。
+
+如果没有这些设备映射，容器里的图像增强通常只能回退到 CPU，或者直接拿不到 Vulkan 设备。
 
 ## 9. 镜像频道
 

@@ -14,6 +14,9 @@ services:
       - UPDATE_CURRENT_TAG=${UPDATE_CURRENT_TAG:-latest}
       - UPDATE_WEBHOOK_URL=${UPDATE_WEBHOOK_URL:-http://updater:4182/update}
       - UPDATE_WEBHOOK_TOKEN=${SCRAPETAB_UPDATER_TOKEN:-}
+      - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:-all}
+      - NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES:-compute,utility,video}
+    # __APP_GPU_BLOCK__
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:

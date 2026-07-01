@@ -21,10 +21,13 @@ services:
       # 如果没有部署 FlareSolverr，可以先保持默认。
       FLARESOLVERR_URL: http://host.docker.internal:8191/v1
 
-      # 可选：TMDB 数据源。
-      # TMDB_API_KEY: your_tmdb_api_key
+	      # 可选：TMDB 数据源。
+	      # TMDB_API_KEY: your_tmdb_api_key
 
-      # 可选：WebDAV 默认配置，也可以部署后在网页里配置。
+	      # 可选：Bangumi 漫画数据源（默认留空）。
+	      # BANGUMI_API_KEY:
+
+	      # 可选：WebDAV 默认配置，也可以部署后在网页里配置。
       # WEBDAV_URL: https://your-webdav.example.com
       # WEBDAV_USERNAME: your_username
       # WEBDAV_PASSWORD: your_password
@@ -62,6 +65,38 @@ services:
 ```text
 http://NAS_IP:8096
 ```
+
+## GPU 透传
+
+如果你希望 Docker 里的图像增强使用宿主机 GPU，而不是只跑 CPU，需要额外做设备透传。
+
+如果你是通过一键脚本部署，脚本首次运行时会提示你选择 GPU 模式，并自动把对应配置写进部署目录里的 `docker-compose.remote.yml`；后续更新会沿用这个选择。也可以通过 `SCRAPEFUN_GPU_MODE=none|dri|amd|nvidia` 直接指定。
+
+常见 Linux / NAS 情况：
+
+```yaml
+services:
+  app:
+    devices:
+      - /dev/dri:/dev/dri
+    group_add:
+      - render
+      - video
+```
+
+部分 AMD 设备还需要：
+
+```yaml
+    devices:
+      - /dev/dri:/dev/dri
+      - /dev/kfd:/dev/kfd
+```
+
+注意：
+
+- 如果宿主机没有 `/dev/kfd`，不要硬加这一行
+- NVIDIA 还需要宿主机安装 `NVIDIA Container Toolkit`
+- 不做设备透传时，容器虽然能启动，但图像增强通常无法真正使用 GPU
 
 ## NAS 面板填写要点
 
@@ -133,6 +168,16 @@ services:
   updater:
     image: haoweil/scrapefun:beta
 ```
+
+### 图像增强说明
+
+Docker 镜像当前只内置并开放 `waifu2x_fast`。
+
+这意味着：
+
+- Docker 下不会显示 `realcugan` / `realesrgan`
+- `waifu2x_fast` 在 `amd64` / `arm64` 镜像里都可用
+- 是否真正用上 GPU，还取决于上面的设备透传和宿主机驱动
 
 ### 配置 FlareSolverr
 

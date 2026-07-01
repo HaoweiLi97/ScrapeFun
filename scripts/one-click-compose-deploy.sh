@@ -37,6 +37,7 @@ COMPOSE_URL="${COMPOSE_URL:-https://raw.githubusercontent.com/${GITHUB_REPO}/${G
 COMPOSE_API_URL="${COMPOSE_API_URL:-https://api.github.com/repos/${GITHUB_REPO}/contents/docker-compose.remote.yml?ref=${GITHUB_BRANCH}}"
 APP_HOST_PORT="${APP_HOST_PORT:-}"
 SCRAPEFUN_DATA_DIR="${SCRAPEFUN_DATA_DIR:-}"
+SCRAPEFUN_GPU_MODE="${SCRAPEFUN_GPU_MODE:-}"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -60,6 +61,13 @@ Environment variables:
   IMAGE_BUNDLE_URL         Exact docker load bundle URL. Overrides IMAGE_BUNDLE_BASE_URL.
   SCRAPEFUN_SKIP_IMAGE_BUNDLE=1
                            Disable offline bundle fallback.
+  SCRAPEFUN_GPU_MODE       GPU mode to use without prompting.
+                           Options: none, dri, amd, nvidia
+
+Notes:
+  - default port is 8096
+  - script preserves existing channel, host port, and data dir on updates
+  - if docker pull fails, the script will try an arch-matched offline image bundle
 EOF
 }
 
@@ -268,6 +276,58 @@ PY
   exit 1
 }
 
+render_compose_with_gpu_mode() {
+  local tmp_file
+  local marker_found=0
+  tmp_file="$(create_deploy_tmp_file ".docker-compose.remote.rendered.yml.tmp")"
+
+  while IFS= read -r line || [[ -n "${line}" ]]; do
+    if [[ "${line}" == "    # __APP_GPU_BLOCK__" ]]; then
+      marker_found=1
+      case "${SCRAPEFUN_GPU_MODE}" in
+        none)
+          printf '%s\n' "    # GPU passthrough disabled" >> "${tmp_file}"
+          ;;
+        dri)
+          cat >> "${tmp_file}" <<'EOF'
+    devices:
+      - /dev/dri:/dev/dri
+    group_add:
+      - render
+      - video
+EOF
+          ;;
+        amd)
+          cat >> "${tmp_file}" <<'EOF'
+    devices:
+      - /dev/dri:/dev/dri
+      - /dev/kfd:/dev/kfd
+    device_cgroup_rules:
+      - 'c 226:* rmw'
+      - 'c 235:* rmw'
+    group_add:
+      - render
+      - video
+EOF
+          ;;
+        nvidia)
+          printf '%s\n' "    gpus: all" >> "${tmp_file}"
+          ;;
+      esac
+      continue
+    fi
+    printf '%s\n' "${line}" >> "${tmp_file}"
+  done < "${COMPOSE_TARGET}"
+
+  if [[ "${marker_found}" -ne 1 ]]; then
+    rm -f "${tmp_file}"
+    echo -e "${RED}Error: compose template GPU marker not found.${NC}"
+    exit 1
+  fi
+
+  replace_file_if_changed "${tmp_file}" "${COMPOSE_TARGET}"
+}
+
 resolve_app_host_port() {
   if [[ -n "${APP_HOST_PORT}" ]]; then
     return
@@ -318,6 +378,71 @@ resolve_data_dir() {
   SCRAPEFUN_DATA_DIR="${DEFAULT_DATA_DIR}"
 }
 
+normalize_gpu_mode() {
+  local raw
+  raw="$(printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')"
+  case "${raw}" in
+    ""|none|off|cpu)
+      echo "none"
+      ;;
+    dri|intel|igpu|intel-amd|intel_amd)
+      echo "dri"
+      ;;
+    amd|rocm|kfd)
+      echo "amd"
+      ;;
+    nvidia|cuda)
+      echo "nvidia"
+      ;;
+    *)
+      echo -e "${RED}Error: unsupported GPU mode: ${1}${NC}" >&2
+      echo -e "${RED}Supported values: none, dri, amd, nvidia${NC}" >&2
+      exit 1
+      ;;
+  esac
+}
+
+resolve_gpu_mode() {
+  if [[ -n "${SCRAPEFUN_GPU_MODE}" ]]; then
+    SCRAPEFUN_GPU_MODE="$(normalize_gpu_mode "${SCRAPEFUN_GPU_MODE}")"
+    return
+  fi
+
+  if [[ -f "${UPDATER_ENV_FILE}" ]]; then
+    local existing_gpu_mode
+    existing_gpu_mode="$(read_env_value "SCRAPEFUN_GPU_MODE" "${UPDATER_ENV_FILE}")"
+    if [[ -n "${existing_gpu_mode}" ]]; then
+      SCRAPEFUN_GPU_MODE="$(normalize_gpu_mode "${existing_gpu_mode}")"
+      return
+    fi
+  fi
+
+  SCRAPEFUN_GPU_MODE="none"
+
+  if [[ -t 1 && -r /dev/tty ]]; then
+    local selected
+    echo "Choose GPU passthrough mode:" > /dev/tty
+    echo "  1) none   - no GPU passthrough (recommended if unsure)" > /dev/tty
+    echo "  2) dri    - Intel / AMD / most NAS iGPU via /dev/dri" > /dev/tty
+    echo "  3) amd    - /dev/dri + /dev/kfd for some AMD systems" > /dev/tty
+    echo "  4) nvidia - enable 'gpus: all' for NVIDIA Container Toolkit" > /dev/tty
+    printf "Select GPU mode [1]: " > /dev/tty
+    IFS= read -r selected < /dev/tty || true
+    selected="${selected//$'\r'/}"
+    selected="${selected//[[:space:]]/}"
+    case "${selected:-1}" in
+      1) SCRAPEFUN_GPU_MODE="none" ;;
+      2) SCRAPEFUN_GPU_MODE="dri" ;;
+      3) SCRAPEFUN_GPU_MODE="amd" ;;
+      4) SCRAPEFUN_GPU_MODE="nvidia" ;;
+      *)
+        echo -e "${RED}Error: invalid GPU mode selection.${NC}"
+        exit 1
+        ;;
+    esac
+  fi
+}
+
 normalize_repository_list() {
   printf '%s\n' "${IMAGE_REPOSITORIES//,/ }"
 }
@@ -361,6 +486,7 @@ UPDATE_REPOSITORY=${repository}
 UPDATE_DOCKERHUB_REPO=${repository}
 APP_HOST_PORT=${APP_HOST_PORT}
 SCRAPEFUN_DATA_DIR=${SCRAPEFUN_DATA_DIR}
+SCRAPEFUN_GPU_MODE=${SCRAPEFUN_GPU_MODE}
 COMPOSE_PROJECT_NAME=scrapefun
 EOF
 
@@ -469,9 +595,11 @@ load_image_bundle() {
   return 0
 }
 
-download_compose
 resolve_app_host_port
 resolve_data_dir
+resolve_gpu_mode
+download_compose
+render_compose_with_gpu_mode
 
 mkdir -p \
   "${SCRAPEFUN_DATA_DIR}/db" \
@@ -499,6 +627,7 @@ echo -e "Channel: ${YELLOW}${CHANNEL}${NC}"
 echo -e "Image sources: ${YELLOW}${IMAGE_REPOSITORIES}${NC}"
 echo -e "Host port: ${YELLOW}${APP_HOST_PORT}${NC}"
 echo -e "Data dir: ${YELLOW}${SCRAPEFUN_DATA_DIR}${NC}"
+echo -e "GPU mode: ${YELLOW}${SCRAPEFUN_GPU_MODE}${NC}"
 echo -e "Deploy dir: ${YELLOW}${DEPLOY_DIR}${NC}"
 echo ""
 
