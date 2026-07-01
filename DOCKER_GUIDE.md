@@ -165,6 +165,8 @@ http://NAS_IP:8096
 
 这里的 `/workspace` 是容器内部路径，不需要用户创建。它只用来让 updater 读取当前项目的 `docker-compose.yml`。
 
+如果你用了自定义镜像仓库，记得让 `UPDATE_DOCKERHUB_REPO` 和 `UPDATER_REPOSITORY` 保持一致；否则网页里看到的更新仓库和 sidecar updater 实际拉取的仓库可能会不一样。
+
 ## 4. 端口
 
 当前版本默认端口是 `8096`。

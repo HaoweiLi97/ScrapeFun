@@ -55,6 +55,8 @@ services:
     environment:
       # 可选：更新 webhook token。为空表示不校验。
       UPDATER_TOKEN: ""
+      # 如果你改了镜像仓库，这里要和 UPDATE_DOCKERHUB_REPO 保持一致。
+      UPDATER_REPOSITORY: haoweil/scrapefun
     volumes:
       - ./:/workspace
       - /var/run/docker.sock:/var/run/docker.sock
@@ -134,6 +136,8 @@ UPDATER_TOKEN: ""
 ```
 
 如果只填了其中一个，或者两个值不一致，网页内更新功能会无法调用 updater。
+
+如果你还改了镜像仓库地址，也要确保 `UPDATE_DOCKERHUB_REPO` 和 `UPDATER_REPOSITORY` 指向同一个仓库；一键脚本会自动处理这件事，手动维护 compose 时要一起改。
 
 ## 常用可改项
 
