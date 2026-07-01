@@ -62,7 +62,11 @@ Environment variables:
   SCRAPEFUN_SKIP_IMAGE_BUNDLE=1
                            Disable offline bundle fallback.
   SCRAPEFUN_GPU_MODE       GPU mode to use without prompting.
-                           Options: none, dri, amd, nvidia
+                           Options:
+                             none    no GPU passthrough
+                             dri     Intel / most AMD / most NAS via /dev/dri
+                             amd     /dev/dri + /dev/kfd for some AMD hosts
+                             nvidia  gpus: all for NVIDIA Container Toolkit
 
 Notes:
   - default port is 8096
@@ -417,8 +421,8 @@ resolve_gpu_mode() {
     local selected
     echo "Choose GPU passthrough mode:" > /dev/tty
     echo "  1) none   - no GPU passthrough (recommended if unsure)" > /dev/tty
-    echo "  2) dri    - Intel / AMD / most NAS iGPU via /dev/dri" > /dev/tty
-    echo "  3) amd    - /dev/dri + /dev/kfd for some AMD systems" > /dev/tty
+    echo "  2) dri    - Intel / most AMD / most NAS iGPU via /dev/dri" > /dev/tty
+    echo "  3) amd    - /dev/dri + /dev/kfd for some AMD ROCm / Vulkan systems" > /dev/tty
     echo "  4) nvidia - enable 'gpus: all' for NVIDIA Container Toolkit" > /dev/tty
     printf "Select GPU mode [1]: " > /dev/tty
     IFS= read -r selected < /dev/tty || true

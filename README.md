@@ -117,9 +117,9 @@ curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/o
 可选值：
 
 - `none`：不透传 GPU，默认最稳
-- `dri`：Intel / AMD / 大多数 NAS 集显，透传 `/dev/dri`
-- `amd`：在 `dri` 基础上再加 `/dev/kfd`
-- `nvidia`：为 Docker Compose 注入 `gpus: all`
+- `dri`：Intel / 大多数 AMD / 大多数 NAS 集显，透传 `/dev/dri`
+- `amd`：在 `dri` 基础上再加 `/dev/kfd`，适合部分 AMD 主机
+- `nvidia`：为 Docker Compose 注入 `gpus: all`，适合已安装 `NVIDIA Container Toolkit` 的 NVIDIA 主机
 
 ### 方式二：手动部署
 

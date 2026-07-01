@@ -84,9 +84,9 @@ curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/o
 支持值：
 
 - `none`：不透传 GPU
-- `dri`：透传 `/dev/dri`，适合 Intel / AMD / 大多数 NAS 集显
-- `amd`：透传 `/dev/dri` 和 `/dev/kfd`
-- `nvidia`：为 Compose 注入 `gpus: all`
+- `dri`：透传 `/dev/dri`，适合 Intel / 大多数 AMD / 大多数 NAS 集显
+- `amd`：透传 `/dev/dri` 和 `/dev/kfd`，适合部分 AMD 主机
+- `nvidia`：为 Compose 注入 `gpus: all`，适合已安装 `NVIDIA Container Toolkit` 的 NVIDIA 主机
 
 `dri` / `amd` 模式不会额外写死 `group_add: render` 或 `group_add: video`，这样在部分基础镜像里没有这些组名时也不会启动失败。
 
