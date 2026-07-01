@@ -88,6 +88,8 @@ curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/o
 - `amd`：透传 `/dev/dri` 和 `/dev/kfd`
 - `nvidia`：为 Compose 注入 `gpus: all`
 
+`dri` / `amd` 模式不会额外写死 `group_add: render` 或 `group_add: video`，这样在部分基础镜像里没有这些组名时也不会启动失败。
+
 ## 2. NAS / 面板 Compose 部署
 
 NAS 面板创建 Compose 项目时，使用 [Docker Compose 部署文档](./DOCKER_COMPOSE_DEPLOYMENT.md) 里的 YAML 内容。
@@ -306,9 +308,6 @@ services:
   app:
     devices:
       - /dev/dri:/dev/dri
-    group_add:
-      - render
-      - video
 ```
 
 部分 AMD 设备还需要：

@@ -79,9 +79,6 @@ services:
   app:
     devices:
       - /dev/dri:/dev/dri
-    group_add:
-      - render
-      - video
 ```
 
 部分 AMD 设备还需要：
@@ -96,6 +93,7 @@ services:
 
 - 如果宿主机没有 `/dev/kfd`，不要硬加这一行
 - NVIDIA 还需要宿主机安装 `NVIDIA Container Toolkit`
+- 不建议在这里写死 `group_add: render` / `video`，有些镜像里不存在这些组名，会直接启动失败
 - 不做设备透传时，容器虽然能启动，但图像增强通常无法真正使用 GPU
 
 ## NAS 面板填写要点

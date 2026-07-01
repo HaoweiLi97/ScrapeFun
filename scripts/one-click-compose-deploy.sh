@@ -292,9 +292,6 @@ render_compose_with_gpu_mode() {
           cat >> "${tmp_file}" <<'EOF'
     devices:
       - /dev/dri:/dev/dri
-    group_add:
-      - render
-      - video
 EOF
           ;;
         amd)
@@ -305,9 +302,6 @@ EOF
     device_cgroup_rules:
       - 'c 226:* rmw'
       - 'c 235:* rmw'
-    group_add:
-      - render
-      - video
 EOF
           ;;
         nvidia)
