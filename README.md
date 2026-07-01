@@ -165,9 +165,10 @@ curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/o
 
 Docker 镜像虽然已经包含 `waifu2x_fast` 和 Vulkan 相关运行时，但容器能不能真正拿到宿主机 GPU，取决于你的部署方式。
 
+- Intel / AMD 路线下，镜像内已经带了 Mesa Vulkan userspace
 - Intel / AMD / 大多数 NAS 集显：通常至少要透传 `/dev/dri`
 - 部分 AMD 设备：还需要 `/dev/kfd`
-- NVIDIA：除了设备透传，还需要宿主机安装 `NVIDIA Container Toolkit`
+- NVIDIA：通常使用 `gpus: all`，并且宿主机还需要安装 `NVIDIA Container Toolkit`
 - 一键脚本首次部署时会提示你选择 `none` / `dri` / `amd` / `nvidia`，并把结果保存到 `.updater.env`
 - 一键脚本现在不会再写死 `group_add: render/video`，避免部分镜像里不存在这些组名时导致容器无法启动
 

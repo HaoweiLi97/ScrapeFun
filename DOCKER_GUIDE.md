@@ -316,7 +316,13 @@ services:
       - /dev/kfd:/dev/kfd
 ```
 
-NVIDIA 还需要宿主机额外安装 `NVIDIA Container Toolkit`。
+NVIDIA 通常使用 `gpus: all`，并且宿主机还需要额外安装 `NVIDIA Container Toolkit`。
+
+一键脚本里的 GPU 选项可以对应理解为：
+
+- `dri`：适合 Intel / 大多数 AMD / 大多数 NAS
+- `amd`：适合还需要 `/dev/kfd` 的 AMD 环境
+- `nvidia`：适合已经装好 `NVIDIA Container Toolkit` 的 NVIDIA 主机
 
 如果没有这些设备映射，容器里的图像增强通常只能回退到 CPU，或者直接拿不到 Vulkan 设备。
 
