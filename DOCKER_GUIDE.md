@@ -296,8 +296,9 @@ FLARESOLVERR_URL: http://192.168.1.50:8191/v1
 当前 Docker 镜像有几个和图像增强相关的事实：
 
 - 镜像默认发布 `linux/amd64` 和 `linux/arm64`
-- 镜像里已内置 `waifu2x_fast`
-- Docker 环境下只开放 `waifu2x_fast`
+- 镜像里已内置 `waifu2x`、`waifu2x_fast`、`realcugan`、`realcugan_pro`、`realesrgan`
+- Docker 环境下会开放这 5 个增强引擎
+- `linux/arm64` 下的 `realcugan` / `realesrgan` 使用 fork 后自编译发布的 arm64 资产
 
 但“镜像里有图像增强运行时”不等于“容器自动能用宿主机 GPU”。
 

@@ -17,6 +17,8 @@ services:
       - UPDATE_DOCKERHUB_REPO=${UPDATE_DOCKERHUB_REPO:-${UPDATE_REPOSITORY:-haoweil/scrapefun}}
       - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:-all}
       - NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES:-compute,utility,video}
+      - TRANSCODE_HW_DECODE=${TRANSCODE_HW_DECODE:-auto}
+      - TRANSCODE_HW_ACCEL=${TRANSCODE_HW_ACCEL:-auto}
     # __APP_GPU_BLOCK__
     extra_hosts:
       - "host.docker.internal:host-gateway"

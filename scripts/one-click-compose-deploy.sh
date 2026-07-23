@@ -24,6 +24,7 @@ COMPOSE_SOURCE="${ROOT_DIR}/docker-compose.remote.yml"
 COMPOSE_TARGET="${DEPLOY_DIR}/docker-compose.remote.yml"
 SERVER_ENV_FILE="${DEPLOY_DIR}/server.env"
 UPDATER_ENV_FILE="${DEPLOY_DIR}/.updater.env"
+LEGACY_ENV_FILE="${DEPLOY_DIR}/.env"
 DEFAULT_DATA_DIR="${HOME}/scrapefun-data"
 REPOSITORY="${REPOSITORY:-haoweil/scrapefun}"
 IMAGE_REPOSITORIES="${IMAGE_REPOSITORIES:-$REPOSITORY}"
@@ -61,7 +62,7 @@ Environment variables:
   IMAGE_BUNDLE_URL         Exact docker load bundle URL. Overrides IMAGE_BUNDLE_BASE_URL.
   SCRAPEFUN_SKIP_IMAGE_BUNDLE=1
                            Disable offline bundle fallback.
-  SCRAPEFUN_GPU_MODE       GPU mode to use without prompting.
+  SCRAPEFUN_GPU_MODE       GPU passthrough mode for video decode/transcode and image processing.
                            Options:
                              none    no GPU passthrough
                              dri     Intel / most AMD / most NAS via /dev/dri
@@ -373,6 +374,15 @@ resolve_data_dir() {
     fi
   fi
 
+  if [[ -f "${LEGACY_ENV_FILE}" ]]; then
+    local legacy_data_dir
+    legacy_data_dir="$(read_env_value "SCRAPEFUN_DATA_DIR" "${LEGACY_ENV_FILE}")"
+    if [[ -n "${legacy_data_dir}" ]]; then
+      SCRAPEFUN_DATA_DIR="${legacy_data_dir}"
+      return
+    fi
+  fi
+
   SCRAPEFUN_DATA_DIR="${DEFAULT_DATA_DIR}"
 }
 
@@ -419,7 +429,7 @@ resolve_gpu_mode() {
 
   if [[ -t 1 && -r /dev/tty ]]; then
     local selected
-    echo "Choose GPU passthrough mode:" > /dev/tty
+    echo "Choose GPU passthrough mode for hardware video decode/transcode and image processing:" > /dev/tty
     echo "  1) none   - no GPU passthrough (recommended if unsure)" > /dev/tty
     echo "  2) dri    - Intel / most AMD / most NAS iGPU via /dev/dri" > /dev/tty
     echo "  3) amd    - /dev/dri + /dev/kfd for some AMD ROCm / Vulkan systems" > /dev/tty
@@ -480,6 +490,7 @@ write_updater_env_file() {
   cat > "${tmp_file}" <<EOF
 SCRAPETAB_IMAGE=${repository}:${TAG}
 UPDATE_CURRENT_TAG=${TAG}
+UPDATE_DEFAULT_CHANNEL=${CHANNEL}
 UPDATE_REPOSITORY=${repository}
 UPDATE_DOCKERHUB_REPO=${repository}
 APP_HOST_PORT=${APP_HOST_PORT}

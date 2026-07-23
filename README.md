@@ -131,8 +131,8 @@ curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/o
 ## Docker 镜像现状
 
 - Docker 镜像当前默认发布 `linux/amd64` 和 `linux/arm64`
-- 镜像里已内置 `waifu2x_fast` 图像增强运行时
-- Docker 环境下只开放 `waifu2x_fast`，不会再暴露 `realcugan` / `realesrgan`
+- 镜像里已内置 `waifu2x`、`waifu2x_fast`、`realcugan`、`realcugan_pro`、`realesrgan` 图像增强运行时
+- `linux/amd64` 继续使用 upstream Linux release，`linux/arm64` 会使用 fork 后自编译发布的 Linux arm64 资产
 
 如果你只是普通 CPU 部署，直接使用默认镜像即可。
 
@@ -163,7 +163,7 @@ curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/o
 
 ## GPU 说明
 
-Docker 镜像虽然已经包含 `waifu2x_fast` 和 Vulkan 相关运行时，但容器能不能真正拿到宿主机 GPU，取决于你的部署方式。
+Docker 镜像虽然已经包含 `waifu2x`、`waifu2x_fast`、`realcugan`、`realcugan_pro`、`realesrgan` 和 Vulkan 相关运行时，但容器能不能真正拿到宿主机 GPU，取决于你的部署方式。
 
 - Intel / AMD 路线下，镜像内已经带了 Mesa Vulkan userspace
 - Intel / AMD / 大多数 NAS 集显：通常至少要透传 `/dev/dri`

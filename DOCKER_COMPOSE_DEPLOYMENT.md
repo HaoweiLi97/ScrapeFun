@@ -173,12 +173,13 @@ services:
 
 ### 图像增强说明
 
-Docker 镜像当前只内置并开放 `waifu2x_fast`。
+Docker 镜像当前内置并开放 `waifu2x`、`waifu2x_fast`、`realcugan`、`realcugan_pro`、`realesrgan`。
 
 这意味着：
 
-- Docker 下不会显示 `realcugan` / `realesrgan`
-- `waifu2x_fast` 在 `amd64` / `arm64` 镜像里都可用
+- 这几种增强引擎都会在 Docker UI 里显示
+- `waifu2x` / `waifu2x_fast` / `realcugan` / `realcugan_pro` / `realesrgan` 都会随 `amd64` / `arm64` 镜像一起提供
+- `linux/arm64` 下的 `realcugan` / `realesrgan` 资产来自 fork 后单独发布的 arm64 release
 - 是否真正用上 GPU，还取决于上面的设备透传和宿主机驱动
 
 ### 配置 FlareSolverr
