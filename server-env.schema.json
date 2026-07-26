@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "variables": [
+    {
+      "name": "NODE_ENV",
+      "source": "literal",
+      "value": "production"
+    },
+    {
+      "name": "DATABASE_URL",
+      "source": "literal",
+      "value": "file:/app/data/db/dev.db"
+    },
+    {
+      "name": "APP_AUTH_SECRET",
+      "source": "randomHex",
+      "bytes": 32,
+      "aliases": [
+        "JWT_SECRET"
+      ]
+    }
+  ]
+}

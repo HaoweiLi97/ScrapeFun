@@ -107,6 +107,8 @@ curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/o
 curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-compose-deploy.sh | bash
 ```
 
+安装新版 updater 后，也可以直接在设置页点击更新。updater 会从本仓库读取 [`server-env.schema.json`](./server-env.schema.json)，只补齐 `server.env` 中缺失的变量；已有配置不会被覆盖，密钥会在你的服务器本地生成并保存，不会从 GitHub 下载真实密钥。
+
 如果你不想交互选择 GPU，也可以直接传环境变量：
 
 ```bash

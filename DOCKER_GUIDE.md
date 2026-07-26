@@ -24,6 +24,8 @@ curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/o
 - 优先从 Docker Hub 拉镜像
 - 如果 Docker Hub 拉取失败，会自动尝试下载离线镜像 bundle 并执行 `docker load`
 
+新版 updater 的网页内更新也会在重建应用前读取 GitHub 上的 [`server-env.schema.json`](./server-env.schema.json)，安全合并本地 `server.env`：已有非空值不覆盖，新增默认项才写入，密钥只在本机生成。修改前会保留 `server.env.bak`，下载失败且没有缓存规则时会停止更新，不会重建当前应用。
+
 部署 beta 频道：
 
 ```bash

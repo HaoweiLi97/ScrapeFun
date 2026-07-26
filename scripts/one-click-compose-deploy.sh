@@ -491,6 +491,8 @@ EOF
     upsert_env_value "UPDATE_DOCKERHUB_REPO" "${repository}" "${SERVER_ENV_FILE}"
     upsert_env_value "UPDATE_DEFAULT_CHANNEL" "${CHANNEL}" "${SERVER_ENV_FILE}"
   fi
+
+  chmod 600 "${SERVER_ENV_FILE}" 2>/dev/null || echo -e "${YELLOW}Warning: could not restrict permissions on ${SERVER_ENV_FILE}.${NC}"
 }
 
 write_updater_env_file() {
@@ -512,6 +514,7 @@ EOF
 
   if [[ -f "${UPDATER_ENV_FILE}" ]] && cmp -s "${tmp_file}" "${UPDATER_ENV_FILE}"; then
     rm -f "${tmp_file}"
+    chmod 600 "${UPDATER_ENV_FILE}" 2>/dev/null || echo -e "${YELLOW}Warning: could not restrict permissions on ${UPDATER_ENV_FILE}.${NC}"
     return
   fi
 
@@ -520,6 +523,7 @@ EOF
     print_permission_help "${UPDATER_ENV_FILE}"
     exit 1
   fi
+  chmod 600 "${UPDATER_ENV_FILE}" 2>/dev/null || echo -e "${YELLOW}Warning: could not restrict permissions on ${UPDATER_ENV_FILE}.${NC}"
 }
 
 remove_legacy_container_if_needed() {

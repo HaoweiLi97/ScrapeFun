@@ -56,6 +56,14 @@ services:
     working_dir: /workspace
     command: ["node", "/app/updater/server.cjs"]
     environment:
+      UPDATER_PROJECT_DIR: /workspace
+      UPDATER_COMPOSE_FILE: /workspace/docker-compose.yml
+      UPDATER_SERVICE_NAME: app
+      UPDATER_HEALTHCHECK_URL: http://app:8096/health
+      UPDATER_STATE_ENV_FILE: /workspace/.updater.env
+      UPDATER_SERVER_ENV_FILE: /workspace/server.env
+      UPDATER_SERVER_ENV_SCHEMA_URL: https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/server-env.schema.json
+      UPDATER_SERVER_ENV_SCHEMA_CACHE: /workspace/.server-env.schema.json
       # 可选：更新 webhook token。为空表示不校验。
       UPDATER_TOKEN: ""
       # 如果你改了镜像仓库，这里要和 UPDATE_DOCKERHUB_REPO 保持一致。
@@ -72,6 +80,8 @@ http://NAS_IP:8096
 ```
 
 `APP_AUTH_SECRET` 在生产环境中必填；缺失时容器会报 `APP_AUTH_SECRET is required in production`。首次生成后不要在普通更新时更换，否则已有登录令牌会失效。一键部署脚本会自动生成并持久化这个值。
+
+新版 updater 在网页内更新时会读取 [`server-env.schema.json`](./server-env.schema.json)，只向 `server.env` 补充缺失项。规则可以由 GitHub 更新，但真实密钥始终在本地生成；已有非空值不会被远程规则替换。
 
 ## GPU 透传
 

@@ -45,6 +45,9 @@ services:
       - UPDATER_SERVICE_NAME=app
       - UPDATER_HEALTHCHECK_URL=http://app:8096/health
       - UPDATER_STATE_ENV_FILE=/workspace/.updater.env
+      - UPDATER_SERVER_ENV_FILE=/workspace/server.env
+      - UPDATER_SERVER_ENV_SCHEMA_URL=${UPDATER_SERVER_ENV_SCHEMA_URL:-https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/server-env.schema.json}
+      - UPDATER_SERVER_ENV_SCHEMA_CACHE=/workspace/.server-env.schema.json
       - UPDATER_REPOSITORY=${UPDATE_DOCKERHUB_REPO:-${UPDATE_REPOSITORY:-haoweil/scrapefun}}
     volumes:
       - ./:/workspace
