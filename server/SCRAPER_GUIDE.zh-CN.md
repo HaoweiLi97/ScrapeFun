@@ -1,5 +1,7 @@
 # ScrapeFun 自定义 Scraper 开发指南
 
+> 最后更新：2026 年 7 月 26 日
+
 这份文档说明 ScrapeFun 当前使用的自定义 scraper 模型。
 
 内容包括：

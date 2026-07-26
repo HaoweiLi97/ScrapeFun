@@ -1,5 +1,7 @@
 # ScrapeFun Custom Scraper Development Guide
 
+> Last updated: July 26, 2026
+
 This guide documents the current custom scraper model used by ScrapeFun.
 
 It covers:

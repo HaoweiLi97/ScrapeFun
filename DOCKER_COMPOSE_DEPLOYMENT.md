@@ -1,6 +1,46 @@
-# Docker Compose 部署
+# NAS Docker Compose 部署
 
-## 推荐 Compose
+> 最后更新：2026 年 7 月 26 日
+
+适用于群晖 Container Manager、威联通 Container Station、1Panel、CasaOS 及其他支持 Docker Compose 的环境。
+
+## 创建项目目录
+
+选择一个固定目录，例如：
+
+```text
+/volume1/docker/scrapefun
+```
+
+在其中创建：
+
+```text
+scrapefun-data/db
+scrapefun-data/images
+scrapefun-data/config
+scrapefun-data/custom-scrapers
+scrapefun-data/local-subtitles
+```
+
+## 创建 server.env
+
+生成 32 字节随机密钥：
+
+```bash
+openssl rand -hex 32
+```
+
+在项目目录创建 `server.env`：
+
+```dotenv
+NODE_ENV=production
+DATABASE_URL=file:/app/data/db/dev.db
+APP_AUTH_SECRET=替换为上一步生成的随机密钥
+```
+
+`APP_AUTH_SECRET` 是生产环境必填项，请妥善保管。
+
+## 创建 docker-compose.yml
 
 ```yaml
 name: scrapefun
@@ -12,32 +52,15 @@ services:
     restart: unless-stopped
     ports:
       - "8096:8096"
+    env_file:
+      - ./server.env
     environment:
       NODE_ENV: production
       PORT: 8096
       DATABASE_URL: file:/app/data/db/dev.db
-      # 必填：用于签发登录令牌。先运行 `openssl rand -hex 32` 生成并固定保存。
-      APP_AUTH_SECRET: replace_with_a_long_random_secret
-
-      # 可选：部分 scraper 绕过 Cloudflare 时使用。
-      # 如果没有部署 FlareSolverr，可以先保持默认。
       FLARESOLVERR_URL: http://host.docker.internal:8191/v1
-
-	      # 可选：TMDB 数据源。
-	      # TMDB_API_KEY: your_tmdb_api_key
-
-	      # 可选：Bangumi 漫画数据源（默认留空）。
-	      # BANGUMI_API_KEY:
-
-	      # 可选：WebDAV 默认配置，也可以部署后在网页里配置。
-      # WEBDAV_URL: https://your-webdav.example.com
-      # WEBDAV_USERNAME: your_username
-      # WEBDAV_PASSWORD: your_password
-
-      # 内置更新相关配置。
       UPDATE_CURRENT_TAG: latest
       UPDATE_WEBHOOK_URL: http://updater:4182/update
-      # 可选：更新 webhook token。为空表示不校验。
       UPDATE_WEBHOOK_TOKEN: ""
       UPDATE_DOCKERHUB_REPO: haoweil/scrapefun
     extra_hosts:
@@ -64,32 +87,18 @@ services:
       UPDATER_SERVER_ENV_FILE: /workspace/server.env
       UPDATER_SERVER_ENV_SCHEMA_URL: https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/server-env.schema.json
       UPDATER_SERVER_ENV_SCHEMA_CACHE: /workspace/.server-env.schema.json
-      # 可选：更新 webhook token。为空表示不校验。
       UPDATER_TOKEN: ""
-      # 如果你改了镜像仓库，这里要和 UPDATE_DOCKERHUB_REPO 保持一致。
       UPDATER_REPOSITORY: haoweil/scrapefun
     volumes:
       - ./:/workspace
       - /var/run/docker.sock:/var/run/docker.sock
 ```
 
-部署完成后访问：
+## 配置 GPU
 
-```text
-http://NAS_IP:8096
-```
+GPU 是部署配置的重要部分。请根据 NAS 或服务器硬件，将对应片段加入 `app` 服务。
 
-`APP_AUTH_SECRET` 在生产环境中必填；缺失时容器会报 `APP_AUTH_SECRET is required in production`。首次生成后不要在普通更新时更换，否则已有登录令牌会失效。一键部署脚本会自动生成并持久化这个值。
-
-新版 updater 在网页内更新时会读取 [`server-env.schema.json`](./server-env.schema.json)，只向 `server.env` 补充缺失项。规则可以由 GitHub 更新，但真实密钥始终在本地生成；已有非空值不会被远程规则替换。
-
-## GPU 透传
-
-如果你希望 Docker 里的图像增强使用宿主机 GPU，而不是只跑 CPU，需要额外做设备透传。
-
-如果你是通过一键脚本部署，脚本首次运行时会提示你选择 GPU 模式，并自动把对应配置写进部署目录里的 `docker-compose.remote.yml`；后续更新会沿用这个选择。也可以通过 `SCRAPEFUN_GPU_MODE=none|dri|amd|nvidia` 直接指定。
-
-常见 Linux / NAS 情况：
+Intel、大多数 AMD 和大多数 NAS 集显：
 
 ```yaml
 services:
@@ -98,83 +107,52 @@ services:
       - /dev/dri:/dev/dri
 ```
 
-部分 AMD 设备还需要：
+部分 AMD 主机还需要 `/dev/kfd`：
 
 ```yaml
+services:
+  app:
     devices:
       - /dev/dri:/dev/dri
       - /dev/kfd:/dev/kfd
 ```
 
-注意：
+NVIDIA：
 
-- 如果宿主机没有 `/dev/kfd`，不要硬加这一行
-- NVIDIA 通常使用 `gpus: all`，并且还需要宿主机安装 `NVIDIA Container Toolkit`
-- 不建议在这里写死 `group_add: render` / `video`，有些镜像里不存在这些组名，会直接启动失败
-- 不做设备透传时，容器虽然能启动，但图像增强通常无法真正使用 GPU
+```yaml
+services:
+  app:
+    gpus: all
+```
 
-## NAS 面板填写要点
+NVIDIA 主机需要先安装 NVIDIA Container Toolkit。只有明确不使用硬件加速时，才不添加 GPU 配置。
 
-- 项目名称：`scrapefun`
-- Compose 内容：粘贴上面的 YAML
-- 工作目录 / 项目目录：建议选择一个固定目录，例如 `/volume1/docker/scrapefun`
-- 数据目录：Compose 会在项目目录下创建 `scrapefun-data`
-- Web 端口：默认 `8096`
+## 启动
 
-不需要手动创建 `/workspace`，也不需要给它单独准备目录。它只是 updater 容器内部路径，用来读取当前 Compose 项目的 `docker-compose.yml` 并执行更新；`./:/workspace` 会自动把 NAS 面板选择的项目目录挂载进去。
+```bash
+docker compose up -d
+```
 
-如果 NAS 面板要求手动创建挂载目录，创建这些目录：
+浏览器访问：
 
 ```text
-scrapefun-data/db
-scrapefun-data/images
-scrapefun-data/config
-scrapefun-data/custom-scrapers
-scrapefun-data/local-subtitles
+http://NAS_IP:8096
 ```
 
-## 可选：更新 Token
+## 修改访问端口
 
-默认 Compose 里更新 token 为空，可以正常部署和使用。如果你希望限制网页内更新接口调用，可以设置 token。
-
-两个位置必须填同一个值：
-
-```yaml
-UPDATE_WEBHOOK_TOKEN: scrapefun-update-2026-your-random-text
-UPDATER_TOKEN: scrapefun-update-2026-your-random-text
-```
-
-如果不需要 token，保持为空：
-
-```yaml
-UPDATE_WEBHOOK_TOKEN: ""
-UPDATER_TOKEN: ""
-```
-
-如果只填了其中一个，或者两个值不一致，网页内更新功能会无法调用 updater。
-
-如果你还改了镜像仓库地址，也要确保 `UPDATE_DOCKERHUB_REPO` 和 `UPDATER_REPOSITORY` 指向同一个仓库；一键脚本会自动处理这件事，手动维护 compose 时要一起改。
-
-## 常用可改项
-
-### 修改访问端口
-
-如果 `8096` 被占用，只改左边的宿主机端口：
+如果 `8096` 已被占用，只修改左侧宿主机端口：
 
 ```yaml
 ports:
   - "18096:8096"
 ```
 
-访问地址变为：
+访问地址变为 `http://NAS_IP:18096`。
 
-```text
-http://NAS_IP:18096
-```
+## 使用 Beta
 
-### 使用 beta 镜像
-
-把两个镜像和当前标签改成 `beta`：
+同时修改 `app` 与 `updater` 的镜像标签，并设置当前频道：
 
 ```yaml
 services:
@@ -187,45 +165,46 @@ services:
     image: haoweil/scrapefun:beta
 ```
 
-### 图像增强说明
+切回 stable 时，将两个镜像标签和 `UPDATE_CURRENT_TAG` 改回 `latest`。
 
-Docker 镜像当前内置并开放 `waifu2x`、`waifu2x_fast`、`realcugan`、`realcugan_pro`、`realesrgan`。
+## 可选更新 Token
 
-这意味着：
+如果希望限制更新接口调用，在两个服务中设置同一个随机值：
 
-- 这几种增强引擎都会在 Docker UI 里显示
-- `waifu2x` / `waifu2x_fast` / `realcugan` / `realcugan_pro` / `realesrgan` 都会随 `amd64` / `arm64` 镜像一起提供
-- `linux/arm64` 下的 `realcugan` / `realesrgan` 资产来自 fork 后单独发布的 arm64 release
-- 是否真正用上 GPU，还取决于上面的设备透传和宿主机驱动
+```yaml
+UPDATE_WEBHOOK_TOKEN: your-random-token
+UPDATER_TOKEN: your-random-token
+```
 
-### 配置 FlareSolverr
+不需要 token 时，两项都保持空字符串。
 
-如果你已经在 NAS 上单独部署了 FlareSolverr，并暴露 `8191` 端口，保持默认即可：
+## FlareSolverr
+
+FlareSolverr 在宿主机并开放 `8191` 端口：
 
 ```yaml
 FLARESOLVERR_URL: http://host.docker.internal:8191/v1
 ```
 
-如果 FlareSolverr 是同一个 Compose 项目里的服务，服务名叫 `flaresolverr`，改成：
+FlareSolverr 位于同一 Compose 项目且服务名为 `flaresolverr`：
 
 ```yaml
 FLARESOLVERR_URL: http://flaresolverr:8191/v1
 ```
 
-如果 FlareSolverr 在另一台机器，改成：
+FlareSolverr 位于其他机器：
 
 ```yaml
 FLARESOLVERR_URL: http://192.168.1.50:8191/v1
 ```
 
-## 持久化目录说明
+## 更新与备份
 
-```text
-./scrapefun-data/db              数据库
-./scrapefun-data/images          海报、背景图、演员图等图片缓存
-./scrapefun-data/config          实例配置
-./scrapefun-data/custom-scrapers 自定义刮削器文件
-./scrapefun-data/local-subtitles 本地化字幕
+手动更新：
+
+```bash
+docker compose pull
+docker compose up -d
 ```
 
-备份时备份整个 `scrapefun-data` 目录即可。
+完整备份与迁移方法见 [Docker 数据持久化与备份](./DOCKER_DATA_AND_BACKUP.md)。
