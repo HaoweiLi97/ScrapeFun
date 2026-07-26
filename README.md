@@ -32,7 +32,7 @@ ScrapeFun 提供媒体刮削、WebDAV / AList 管理、字幕处理、播放兼�
 - [数据持久化与备份](./DOCKER_DATA_AND_BACKUP.md)
 - [自定义 Scraper 开发指南（中文）](./server/SCRAPER_GUIDE.zh-CN.md)
 - [Custom Scraper Development Guide (English)](./server/SCRAPER_GUIDE.md)
-- [在线使用文档](https://mightly.store/deployment.html)
+- [在线使用文档](https://scrapefun.com/deployment.html)
 
 ## 核心能力
 
@@ -134,6 +134,6 @@ scrapefun-data/
 
 ## 获取帮助
 
-- [在线文档](https://mightly.store/deployment.html)
-- [建议反馈](https://mightly.store/feedback.html)
+- [在线文档](https://scrapefun.com/deployment.html)
+- [建议反馈](https://scrapefun.com/feedback.html)
 - Product / Business：`lihaowei977@gmail.com`
