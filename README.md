@@ -96,7 +96,7 @@ curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/o
 - 生成部署目录
 - 初始化持久化数据目录
 - 首次部署时让你选择 GPU 模式，并在后续更新时复用这个选择
-- 生成 `server.env` 与 `.updater.env`
+- 生成 `server.env` 与 `.updater.env`，并自动创建生产环境必需的 `APP_AUTH_SECRET`
 - 启动应用与 updater
 
 如果 Docker Hub 拉取失败，脚本还会自动尝试下载对应架构的离线镜像 bundle 并执行 `docker load`，所以在网络不稳定或拉取受限的环境里也更稳。

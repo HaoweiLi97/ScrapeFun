@@ -18,8 +18,9 @@ curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/o
 
 一键脚本的实际行为：
 
-- 首次部署会创建部署目录、`server.env`、`.updater.env` 和持久化数据目录
+- 首次部署会创建部署目录、`server.env`、`.updater.env` 和持久化数据目录，并自动生成生产环境必需的 `APP_AUTH_SECRET`
 - 首次部署会交互选择 GPU 模式，更新时会保留已有端口、数据目录、频道和 GPU 设置
+- 更新旧部署时，如果 `server.env` 中缺少 `APP_AUTH_SECRET`，脚本会自动补齐并保留到后续更新
 - 优先从 Docker Hub 拉镜像
 - 如果 Docker Hub 拉取失败，会自动尝试下载离线镜像 bundle 并执行 `docker load`
 

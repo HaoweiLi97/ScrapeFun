@@ -461,14 +461,17 @@ write_server_env_file() {
   if [[ ! -f "${SERVER_ENV_FILE}" ]]; then
     if command -v openssl >/dev/null 2>&1; then
       UPDATER_TOKEN="$(openssl rand -hex 24)"
+      APP_AUTH_SECRET="$(openssl rand -hex 32)"
     else
       UPDATER_TOKEN="$(date +%s | sha256sum | cut -d' ' -f1 | cut -c1-48)"
+      APP_AUTH_SECRET="$(date +%s%N | sha256sum | cut -d' ' -f1)"
     fi
 
     cat > "${SERVER_ENV_FILE}" <<EOF
 NODE_ENV=production
 DATABASE_URL=file:/app/data/db/dev.db
 SCRAPETAB_UPDATER_TOKEN=${UPDATER_TOKEN}
+APP_AUTH_SECRET=${APP_AUTH_SECRET}
 UPDATE_REPOSITORY=${repository}
 UPDATE_DOCKERHUB_REPO=${repository}
 UPDATE_DEFAULT_CHANNEL=${CHANNEL}
@@ -476,6 +479,14 @@ EOF
     echo -e "${YELLOW}Created ${SERVER_ENV_FILE}${NC}"
   else
     echo -e "${YELLOW}Keeping existing ${SERVER_ENV_FILE}${NC}"
+    if [[ -z "$(read_env_value "APP_AUTH_SECRET" "${SERVER_ENV_FILE}")" && -z "$(read_env_value "JWT_SECRET" "${SERVER_ENV_FILE}")" ]]; then
+      if command -v openssl >/dev/null 2>&1; then
+        APP_AUTH_SECRET="$(openssl rand -hex 32)"
+      else
+        APP_AUTH_SECRET="$(date +%s%N | sha256sum | cut -d' ' -f1)"
+      fi
+      upsert_env_value "APP_AUTH_SECRET" "${APP_AUTH_SECRET}" "${SERVER_ENV_FILE}"
+    fi
     upsert_env_value "UPDATE_REPOSITORY" "${repository}" "${SERVER_ENV_FILE}"
     upsert_env_value "UPDATE_DOCKERHUB_REPO" "${repository}" "${SERVER_ENV_FILE}"
     upsert_env_value "UPDATE_DEFAULT_CHANNEL" "${CHANNEL}" "${SERVER_ENV_FILE}"

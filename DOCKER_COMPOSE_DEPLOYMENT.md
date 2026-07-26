@@ -16,6 +16,8 @@ services:
       NODE_ENV: production
       PORT: 8096
       DATABASE_URL: file:/app/data/db/dev.db
+      # 必填：用于签发登录令牌。先运行 `openssl rand -hex 32` 生成并固定保存。
+      APP_AUTH_SECRET: replace_with_a_long_random_secret
 
       # 可选：部分 scraper 绕过 Cloudflare 时使用。
       # 如果没有部署 FlareSolverr，可以先保持默认。
@@ -68,6 +70,8 @@ services:
 ```text
 http://NAS_IP:8096
 ```
+
+`APP_AUTH_SECRET` 在生产环境中必填；缺失时容器会报 `APP_AUTH_SECRET is required in production`。首次生成后不要在普通更新时更换，否则已有登录令牌会失效。一键部署脚本会自动生成并持久化这个值。
 
 ## GPU 透传
 
