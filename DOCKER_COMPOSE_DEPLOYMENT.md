@@ -44,6 +44,7 @@ services:
       - ./scrapefun-data/db:/app/data/db
       - ./scrapefun-data/images:/app/data/images
       - ./scrapefun-data/config:/app/data/config
+      - ./scrapefun-data/custom-scrapers:/app/data/custom-scrapers
       - ./scrapefun-data/local-subtitles:/app/data/local-subtitles
 
   updater:
@@ -114,6 +115,7 @@ services:
 scrapefun-data/db
 scrapefun-data/images
 scrapefun-data/config
+scrapefun-data/custom-scrapers
 scrapefun-data/local-subtitles
 ```
 
@@ -208,6 +210,7 @@ FLARESOLVERR_URL: http://192.168.1.50:8191/v1
 ./scrapefun-data/db              数据库
 ./scrapefun-data/images          海报、背景图、演员图等图片缓存
 ./scrapefun-data/config          实例配置
+./scrapefun-data/custom-scrapers 自定义刮削器文件
 ./scrapefun-data/local-subtitles 本地化字幕
 ```
 

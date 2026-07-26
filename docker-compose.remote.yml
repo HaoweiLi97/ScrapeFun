@@ -28,6 +28,7 @@ services:
       - ${SCRAPEFUN_DATA_DIR:-./scrapefun-data}/db:/app/data/db
       - ${SCRAPEFUN_DATA_DIR:-./scrapefun-data}/images:/app/data/images
       - ${SCRAPEFUN_DATA_DIR:-./scrapefun-data}/config:/app/data/config
+      - ${SCRAPEFUN_DATA_DIR:-./scrapefun-data}/custom-scrapers:/app/data/custom-scrapers
       - ${SCRAPEFUN_DATA_DIR:-./scrapefun-data}/local-subtitles:/app/data/local-subtitles
     restart: unless-stopped
 

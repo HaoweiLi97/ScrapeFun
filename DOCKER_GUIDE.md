@@ -108,10 +108,11 @@ Compose 会在项目目录下使用这些持久化目录：
 scrapefun-data/db
 scrapefun-data/images
 scrapefun-data/config
+scrapefun-data/custom-scrapers
 scrapefun-data/local-subtitles
 ```
 
-如果 NAS 面板不会自动创建挂载目录，再手动创建上面四个目录即可。
+如果 NAS 面板不会自动创建挂载目录，再手动创建上面这些目录即可。
 
 ## 3. Compose 服务说明
 
@@ -205,6 +206,7 @@ scrapefun-data/
   db/
   images/
   config/
+  custom-scrapers/
   local-subtitles/
 ```
 
@@ -213,6 +215,7 @@ scrapefun-data/
 - `db`：SQLite 数据库、媒体元数据、用户数据、配置数据
 - `images`：海报、背景图、演员图等图片缓存
 - `config`：实例配置和运行状态
+- `custom-scrapers`：用户安装或编辑的自定义刮削器文件
 - `local-subtitles`：本地化字幕文件
 
 备份时备份整个 `scrapefun-data` 目录即可。
@@ -378,6 +381,7 @@ volumes:
   - ./scrapefun-data/db:/app/data/db
   - ./scrapefun-data/images:/app/data/images
   - ./scrapefun-data/config:/app/data/config
+  - ./scrapefun-data/custom-scrapers:/app/data/custom-scrapers
   - ./scrapefun-data/local-subtitles:/app/data/local-subtitles
 ```
 

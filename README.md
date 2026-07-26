@@ -181,9 +181,10 @@ Docker 镜像虽然已经包含 `waifu2x`、`waifu2x_fast`、`realcugan`、`real
 - `db`
 - `images`
 - `config`
+- `custom-scrapers`
 - `local-subtitles`
 
-尤其是 `config` 与 `local-subtitles`，它们分别关系到实例状态保留与字幕本地化结果保留。
+尤其是 `config`、`custom-scrapers` 与 `local-subtitles`，它们分别关系到实例状态、自定义刮削器文件与字幕本地化结果保留。
 
 ## 适用平台
 

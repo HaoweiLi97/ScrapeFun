@@ -614,6 +614,7 @@ mkdir -p \
   "${SCRAPEFUN_DATA_DIR}/db" \
   "${SCRAPEFUN_DATA_DIR}/images" \
   "${SCRAPEFUN_DATA_DIR}/config" \
+  "${SCRAPEFUN_DATA_DIR}/custom-scrapers" \
   "${SCRAPEFUN_DATA_DIR}/local-subtitles"
 
 TAG="latest"
