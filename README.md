@@ -1,7 +1,7 @@
 <div align="center">
   <img src="./docs/images/favicon.png" alt="ScrapeFun Logo" width="96" />
   <h1>ScrapeFun</h1>
-  <p>面向 WebDAV、AList 和远程媒体库的刮削、整理与播放服务</p>
+  <p>覆盖电影、剧集、漫画与远程资源的综合媒体服务器</p>
   <p>
     <a href="https://hub.docker.com/r/haoweil/scrapefun/tags"><img src="https://img.shields.io/badge/Docker-latest-2496ED?logo=docker&logoColor=white" alt="Docker latest" /></a>
     <a href="https://github.com/HaoweiLi97/scrapefun-server-macos/releases/latest"><img src="https://img.shields.io/github/v/release/HaoweiLi97/scrapefun-server-macos?label=macOS%20Server&logo=apple" alt="macOS Server latest" /></a>
@@ -12,7 +12,7 @@
 
 > 最后更新：2026 年 7 月 26 日
 
-ScrapeFun 提供媒体刮削、WebDAV / AList 管理、字幕处理、播放兼容、多用户权限和桌面客户端连接能力，适合个人、家庭及小规模共享媒体库。
+ScrapeFun 是覆盖电影、剧集、漫画与远程资源的综合媒体服务器，提供媒体刮削、漫画阅读、WebDAV / AList 管理、字幕处理、播放兼容、多用户权限和桌面客户端连接能力，适合个人、家庭及小规模共享媒体库。
 
 ## 下载与部署
 
@@ -36,12 +36,19 @@ ScrapeFun 提供媒体刮削、WebDAV / AList 管理、字幕处理、播放兼�
 
 ## 核心能力
 
-### 媒体刮削与整理
+### 影视刮削与整理
 
 - 支持电影、剧集和资源类自定义 scraper
 - 支持清洗规则、刮削器绑定、优先级回退和组合刮削
 - 支持海报、背景图、演员、简介和剧集信息管理
 - 支持用户安装或编辑自定义刮削器
+
+### 漫画管理与阅读
+
+- 统一扫描、整理和浏览漫画资源
+- 支持网页与桌面客户端阅读
+- 保存阅读进度，方便跨设备继续阅读
+- 持久化漫画清单，重启服务后无需重新生成
 
 ### WebDAV 与远程媒体库
 
