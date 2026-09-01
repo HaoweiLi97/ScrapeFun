@@ -1,6 +1,6 @@
 # NAS Docker Compose 部署
 
-> 最后更新：2026 年 7 月 26 日
+> 最后更新：2026 年 9 月 1 日
 
 适用于群晖 Container Manager、威联通 Container Station、1Panel、CasaOS 及其他支持 Docker Compose 的环境。
 
@@ -93,6 +93,25 @@ services:
       - ./:/workspace
       - /var/run/docker.sock:/var/run/docker.sock
 ```
+
+## updater 镜像迁移说明
+
+上面的手动 Compose 示例暂时让 updater 使用 `haoweil/scrapefun:latest`，是为了兼容仍把 app/updater 放在同一镜像中的现有渠道 tag。独立 updater tag 发布后，推荐只修改 updater 的镜像：
+
+```yaml
+services:
+  updater:
+    image: haoweil/scrapefun-updater:latest
+    command: ["node", "/app/updater/server.cjs"]
+```
+
+beta 对应 `haoweil/scrapefun-updater:beta`。在切换前可先检查 tag 是否存在：
+
+```bash
+docker pull haoweil/scrapefun-updater:latest
+```
+
+如果提示 `not found`，继续使用原来的 app 镜像即可，不会影响当前部署。Linux 一键脚本会自动执行这个检测，并把 app/updater 的实际引用分别写入 `.updater.env`；以后重复运行原命令就能自动切换，不需要迁移 `scrapefun-data`。
 
 ## 配置 GPU
 
@@ -204,7 +223,9 @@ FLARESOLVERR_URL: http://192.168.1.50:8191/v1
 
 ```bash
 docker compose pull
-docker compose up -d
+docker compose up -d --remove-orphans
 ```
+
+普通更新不需要先执行 `docker compose down`。先 `down` 会同时停止 app 和 updater，扩大不必要的停机窗口；只有修改网络、项目名或需要完整移除项目时才考虑使用它。
 
 完整备份与迁移方法见 [Docker 数据持久化与备份](./DOCKER_DATA_AND_BACKUP.md)。

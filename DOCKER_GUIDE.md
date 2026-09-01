@@ -1,6 +1,6 @@
 # ScrapeFun Docker 部署与更新
 
-> 最后更新：2026 年 7 月 26 日
+> 最后更新：2026 年 9 月 1 日
 
 普通 Linux 服务器推荐使用一键脚本；群晖、威联通和其他 NAS 请使用 [Docker Compose 指南](./DOCKER_COMPOSE_DEPLOYMENT.md)。
 
@@ -19,6 +19,7 @@ curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/o
 - 初始化持久化数据目录
 - 生成生产环境需要的 `APP_AUTH_SECRET`
 - 选择并保存 GPU 模式
+- 分别解析 app 与 updater 镜像，并兼容旧的组合镜像
 - 启动 ScrapeFun 与 updater
 
 完成后访问：
@@ -73,15 +74,46 @@ curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/o
 
 ## 更新
 
-一键部署用户可以重复运行原安装命令。脚本会拉取目标镜像并重建服务，不会更换持久化目录。
+一键部署用户可以重复运行原安装命令。脚本会拉取目标镜像并使用 `docker compose up -d --remove-orphans` 重建发生变化的服务，不会先停止整个 Compose 项目，也不会更换持久化目录。
 
 安装新版 updater 后，也可以在 ScrapeFun 设置页检查更新。新版 updater 会读取公开配置规则，只向本地 `server.env` 补齐缺失变量，已有非空配置不会被覆盖，修改前会创建 `server.env.bak`。
 
-配置自动合并需要包含新 updater 的 Docker 镜像。该镜像目前尚未发布；现有旧部署需要在新版镜像发布后重新运行一次一键脚本，之后才能使用这项更新能力。
+### 独立 updater 镜像兼容迁移
+
+app 直接处理网页、媒体和 scraper 请求；updater 挂载 Docker socket，权限明显更高。新版部署会优先把 updater 放进独立的 `haoweil/scrapefun-updater` 镜像，避免 app 镜像携带 Docker CLI。
+
+一键脚本按下面顺序选择镜像：
+
+1. 拉取当前渠道的 app 镜像，例如 `haoweil/scrapefun:latest`；
+2. 尝试拉取同渠道的独立 updater，例如 `haoweil/scrapefun-updater:latest`；
+3. 独立 updater tag 已存在时使用新镜像；尚未发布时暂时回退到仍包含 updater runtime 的旧 app 镜像；
+4. 把最终选择分别写入 `.updater.env` 的 `SCRAPETAB_IMAGE` 和 `SCRAPETAB_UPDATER_IMAGE`。
+
+兼容回退不会修改数据库和数据目录。等独立 updater tag 发布后，重新运行原来的一键命令，脚本就会自动切换，不需要手工编辑 Compose。迁移期间请保留公开 `docker-compose.remote.yml` 中显式的 updater `command`；旧组合镜像依赖它启动 updater，新独立镜像也兼容该命令。
+
+可在部署目录确认当前选择：
+
+```bash
+grep -E '^SCRAPETAB_(IMAGE|UPDATER_IMAGE)=' .updater.env
+```
+
+正常情况下可能看到以下任意一种状态：
+
+```dotenv
+# 独立 updater 已可用
+SCRAPETAB_IMAGE=haoweil/scrapefun:latest
+SCRAPETAB_UPDATER_IMAGE=haoweil/scrapefun-updater:latest
+```
+
+```dotenv
+# 迁移期兼容回退
+SCRAPETAB_IMAGE=haoweil/scrapefun:latest
+SCRAPETAB_UPDATER_IMAGE=haoweil/scrapefun:latest
+```
 
 ## Docker Hub 拉取失败
 
-一键脚本在 Docker Hub 拉取失败时，会尝试下载对应架构的离线镜像 bundle 并执行 `docker load`。
+一键脚本在 Docker Hub 拉取失败时，会尝试下载对应架构的离线镜像 bundle 并执行 `docker load`。新版 bundle 可以同时携带 app/updater 两个镜像；迁移期仍兼容只含历史组合镜像的旧 bundle。
 
 如需关闭这项回退：
 
