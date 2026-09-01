@@ -497,11 +497,13 @@ EOF
 
 write_updater_env_file() {
   local repository="$1"
+  local updater_image="${2:-${repository}-updater:${TAG}}"
   local tmp_file
   tmp_file="$(create_deploy_tmp_file ".updater.env.tmp")"
 
   cat > "${tmp_file}" <<EOF
 SCRAPETAB_IMAGE=${repository}:${TAG}
+SCRAPETAB_UPDATER_IMAGE=${updater_image}
 UPDATE_CURRENT_TAG=${TAG}
 UPDATE_DEFAULT_CHANNEL=${CHANNEL}
 UPDATE_REPOSITORY=${repository}
@@ -547,12 +549,18 @@ remove_legacy_container_if_needed() {
 
 try_pull_images() {
   local repository
+  local updater_image
   local pull_failed=1
 
   for repository in $(normalize_repository_list); do
     [[ -n "${repository}" ]] || continue
     echo -e "${YELLOW}Trying image source: ${repository}:${TAG}${NC}"
-    write_updater_env_file "${repository}"
+    updater_image="${repository}-updater:${TAG}"
+    if ! docker pull "${updater_image}"; then
+      updater_image="${repository}:${TAG}"
+      echo -e "${YELLOW}Separate updater image is not available yet; using the compatible app image for updater.${NC}"
+    fi
+    write_updater_env_file "${repository}" "${updater_image}"
 
     if docker compose --env-file "${UPDATER_ENV_FILE}" -f "${COMPOSE_TARGET}" pull; then
       SELECTED_REPOSITORY="${repository}"
@@ -615,7 +623,16 @@ load_image_bundle() {
   rm -f "${bundle_file}"
 
   SELECTED_REPOSITORY="${IMAGE_BUNDLE_REPOSITORY}"
-  write_updater_env_file "${SELECTED_REPOSITORY}"
+  if ! docker image inspect "${SELECTED_REPOSITORY}:${TAG}" >/dev/null 2>&1; then
+    echo -e "${YELLOW}Offline bundle does not contain the app image for ${TAG}.${NC}"
+    return 1
+  fi
+  local updater_image="${SELECTED_REPOSITORY}-updater:${TAG}"
+  if ! docker image inspect "${updater_image}" >/dev/null 2>&1; then
+    updater_image="${SELECTED_REPOSITORY}:${TAG}"
+    echo -e "${YELLOW}Legacy offline bundle detected; using the compatible app image for updater.${NC}"
+  fi
+  write_updater_env_file "${SELECTED_REPOSITORY}" "${updater_image}"
   return 0
 }
 
@@ -668,14 +685,14 @@ fi
 
 write_server_env_file "${SELECTED_REPOSITORY}"
 
-if [[ "${ACTION}" == "update" ]]; then
-  echo -e "${YELLOW}Stopping existing Compose services before update...${NC}"
-  docker compose --env-file "${UPDATER_ENV_FILE}" -f "${COMPOSE_TARGET}" down
-fi
-
 remove_legacy_container_if_needed "scrapefun"
 remove_legacy_container_if_needed "scrapefun-updater"
-docker compose --env-file "${UPDATER_ENV_FILE}" -f "${COMPOSE_TARGET}" up -d
+if [[ "${ACTION}" == "update" ]]; then
+  echo -e "${YELLOW}Recreating changed Compose services without stopping the project...${NC}"
+  docker compose --env-file "${UPDATER_ENV_FILE}" -f "${COMPOSE_TARGET}" up -d --remove-orphans
+else
+  docker compose --env-file "${UPDATER_ENV_FILE}" -f "${COMPOSE_TARGET}" up -d
+fi
 
 echo ""
 if [[ "${ACTION}" == "update" ]]; then

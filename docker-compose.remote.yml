@@ -33,9 +33,10 @@ services:
     restart: unless-stopped
 
   updater:
-    image: ${SCRAPETAB_IMAGE:-haoweil/scrapefun:latest}
+    image: ${SCRAPETAB_UPDATER_IMAGE:-${SCRAPETAB_IMAGE:-haoweil/scrapefun:latest}}
     container_name: scrapefun-updater
     working_dir: /workspace
+    # Kept explicit so the transition can fall back to the previous combined image.
     command: ["node", "/app/updater/server.cjs"]
     environment:
       - UPDATER_PORT=4182
