@@ -93,6 +93,8 @@ http://服务器IP:8096
 curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-compose-deploy.sh | bash -s -- beta
 ```
 
+当前 Docker beta 为 `0.3.0-beta.1`；`haoweil/scrapefun:beta` 与 `haoweil/scrapefun-updater:beta` 会保持为配套版本。升级或恢复前请先阅读[数据持久化与备份](./DOCKER_DATA_AND_BACKUP.md)。
+
 重新运行标准命令即可回到 stable。
 
 ## GPU 配置
