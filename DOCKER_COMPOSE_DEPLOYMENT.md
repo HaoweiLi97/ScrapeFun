@@ -1,6 +1,6 @@
 # NAS Docker Compose 部署
 
-> 最后更新：2026 年 9 月 1 日
+> 最后更新：2026 年 9 月 2 日
 
 适用于群晖 Container Manager、威联通 Container Station、1Panel、CasaOS 及其他支持 Docker Compose 的环境。
 
@@ -12,14 +12,10 @@
 /volume1/docker/scrapefun
 ```
 
-在其中创建：
+在其中创建数据根目录；其余子目录由容器自动建立：
 
 ```text
-scrapefun-data/db
-scrapefun-data/images
-scrapefun-data/config
-scrapefun-data/custom-scrapers
-scrapefun-data/local-subtitles
+scrapefun-data
 ```
 
 ## 创建 server.env
@@ -66,52 +62,58 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - ./scrapefun-data/db:/app/data/db
-      - ./scrapefun-data/images:/app/data/images
-      - ./scrapefun-data/config:/app/data/config
-      - ./scrapefun-data/custom-scrapers:/app/data/custom-scrapers
-      - ./scrapefun-data/local-subtitles:/app/data/local-subtitles
+      - ./scrapefun-data:/app/data
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   updater:
-    image: haoweil/scrapefun:latest
+    image: haoweil/scrapefun-updater:latest
     container_name: scrapefun-updater
     restart: unless-stopped
     working_dir: /workspace
-    command: ["node", "/app/updater/server.cjs"]
     environment:
       UPDATER_PROJECT_DIR: /workspace
       UPDATER_COMPOSE_FILE: /workspace/docker-compose.yml
       UPDATER_SERVICE_NAME: app
-      UPDATER_HEALTHCHECK_URL: http://app:8096/health
+      UPDATER_HEALTHCHECK_URL: http://app:8096/health/ready
       UPDATER_STATE_ENV_FILE: /workspace/.updater.env
       UPDATER_SERVER_ENV_FILE: /workspace/server.env
       UPDATER_SERVER_ENV_SCHEMA_URL: https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/server-env.schema.json
       UPDATER_SERVER_ENV_SCHEMA_CACHE: /workspace/.server-env.schema.json
+      UPDATER_STATUS_FILE: /workspace/.updater-status.json
+      UPDATER_UPDATE_METADATA_FILE: /workspace/.updater-image-state.json
       UPDATER_TOKEN: ""
       UPDATER_REPOSITORY: haoweil/scrapefun
     volumes:
       - ./:/workspace
       - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "127.0.0.1:4182:4182"
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 ```
 
-## updater 镜像迁移说明
+## updater 镜像
 
-上面的手动 Compose 示例暂时让 updater 使用 `haoweil/scrapefun:latest`，是为了兼容仍把 app/updater 放在同一镜像中的现有渠道 tag。独立 updater tag 发布后，推荐只修改 updater 的镜像：
+updater 使用独立镜像 `haoweil/scrapefun-updater:latest`；beta 使用 `haoweil/scrapefun-updater:beta`。新版 app 镜像不包含 updater runtime，不能把 updater 的镜像改成 `haoweil/scrapefun`。
 
-```yaml
-services:
-  updater:
-    image: haoweil/scrapefun-updater:latest
-    command: ["node", "/app/updater/server.cjs"]
-```
+updater 是可选服务。如果当前环境无法拉取独立 updater，可暂时移除 updater 服务以及 app 中的 `UPDATE_WEBHOOK_URL`，改用本页末尾的手动更新命令；这不会影响 `/app/data` 中的业务数据。
 
-beta 对应 `haoweil/scrapefun-updater:beta`。在切换前可先检查 tag 是否存在：
-
-```bash
-docker pull haoweil/scrapefun-updater:latest
-```
-
-如果提示 `not found`，继续使用原来的 app 镜像即可，不会影响当前部署。Linux 一键脚本会自动执行这个检测，并把 app/updater 的实际引用分别写入 `.updater.env`；以后重复运行原命令就能自动切换，不需要迁移 `scrapefun-data`。
+updater 挂载 Docker socket，具备主机级容器管理权限。不要把 `4182` 暴露到公网，并妥善保存 updater token；多租户或不可信网络建议移除 updater，改为人工更新。
 
 ## 配置 GPU
 
@@ -181,7 +183,7 @@ services:
       UPDATE_CURRENT_TAG: beta
 
   updater:
-    image: haoweil/scrapefun:beta
+    image: haoweil/scrapefun-updater:beta
 ```
 
 切回 stable 时，将两个镜像标签和 `UPDATE_CURRENT_TAG` 改回 `latest`。

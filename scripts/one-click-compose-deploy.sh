@@ -4,6 +4,16 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 ACTION="deploy"
+MIGRATE_LEGACY_DATA=0
+
+POSITIONAL_ARGS=()
+for argument in "$@"; do
+  case "$argument" in
+    --migrate-data-root) MIGRATE_LEGACY_DATA=1 ;;
+    *) POSITIONAL_ARGS+=("$argument") ;;
+  esac
+done
+set -- "${POSITIONAL_ARGS[@]}"
 
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
   ACTION="$1"
@@ -36,6 +46,7 @@ GITHUB_REPO="${GITHUB_REPO:-HaoweiLi97/ScrapeFun}"
 GITHUB_BRANCH="${GITHUB_BRANCH:-main}"
 COMPOSE_URL="${COMPOSE_URL:-https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/docker-compose.remote.yml}"
 COMPOSE_API_URL="${COMPOSE_API_URL:-https://api.github.com/repos/${GITHUB_REPO}/contents/docker-compose.remote.yml?ref=${GITHUB_BRANCH}}"
+OPERATIONS_DIR="${DEPLOY_DIR}/operations"
 APP_HOST_PORT="${APP_HOST_PORT:-}"
 SCRAPEFUN_DATA_DIR="${SCRAPEFUN_DATA_DIR:-}"
 SCRAPEFUN_GPU_MODE="${SCRAPEFUN_GPU_MODE:-}"
@@ -68,6 +79,9 @@ Environment variables:
                              dri     Intel / most AMD / most NAS via /dev/dri
                              amd     /dev/dri + /dev/kfd for some AMD hosts
                              nvidia  gpus: all for NVIDIA Container Toolkit
+  --migrate-data-root      After a legacy mount is detected, stop the old app,
+                           copy its complete /app/data view, verify conflicts,
+                           and then switch to the root bind mount.
 
 Notes:
   - default port is 8096
@@ -279,6 +293,32 @@ PY
   echo -e "${RED}Tried API URL: ${COMPOSE_API_URL}${NC}"
   echo -e "${RED}Install curl, wget, or python3 and try again.${NC}"
   exit 1
+}
+
+install_operation_scripts() {
+  local operation_file
+  mkdir -p "${OPERATIONS_DIR}"
+  for operation_file in \
+    docker-operations-common.sh \
+    migrate-docker-data-root.sh \
+    backup-docker.sh \
+    restore-docker.sh \
+    prune-docker-backups.sh \
+    drill-docker-backup.sh \
+    install-docker-backup-timer.sh; do
+    local tmp_file
+    tmp_file="$(create_deploy_tmp_file ".${operation_file}.tmp")"
+    if [[ -f "${ROOT_DIR}/scripts/operations/${operation_file}" ]]; then
+      cp "${ROOT_DIR}/scripts/operations/${operation_file}" "${tmp_file}"
+    else
+      download_file \
+        "https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/scripts/operations/${operation_file}" \
+        "${tmp_file}"
+    fi
+    chmod 755 "${tmp_file}"
+    replace_file_if_changed "${tmp_file}" "${OPERATIONS_DIR}/${operation_file}"
+    chmod 755 "${OPERATIONS_DIR}/${operation_file}"
+  done
 }
 
 render_compose_with_gpu_mode() {
@@ -497,13 +537,12 @@ EOF
 
 write_updater_env_file() {
   local repository="$1"
-  local updater_image="${2:-${repository}-updater:${TAG}}"
   local tmp_file
   tmp_file="$(create_deploy_tmp_file ".updater.env.tmp")"
 
   cat > "${tmp_file}" <<EOF
 SCRAPETAB_IMAGE=${repository}:${TAG}
-SCRAPETAB_UPDATER_IMAGE=${updater_image}
+SCRAPETAB_UPDATER_IMAGE=${repository}-updater:${TAG}
 UPDATE_CURRENT_TAG=${TAG}
 UPDATE_DEFAULT_CHANNEL=${CHANNEL}
 UPDATE_REPOSITORY=${repository}
@@ -547,20 +586,49 @@ remove_legacy_container_if_needed() {
   docker rm -f "${container_id}" >/dev/null
 }
 
+ensure_legacy_data_is_safe() {
+  local migration_script="${OPERATIONS_DIR}/migrate-docker-data-root.sh"
+  local container_id
+  container_id="$(docker ps -aq --filter 'name=^/scrapefun$' | head -n 1)"
+  [[ -n "${container_id}" ]] || return 0
+
+  if [[ ! -x "${migration_script}" ]]; then
+    echo -e "${RED}Error: Docker data migration helper is missing: ${migration_script}${NC}"
+    exit 1
+  fi
+
+  local check_status=0
+  "${migration_script}" --check --container scrapefun --target "${SCRAPEFUN_DATA_DIR}" || check_status=$?
+  if [[ "${check_status}" -eq 0 ]]; then
+    return 0
+  fi
+  if [[ "${check_status}" -ne 2 ]]; then
+    echo -e "${RED}Error: unable to verify the existing Docker data layout.${NC}"
+    exit 1
+  fi
+
+  if [[ "${MIGRATE_LEGACY_DATA}" -ne 1 ]]; then
+    echo -e "${RED}Error: the existing container does not use the configured /app/data root mount.${NC}"
+    echo -e "${RED}Re-run with --migrate-data-root to copy and verify legacy container data before replacement.${NC}"
+    exit 1
+  fi
+
+  "${migration_script}" \
+    --migrate \
+    --container scrapefun \
+    --target "${SCRAPEFUN_DATA_DIR}" \
+    --manifest "${DEPLOY_DIR}/data-migration-$(date -u +%Y%m%dT%H%M%SZ).sha256" \
+    --leave-stopped
+}
+
 try_pull_images() {
   local repository
-  local updater_image
   local pull_failed=1
 
   for repository in $(normalize_repository_list); do
     [[ -n "${repository}" ]] || continue
     echo -e "${YELLOW}Trying image source: ${repository}:${TAG}${NC}"
-    updater_image="${repository}-updater:${TAG}"
-    if ! docker pull "${updater_image}"; then
-      updater_image="${repository}:${TAG}"
-      echo -e "${YELLOW}Separate updater image is not available yet; using the compatible app image for updater.${NC}"
-    fi
-    write_updater_env_file "${repository}" "${updater_image}"
+    write_updater_env_file "${repository}"
 
     if docker compose --env-file "${UPDATER_ENV_FILE}" -f "${COMPOSE_TARGET}" pull; then
       SELECTED_REPOSITORY="${repository}"
@@ -623,16 +691,12 @@ load_image_bundle() {
   rm -f "${bundle_file}"
 
   SELECTED_REPOSITORY="${IMAGE_BUNDLE_REPOSITORY}"
-  if ! docker image inspect "${SELECTED_REPOSITORY}:${TAG}" >/dev/null 2>&1; then
-    echo -e "${YELLOW}Offline bundle does not contain the app image for ${TAG}.${NC}"
+  write_updater_env_file "${SELECTED_REPOSITORY}"
+  if ! docker image inspect "${SELECTED_REPOSITORY}:${TAG}" >/dev/null 2>&1 \
+    || ! docker image inspect "${SELECTED_REPOSITORY}-updater:${TAG}" >/dev/null 2>&1; then
+    echo -e "${YELLOW}Offline bundle does not contain both app and updater images for ${TAG}.${NC}"
     return 1
   fi
-  local updater_image="${SELECTED_REPOSITORY}-updater:${TAG}"
-  if ! docker image inspect "${updater_image}" >/dev/null 2>&1; then
-    updater_image="${SELECTED_REPOSITORY}:${TAG}"
-    echo -e "${YELLOW}Legacy offline bundle detected; using the compatible app image for updater.${NC}"
-  fi
-  write_updater_env_file "${SELECTED_REPOSITORY}" "${updater_image}"
   return 0
 }
 
@@ -640,14 +704,27 @@ resolve_app_host_port
 resolve_data_dir
 resolve_gpu_mode
 download_compose
+install_operation_scripts
 render_compose_with_gpu_mode
 
 mkdir -p \
   "${SCRAPEFUN_DATA_DIR}/db" \
   "${SCRAPEFUN_DATA_DIR}/images" \
+  "${SCRAPEFUN_DATA_DIR}/user-avatars" \
   "${SCRAPEFUN_DATA_DIR}/config" \
   "${SCRAPEFUN_DATA_DIR}/custom-scrapers" \
-  "${SCRAPEFUN_DATA_DIR}/local-subtitles"
+  "${SCRAPEFUN_DATA_DIR}/local-subtitles" \
+  "${SCRAPEFUN_DATA_DIR}/book-cache" \
+  "${SCRAPEFUN_DATA_DIR}/book-tts-cache" \
+  "${SCRAPEFUN_DATA_DIR}/comic-cache" \
+  "${SCRAPEFUN_DATA_DIR}/image-cache" \
+  "${SCRAPEFUN_DATA_DIR}/video-proxy-cache" \
+  "${SCRAPEFUN_DATA_DIR}/transcode-cache" \
+  "${SCRAPEFUN_DATA_DIR}/image-upscale-cache" \
+  "${SCRAPEFUN_DATA_DIR}/models" \
+  "${SCRAPEFUN_DATA_DIR}/logs" \
+  "${SCRAPEFUN_DATA_DIR}/cache" \
+  "${SCRAPEFUN_DATA_DIR}/temp"
 
 TAG="latest"
 if [[ "${CHANNEL}" == "beta" ]]; then
@@ -685,6 +762,7 @@ fi
 
 write_server_env_file "${SELECTED_REPOSITORY}"
 
+ensure_legacy_data_is_safe
 remove_legacy_container_if_needed "scrapefun"
 remove_legacy_container_if_needed "scrapefun-updater"
 if [[ "${ACTION}" == "update" ]]; then
@@ -705,6 +783,7 @@ echo -e "Open: ${YELLOW}http://<your-server-ip>:${APP_HOST_PORT}${NC}"
 echo -e "Compose file: ${YELLOW}${COMPOSE_TARGET}${NC}"
 echo -e "Server env: ${YELLOW}${SERVER_ENV_FILE}${NC}"
 echo -e "Updater env: ${YELLOW}${UPDATER_ENV_FILE}${NC}"
+echo -e "Operations: ${YELLOW}${OPERATIONS_DIR}${NC}"
 echo ""
 echo -e "Later update by running the same one-click command again:"
 echo -e "  ${YELLOW}curl -fsSL https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/scripts/one-click-compose-deploy.sh | bash -s -- ${CHANNEL} ${DEPLOY_DIR}${NC}"

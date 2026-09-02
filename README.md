@@ -10,7 +10,7 @@
   <img src="./docs/images/preview.png" alt="ScrapeFun Preview" width="720" />
 </div>
 
-> 最后更新：2026 年 7 月 26 日
+> 最后更新：2026 年 9 月 2 日
 
 ScrapeFun 是覆盖电影、剧集、漫画与远程资源的综合媒体服务器，提供媒体刮削、漫画阅读、WebDAV / AList 管理、字幕处理、播放兼容、多用户权限和桌面客户端连接能力，适合个人、家庭及小规模共享媒体库。
 
@@ -115,18 +115,14 @@ curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/o
 
 ## 数据持久化
 
-Docker 部署应保留以下目录：
+Docker 部署必须把整个 `scrapefun-data` 根目录挂载到容器的 `/app/data`：
 
-```text
-scrapefun-data/
-  db/
-  images/
-  config/
-  custom-scrapers/
-  local-subtitles/
+```yaml
+volumes:
+  - ./scrapefun-data:/app/data
 ```
 
-数据库、图片、实例配置、自定义刮削器和本地字幕都会保存在这些目录中。更新或重建容器前，请确认 Compose 仍指向同一个 `scrapefun-data` 目录。
+不要使用逐个挂载 `db`、`images`、`config` 等子目录的旧配置。更新、重建、备份或恢复前，请阅读[Docker 数据持久化、备份与恢复](./DOCKER_DATA_AND_BACKUP.md)。
 
 ## 常用配置
 

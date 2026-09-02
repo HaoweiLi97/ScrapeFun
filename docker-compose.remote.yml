@@ -11,12 +11,15 @@ services:
       - PORT=8096
       - DATABASE_URL=file:/app/data/db/dev.db
       - FLARESOLVERR_URL=${FLARESOLVERR_URL:-http://host.docker.internal:8191/v1}
+      - TMDB_API_KEY=${TMDB_API_KEY:-}
+      - BANGUMI_API_KEY=${BANGUMI_API_KEY:-}
       - UPDATE_CURRENT_TAG=${UPDATE_CURRENT_TAG:-latest}
       - UPDATE_WEBHOOK_URL=${UPDATE_WEBHOOK_URL:-http://updater:4182/update}
       - UPDATE_WEBHOOK_TOKEN=${SCRAPETAB_UPDATER_TOKEN:-}
       - UPDATE_DOCKERHUB_REPO=${UPDATE_DOCKERHUB_REPO:-${UPDATE_REPOSITORY:-haoweil/scrapefun}}
       - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:-all}
-      - NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES:-compute,utility,video}
+      # graphics is required for the Vulkan driver used by NCNN and Anime4K.
+      - NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES:-compute,utility,video,graphics}
       - TRANSCODE_HW_DECODE=${TRANSCODE_HW_DECODE:-auto}
       - TRANSCODE_HW_ACCEL=${TRANSCODE_HW_ACCEL:-auto}
     # __APP_GPU_BLOCK__
@@ -25,34 +28,51 @@ services:
     ports:
       - "${APP_HOST_PORT:-8096}:8096"
     volumes:
-      - ${SCRAPEFUN_DATA_DIR:-./scrapefun-data}/db:/app/data/db
-      - ${SCRAPEFUN_DATA_DIR:-./scrapefun-data}/images:/app/data/images
-      - ${SCRAPEFUN_DATA_DIR:-./scrapefun-data}/config:/app/data/config
-      - ${SCRAPEFUN_DATA_DIR:-./scrapefun-data}/custom-scrapers:/app/data/custom-scrapers
-      - ${SCRAPEFUN_DATA_DIR:-./scrapefun-data}/local-subtitles:/app/data/local-subtitles
+      # Persist the complete data root. New runtime directories must survive an
+      # image recreation even when an older installer did not know their names.
+      - ${SCRAPEFUN_DATA_DIR:-./scrapefun-data}:/app/data
+      - /etc/machine-id:/host/etc/machine-id:ro
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     restart: unless-stopped
 
   updater:
-    image: ${SCRAPETAB_UPDATER_IMAGE:-${SCRAPETAB_IMAGE:-haoweil/scrapefun:latest}}
+    image: ${SCRAPETAB_UPDATER_IMAGE:-haoweil/scrapefun-updater:latest}
     container_name: scrapefun-updater
     working_dir: /workspace
-    # Kept explicit so the transition can fall back to the previous combined image.
-    command: ["node", "/app/updater/server.cjs"]
     environment:
       - UPDATER_PORT=4182
       - UPDATER_TOKEN=${SCRAPETAB_UPDATER_TOKEN:-}
       - UPDATER_PROJECT_DIR=/workspace
       - UPDATER_COMPOSE_FILE=/workspace/docker-compose.remote.yml
       - UPDATER_SERVICE_NAME=app
-      - UPDATER_HEALTHCHECK_URL=http://app:8096/health
+      - UPDATER_HEALTHCHECK_URL=http://app:8096/health/ready
       - UPDATER_STATE_ENV_FILE=/workspace/.updater.env
       - UPDATER_SERVER_ENV_FILE=/workspace/server.env
       - UPDATER_SERVER_ENV_SCHEMA_URL=${UPDATER_SERVER_ENV_SCHEMA_URL:-https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/server-env.schema.json}
       - UPDATER_SERVER_ENV_SCHEMA_CACHE=/workspace/.server-env.schema.json
+      - UPDATER_STATUS_FILE=/workspace/.updater-status.json
+      - UPDATER_UPDATE_METADATA_FILE=/workspace/.updater-image-state.json
       - UPDATER_REPOSITORY=${UPDATE_DOCKERHUB_REPO:-${UPDATE_REPOSITORY:-haoweil/scrapefun}}
     volumes:
       - ./:/workspace
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "127.0.0.1:4182:4182"
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     restart: unless-stopped
