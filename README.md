@@ -19,11 +19,13 @@ ScrapeFun 是覆盖电影、剧集、漫画与远程资源的综合媒体服务�
 | 使用场景 | 下载或文档 |
 | --- | --- |
 | Linux / NAS Docker Server | [Docker 部署指南](./DOCKER_GUIDE.md) |
-| macOS Server | [下载 DMG](https://github.com/HaoweiLi97/scrapefun-server-macos/releases/latest) |
+| macOS Server（仅 Apple Silicon / arm64） | [下载 DMG](https://github.com/HaoweiLi97/scrapefun-server-macos/releases/latest) |
 | Windows Server | [下载安装程序](https://github.com/HaoweiLi97/scrapefun-server-windows/releases/latest) |
 | Linux Client | [下载 deb / rpm](https://github.com/HaoweiLi97/scrapefun-client-linux/releases/latest) |
 | macOS Client | [下载 DMG](https://github.com/HaoweiLi97/scrapefun-client-macos/releases/latest) |
 | Windows Client | [下载安装程序](https://github.com/HaoweiLi97/scrapefun-client-windows/releases/latest) |
+
+macOS Server 暂不提供 Intel（amd64/x86_64）版本。0.3.3 的 DMG 使用 ad-hoc 完整性签名，未经 Apple 公证；将应用拖入“应用程序”后，需在终端运行 `xattr -dr com.apple.quarantine "/Applications/ScrapeFun Server.app"`，再启动应用。
 
 ## 使用文档
 
