@@ -1,0 +1,22 @@
+name: Feature request (English)
+description: Describe the usage problem you need to solve
+title: "[Feature] "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Use case and problem
+      description: Describe the platform, current workflow, and difficulty.
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Include alternatives or examples with sensitive details removed.

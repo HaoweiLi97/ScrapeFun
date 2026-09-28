@@ -1,6 +1,7 @@
 <div align="center">
   <img src="./docs/images/favicon.png" alt="ScrapeFun" width="80" />
   <h1>ScrapeFun</h1>
+  <p><strong>简体中文</strong> · <a href="./README.en.md">English</a></p>
   <p>自托管媒体服务器 · 统一管理影视、漫画与远程媒体资源</p>
   <p>
     <a href="https://scrapefun.com/">产品网站</a> ·

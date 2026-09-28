@@ -1,0 +1,45 @@
+ScrapeFun Commercial Software License
+
+English translation of LICENSE. The Chinese original governs if a translation
+discrepancy arises. This translation does not change the license scope.
+
+Agreement version: 1.0
+Statement date: 2026-09-28
+Copyright (c) 2024-2026 ScrapeFun Team. All rights not expressly granted are reserved.
+
+This statement applies to new content owned by ScrapeFun rights holders that
+expressly adopts it, and to later official distributions expressly referencing
+ScrapeFun Software License Agreement 1.0. Full terms: legal/EULA.en.md.
+
+Personal, household, and internal organizational installation and use of official
+Software are permitted. Pro features require a valid entitlement. Its duration,
+instance limits, and feature scope follow the purchase information or separate terms.
+
+Without separate written authorization, users must not resell, sublicense, repackage,
+or distribute ScrapeFun Software governed by the agreement to third parties, use it
+for paid third-party hosting or customer delivery, or crack or bypass Pro licensing,
+installation binding, authorization checks, or integrity protections. These restrictions
+do not apply to conduct permitted by third-party licenses or mandatory law.
+
+Public documentation and deployment examples may be copied and adapted for a user's
+own installation, configuration, and internal operations. Unmodified public documentation
+may be shared with attribution. Public access and viewing or forking permitted by
+GitHub platform rules do not grant redistribution rights in the complete Software
+source code or distribution packages.
+
+License boundaries:
+1. This statement does not retroactively change licenses already in effect for earlier
+   versions. Updating documentation does not automatically change the licenses of
+   existing releases, Docker images, or installers.
+2. Third-party components, dependencies, fonts, models, icons, and players retain their
+   own licenses. Those licenses take precedence for the corresponding third-party
+   content if they conflict with this agreement.
+3. Separately signed commercial licenses or support contracts take precedence within
+   their agreed scope.
+
+To the extent permitted by applicable law, Software is provided "as is" and "as available."
+Rights that cannot legally be excluded remain unaffected. See the full agreement for
+warranties, liability, termination, and scope.
+
+Commercial licensing: lihaowei977@gmail.com
+Usage and licensing support: scrapefun@outlook.com

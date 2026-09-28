@@ -1,5 +1,7 @@
 # NAS Docker Compose 部署
 
+**简体中文** · [English](./DOCKER_COMPOSE_DEPLOYMENT.en.md)
+
 > 文档更新：2026-09-28
 
 适用于群晖 Container Manager、威联通 Container Station、1Panel、CasaOS 及其他支持 Docker Compose 的环境。

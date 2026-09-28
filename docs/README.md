@@ -1,5 +1,7 @@
 # ScrapeFun 文档中心
 
+**简体中文** · [English](./README.en.md)
+
 > 文档更新：2026-09-28
 
 从部署方式开始选择文档。Server 管理数据和媒体库，Client 连接已有 Server；不同平台的安装程序和更新通道独立发布。

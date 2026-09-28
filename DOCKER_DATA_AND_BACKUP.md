@@ -1,5 +1,7 @@
 # Docker 数据持久化、备份与恢复
 
+**简体中文** · [English](./DOCKER_DATA_AND_BACKUP.en.md)
+
 > 文档更新：2026-09-28
 
 ScrapeFun 容器可以随时重建，业务数据必须保存在宿主机。当前唯一推荐的 Compose 写法是把整个数据根目录挂载到 `/app/data`：

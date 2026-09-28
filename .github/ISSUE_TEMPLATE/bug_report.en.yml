@@ -1,0 +1,41 @@
+name: Bug report (English)
+description: Report a publicly reproducible ScrapeFun issue
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please read the deployment and support documentation first. Contact scrapefun@outlook.com for accounts, orders, and activation. Follow SECURITY.en.md for private vulnerability reporting.
+        Do not include passwords, activation codes, tokens, private resource URLs, or complete backups.
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Server / Client versions, stable or beta, operating system, CPU architecture, and deployment method.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      description: Provide the minimum steps that reproduce the issue.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result
+      description: Include the error message, time of failure, and last working version.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Logs or screenshots with sensitive details removed
+      description: Include relevant excerpts only. Remove credentials, private paths, and signed resource URLs.

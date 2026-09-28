@@ -1,5 +1,7 @@
 # Docker 部署与运维
 
+**简体中文** · [English](./DOCKER_GUIDE.en.md)
+
 > 文档更新：2026-09-28
 
 适用于 Linux 主机和 NAS，镜像提供 `linux/amd64` 与 `linux/arm64`。先选择部署方式，再进行初始化；更新已有实例前先[备份](./DOCKER_DATA_AND_BACKUP.md)。

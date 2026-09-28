@@ -1,11 +1,17 @@
 blank_issues_enabled: false
 contact_links:
-  - name: 文档中心
+  - name: 文档中心 / Documentation
     url: https://scrapefun.com/#/docs
-    about: 安装、部署与日常使用说明。
-  - name: 账号、付费与授权支持
+    about: 安装、部署与日常使用说明。Installation, deployment, and usage guides.
+  - name: English documentation
+    url: https://scrapefun.com/?lang=en#/docs
+    about: Read the product documentation in English.
+  - name: 账号、付费与授权支持 / Account and licensing support
     url: https://scrapefun.com/#/contact
-    about: 使用产品反馈入口或发送邮件至 scrapefun@outlook.com，请勿公开激活码。
-  - name: 安全漏洞报告
+    about: 联系 scrapefun@outlook.com，请勿公开激活码。Contact by email; keep activation codes private.
+  - name: 安全漏洞报告 / Security reporting
     url: https://github.com/HaoweiLi97/ScrapeFun/blob/main/SECURITY.md
-    about: 按安全说明私密报告漏洞。
+    about: 按安全说明私密报告漏洞。Report vulnerabilities privately using the security instructions.
+  - name: Security reporting (English)
+    url: https://github.com/HaoweiLi97/ScrapeFun/blob/main/SECURITY.en.md
+    about: Private reporting instructions for vulnerabilities and exposed credentials.
