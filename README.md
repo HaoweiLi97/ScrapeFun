@@ -8,7 +8,7 @@
     <a href="#下载与部署">软件下载</a> ·
     <a href="./SUPPORT.md">支持与反馈</a>
   </p>
-  <img src="./docs/images/preview.png" alt="ScrapeFun 媒体库界面" width="760" />
+  <img src="./docs/images/library.jpg" alt="ScrapeFun 影视库：继续观看、分类筛选与海报浏览" width="960" />
 </div>
 
 > 文档更新：2026-09-28。各平台独立发布，具体版本、系统要求及安装注意事项以对应 Release 为准。
@@ -63,6 +63,46 @@ http://服务器IP:8096
 | 扩展能力 | Emby / Jellyfin 风格兼容接口、画面增强等 Pro 功能 |
 
 部分高级功能需要有效的 ScrapeFun Pro 授权。具体权益与有效期以[产品权益说明](https://scrapefun.com/#/pro)、购买页面和实例内许可证页面为准；播放器兼容性同时受客户端版本、媒体编码及服务器配置影响。
+
+## 界面预览
+
+以下为产品实际界面，与[产品网站](https://scrapefun.com/#/product)使用同一套截图。不同平台、版本和个人设置可能影响显示效果。
+
+<details>
+  <summary>漫画库与阅读进度</summary>
+
+按作品浏览漫画和卷册，并查看继续阅读内容。
+
+<img src="./docs/images/comics.jpg" alt="ScrapeFun 漫画库：继续阅读、卷册封面与漫画筛选" width="960" />
+
+</details>
+
+<details>
+  <summary>书籍库</summary>
+
+通过封面浏览书籍，集中查看阅读中的作品。
+
+<img src="./docs/images/books.png" alt="ScrapeFun 书籍库：继续阅读与书籍封面" width="960" />
+
+</details>
+
+<details>
+  <summary>WebDAV 远程资源</summary>
+
+浏览远程目录，以海报或列表查看媒体资源。
+
+<img src="./docs/images/webdav.jpg" alt="ScrapeFun WebDAV：目录导航、文件搜索与海报视图" width="960" />
+
+</details>
+
+<details>
+  <summary>作品详情</summary>
+
+集中查看作品资料、简介、角色和阅读操作。
+
+<img src="./docs/images/media-detail.jpg" alt="ScrapeFun 漫画作品详情：封面、资料、简介与角色" width="960" />
+
+</details>
 
 ## 文档导航
 
