@@ -1,146 +1,99 @@
 <div align="center">
-  <img src="./docs/images/favicon.png" alt="ScrapeFun Logo" width="96" />
+  <img src="./docs/images/favicon.png" alt="ScrapeFun" width="80" />
   <h1>ScrapeFun</h1>
-  <p>覆盖电影、剧集、漫画与远程资源的综合媒体服务器</p>
+  <p>自托管媒体服务器 · 统一管理影视、漫画与远程媒体资源</p>
   <p>
-    <a href="https://hub.docker.com/r/haoweil/scrapefun/tags"><img src="https://img.shields.io/badge/Docker-latest-2496ED?logo=docker&logoColor=white" alt="Docker latest" /></a>
-    <a href="https://github.com/HaoweiLi97/scrapefun-server-macos/releases/latest"><img src="https://img.shields.io/github/v/release/HaoweiLi97/scrapefun-server-macos?label=macOS%20Server&logo=apple" alt="macOS Server latest" /></a>
-    <a href="https://github.com/HaoweiLi97/scrapefun-server-windows/releases/latest"><img src="https://img.shields.io/github/v/release/HaoweiLi97/scrapefun-server-windows?label=Windows%20Server&logo=windows" alt="Windows Server latest" /></a>
+    <a href="https://scrapefun.com/">产品网站</a> ·
+    <a href="./docs/README.md">部署文档</a> ·
+    <a href="#下载与部署">软件下载</a> ·
+    <a href="./SUPPORT.md">支持与反馈</a>
   </p>
-  <img src="./docs/images/preview.png" alt="ScrapeFun Preview" width="720" />
+  <img src="./docs/images/preview.png" alt="ScrapeFun 媒体库界面" width="760" />
 </div>
 
-> 最后更新：2026 年 9 月 2 日
+> 文档更新：2026-09-28。各平台独立发布，具体版本、系统要求及安装注意事项以对应 Release 为准。
 
-ScrapeFun 是覆盖电影、剧集、漫画与远程资源的综合媒体服务器，提供媒体刮削、漫画阅读、WebDAV / AList 管理、字幕处理、播放兼容、多用户权限和桌面客户端连接能力，适合个人、家庭及小规模共享媒体库。
+ScrapeFun 将媒体刮削、资源浏览、播放、阅读和多用户管理集中在一个自托管服务中。你可以在 Linux / NAS、Mac 或 Windows 电脑上部署 Server，再通过浏览器或专用客户端连接。
+
+本仓库提供公开产品文档、部署模板和扩展示例。完整产品源码不在此仓库中公开；平台仓库用于发布安装包和安装说明。
 
 ## 下载与部署
 
-| 使用场景 | 下载或文档 |
-| --- | --- |
-| Linux / NAS Docker Server | [Docker 部署指南](./DOCKER_GUIDE.md) |
-| macOS Server（仅 Apple Silicon / arm64） | [下载 DMG](https://github.com/HaoweiLi97/scrapefun-server-macos/releases/latest) |
-| Windows Server | [下载安装程序](https://github.com/HaoweiLi97/scrapefun-server-windows/releases/latest) |
-| Linux Client | [下载 deb / rpm](https://github.com/HaoweiLi97/scrapefun-client-linux/releases/latest) |
-| macOS Client | [下载 DMG](https://github.com/HaoweiLi97/scrapefun-client-macos/releases/latest) |
-| Windows Client | [下载安装程序](https://github.com/HaoweiLi97/scrapefun-client-windows/releases/latest) |
+先部署一个 Server，再按需要安装 Client。Server 保存媒体库、用户、配置和进度；Client 连接已有 Server。使用浏览器可直接访问 Server，无需安装客户端。
 
-macOS Server 暂不提供 Intel（amd64/x86_64）版本。0.3.3 的 DMG 使用 ad-hoc 完整性签名，未经 Apple 公证；将应用拖入“应用程序”后，需在终端运行 `xattr -dr com.apple.quarantine "/Applications/ScrapeFun Server.app"`，再启动应用。
+| 类型 | 平台 | 公开安装方式 | 入口 |
+| --- | --- | --- | --- |
+| Server | Linux / NAS | Docker，`linux/amd64` / `linux/arm64` | [Docker 部署](./DOCKER_GUIDE.md) |
+| Server | macOS | Apple Silicon / arm64 DMG | [安装说明](https://github.com/HaoweiLi97/scrapefun-server-macos) · [稳定版](https://github.com/HaoweiLi97/scrapefun-server-macos/releases/latest) |
+| Server | Windows | x64 安装程序 | [安装说明](https://github.com/HaoweiLi97/scrapefun-server-windows) · [稳定版](https://github.com/HaoweiLi97/scrapefun-server-windows/releases/latest) |
+| Client | Linux | x64 deb / AppImage | [安装说明](https://github.com/HaoweiLi97/scrapefun-client-linux) · [稳定版](https://github.com/HaoweiLi97/scrapefun-client-linux/releases/latest) |
+| Client | macOS | Apple Silicon / arm64 DMG | [安装说明](https://github.com/HaoweiLi97/scrapefun-client-macos) · [稳定版](https://github.com/HaoweiLi97/scrapefun-client-macos/releases/latest) |
+| Client | Windows | x64 / ARM64 安装程序 | [安装说明](https://github.com/HaoweiLi97/scrapefun-client-windows) · [稳定版](https://github.com/HaoweiLi97/scrapefun-client-windows/releases/latest) |
+| Client | Android | arm64-v8a / armeabi-v7a APK | [安装说明](https://github.com/HaoweiLi97/scrapefun-client-android) · [稳定版](https://github.com/HaoweiLi97/scrapefun-client-android/releases/latest) |
 
-## 使用文档
+下载范围按 2026-09-28 已公开的稳定版资产核对。其他架构或包格式应先确认 Release 是否提供。
 
-- [Docker 一键部署与更新](./DOCKER_GUIDE.md)
-- [NAS Docker Compose](./DOCKER_COMPOSE_DEPLOYMENT.md)
-- [数据持久化与备份](./DOCKER_DATA_AND_BACKUP.md)
-- [自定义 Scraper 开发指南（中文）](./server/SCRAPER_GUIDE.zh-CN.md)
-- [Custom Scraper Development Guide (English)](./server/SCRAPER_GUIDE.md)
-- [在线使用文档](https://scrapefun.com/deployment.html)
+## 快速开始
 
-## 核心能力
-
-### 影视刮削与整理
-
-- 支持电影、剧集和资源类自定义 scraper
-- 支持清洗规则、刮削器绑定、优先级回退和组合刮削
-- 支持海报、背景图、演员、简介和剧集信息管理
-- 支持用户安装或编辑自定义刮削器
-
-### 漫画管理与阅读
-
-- 统一扫描、整理和浏览漫画资源
-- 支持网页与桌面客户端阅读
-- 保存阅读进度，方便跨设备继续阅读
-- 持久化漫画清单，重启服务后无需重新生成
-
-### WebDAV 与远程媒体库
-
-- 浏览和管理 WebDAV / AList 目录
-- 支持移动、复制、重命名、删除和创建文件夹
-- 支持直链解析、代理播放和失败重试
-- 支持远程媒体库增量扫描与状态同步
-
-### 播放与字幕
-
-- 支持字幕搜索、上传、压缩包导入和本地化保存
-- 支持电影与剧集播放进度同步
-- 提供 Emby / Jellyfin 风格兼容接口
-- 可配合 Infuse、Yamby、VidHub、SenPlayer 等播放器使用
-
-### 用户与权限
-
-- 多用户和管理员角色
-- 媒体库级访问权限
-- Web 与桌面客户端连接
-- 实时状态同步
-
-## Linux 一键部署
-
-安装 Docker 后运行：
+Linux 主机安装 Docker 和 Docker Compose 插件后，运行：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-compose-deploy.sh | bash
+curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-compose-deploy.sh | bash -s -- stable
 ```
 
-脚本会创建部署目录、持久化目录和环境文件，选择 GPU 模式，并启动应用与 updater。
+按提示选择 GPU 模式。脚本默认使用 `~/scrapefun` 保存部署配置、`~/scrapefun-data` 保存业务数据，并启动 app 与独立 updater。
 
-部署完成后访问：
+部署完成后，在浏览器中打开：
 
 ```text
 http://服务器IP:8096
 ```
 
-安装 beta：
+按页面引导完成初始化、设置管理员凭据并添加存储和媒体库。NAS 面板用户请阅读 [Compose 部署指南](./DOCKER_COMPOSE_DEPLOYMENT.md)。升级已有实例前请先完成[数据备份](./DOCKER_DATA_AND_BACKUP.md)。
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-compose-deploy.sh | bash -s -- beta
-```
+## 产品能力
 
-当前 Docker beta 为 `0.3.0-beta.1`；`haoweil/scrapefun:beta` 与 `haoweil/scrapefun-updater:beta` 会保持为配套版本。升级或恢复前请先阅读[数据持久化与备份](./DOCKER_DATA_AND_BACKUP.md)。
+| 领域 | 提供的能力 |
+| --- | --- |
+| 媒体整理 | 电影与剧集刮削、海报和演员信息、清洗规则、自定义刮削器与组合刮削 |
+| 漫画阅读 | 漫画扫描、网页与客户端阅读、阅读进度保存 |
+| 远程资源 | WebDAV / AList 浏览与文件管理、远程媒体库扫描、资源连接 |
+| 播放与字幕 | 网页与客户端播放、播放进度同步、字幕搜索与导入 |
+| 用户管理 | 管理员与普通用户、媒体库访问权限、多设备访问 |
+| 扩展能力 | Emby / Jellyfin 风格兼容接口、画面增强等 Pro 功能 |
 
-重新运行标准命令即可回到 stable。
+部分高级功能需要有效的 ScrapeFun Pro 授权。具体权益与有效期以[产品权益说明](https://scrapefun.com/#/pro)、购买页面和实例内许可证页面为准；播放器兼容性同时受客户端版本、媒体编码及服务器配置影响。
 
-## GPU 配置
+## 文档导航
 
-GPU 是部署配置的重要部分。首次安装时请按服务器硬件选择：
+| 任务 | 文档 |
+| --- | --- |
+| Linux 安装、更新与频道切换 | [Docker 部署与运维](./DOCKER_GUIDE.md) |
+| 在 NAS 面板手动配置 | [Docker Compose 部署](./DOCKER_COMPOSE_DEPLOYMENT.md) |
+| 备份、迁移与故障恢复 | [数据持久化、备份与恢复](./DOCKER_DATA_AND_BACKUP.md) |
+| 查看配置字段 | [环境变量示例](./.env.example) · [配置 Schema](./server-env.schema.json) |
+| 编写刮削器 | [中文开发指南](./server/SCRAPER_GUIDE.zh-CN.md) · [English guide](./server/SCRAPER_GUIDE.md) |
+| 核对版本与更新规则 | [发行与兼容性说明](./RELEASE_POLICY.md) |
+| 报告问题或安全漏洞 | [支持与反馈](./SUPPORT.md) · [安全说明](./SECURITY.md) |
+| 查询软件授权 | [许可与协议](./legal/README.md) |
 
-| 模式 | 适用硬件 | 容器配置 |
-| --- | --- | --- |
-| `dri` | Intel、大多数 AMD、大多数 NAS 集显 | `/dev/dri` |
-| `amd` | 还需要计算设备的 AMD 主机 | `/dev/dri` 与 `/dev/kfd` |
-| `nvidia` | 已安装 NVIDIA Container Toolkit 的主机 | `gpus: all` |
-| `none` | 明确不使用硬件加速 | 不透传 GPU |
+完整使用文档见[在线文档中心](https://scrapefun.com/#/docs)。
 
-非交互指定示例：
+## 数据与更新
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-compose-deploy.sh | \
-  SCRAPEFUN_GPU_MODE=nvidia bash
-```
-
-## 数据持久化
-
-Docker 部署必须把整个 `scrapefun-data` 根目录挂载到容器的 `/app/data`：
+Docker 必须持久化完整数据根目录：
 
 ```yaml
 volumes:
   - ./scrapefun-data:/app/data
 ```
 
-不要使用逐个挂载 `db`、`images`、`config` 等子目录的旧配置。更新、重建、备份或恢复前，请阅读[Docker 数据持久化、备份与恢复](./DOCKER_DATA_AND_BACKUP.md)。
+更新会重启 Server，并中断正在进行的播放和后台任务。先备份，再更新，最后检查登录、媒体库、图片、播放与阅读进度。`latest` 是稳定版频道别名，`beta` 是测试版频道别名；需要固定版本时使用明确的版本标签。
 
-## 常用配置
+macOS Server 0.3.3 仅提供 Apple Silicon 版本，使用 ad-hoc 完整性签名，未经 Apple Developer ID 签名和公证。首次启动步骤见[平台安装说明](https://github.com/HaoweiLi97/scrapefun-server-macos#安装与首次启动)。
 
-常用环境变量可参考 [`.env.example`](./.env.example)：
+## 联系与授权
 
-- `PORT`：服务端口，默认 `8096`
-- `APP_AUTH_SECRET`：生产环境登录令牌密钥
-- `FLARESOLVERR_URL`：部分站点的反爬服务地址
-- `TMDB_API_KEY`：可选 TMDB 数据源
-- `BANGUMI_API_KEY`：可选 Bangumi 数据源
-- `WEBDAV_URL` / `WEBDAV_USERNAME` / `WEBDAV_PASSWORD`：可选 WebDAV 默认配置
+使用问题请通过 [GitHub Issues](https://github.com/HaoweiLi97/ScrapeFun/issues) 或[产品反馈页面](https://scrapefun.com/#/contact)提交。涉及账号、付费或私密日志，请发送至 `scrapefun@outlook.com`；商业合作可联系 `lihaowei977@gmail.com`。
 
-## 获取帮助
-
-- [在线文档](https://scrapefun.com/deployment.html)
-- [建议反馈](https://scrapefun.com/feedback.html)
-- Product / Business：`lihaowei977@gmail.com`
+软件、文档和第三方组件的授权范围见[许可与协议](./legal/README.md)。

@@ -1,8 +1,10 @@
 # NAS Docker Compose 部署
 
-> 最后更新：2026 年 9 月 2 日
+> 文档更新：2026-09-28
 
 适用于群晖 Container Manager、威联通 Container Station、1Panel、CasaOS 及其他支持 Docker Compose 的环境。
+
+本文示例使用 `docker-compose.yml`、`server.env` 和 `.env`。`server.env` 由 app 的 `env_file` 消费；`.env` 用于 Compose 的变量替换。它们与一键脚本的 `docker-compose.remote.yml` / `.updater.env` 文件组合不同，运维命令应按实际部署方式选择。
 
 ## 创建项目目录
 
@@ -36,6 +38,22 @@ APP_AUTH_SECRET=替换为上一步生成的随机密钥
 
 `APP_AUTH_SECRET` 是生产环境必填项，请妥善保管。
 
+## 创建更新 Token
+
+再次生成一个独立随机值：
+
+```bash
+openssl rand -hex 24
+```
+
+在项目目录创建 `.env`，将生成值填入：
+
+```dotenv
+SCRAPEFUN_UPDATER_TOKEN=替换为上一步生成的随机值
+```
+
+`server.env` 与 `.env` 均包含敏感配置，应限制访问并纳入安全备份。
+
 ## 创建 docker-compose.yml
 
 ```yaml
@@ -57,7 +75,7 @@ services:
       FLARESOLVERR_URL: http://host.docker.internal:8191/v1
       UPDATE_CURRENT_TAG: latest
       UPDATE_WEBHOOK_URL: http://updater:4182/update
-      UPDATE_WEBHOOK_TOKEN: ""
+      UPDATE_WEBHOOK_TOKEN: ${SCRAPEFUN_UPDATER_TOKEN:?请在 .env 中设置更新 Token}
       UPDATE_DOCKERHUB_REPO: haoweil/scrapefun
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -89,7 +107,7 @@ services:
       UPDATER_SERVER_ENV_SCHEMA_CACHE: /workspace/.server-env.schema.json
       UPDATER_STATUS_FILE: /workspace/.updater-status.json
       UPDATER_UPDATE_METADATA_FILE: /workspace/.updater-image-state.json
-      UPDATER_TOKEN: ""
+      UPDATER_TOKEN: ${SCRAPEFUN_UPDATER_TOKEN:?请在 .env 中设置更新 Token}
       UPDATER_REPOSITORY: haoweil/scrapefun
     volumes:
       - ./:/workspace
@@ -154,7 +172,7 @@ NVIDIA 主机需要先安装 NVIDIA Container Toolkit。只有明确不使用硬
 docker compose up -d
 ```
 
-浏览器访问：
+启动后检查 `docker compose ps`，然后在浏览器访问：
 
 ```text
 http://NAS_IP:8096
@@ -171,7 +189,7 @@ ports:
 
 访问地址变为 `http://NAS_IP:18096`。
 
-## 使用 Beta
+## 使用 beta
 
 同时修改 `app` 与 `updater` 的镜像标签，并设置当前频道：
 
@@ -188,16 +206,9 @@ services:
 
 切回 stable 时，将两个镜像标签和 `UPDATE_CURRENT_TAG` 改回 `latest`。
 
-## 可选更新 Token
+## 更新 Token 的一致性
 
-如果希望限制更新接口调用，在两个服务中设置同一个随机值：
-
-```yaml
-UPDATE_WEBHOOK_TOKEN: your-random-token
-UPDATER_TOKEN: your-random-token
-```
-
-不需要 token 时，两项都保持空字符串。
+本文的 `.env` 为两个服务提供同一个 `SCRAPEFUN_UPDATER_TOKEN`：app 使用 `UPDATE_WEBHOOK_TOKEN`，updater 使用 `UPDATER_TOKEN`。更换 Token 后重建两个服务。NAS 面板若不读取项目 `.env`，应在其环境变量设置中提供该值，或将两个字段替换为相同的随机值。
 
 ## FlareSolverr
 
@@ -231,3 +242,5 @@ docker compose up -d --remove-orphans
 普通更新不需要先执行 `docker compose down`。先 `down` 会同时停止 app 和 updater，扩大不必要的停机窗口；只有修改网络、项目名或需要完整移除项目时才考虑使用它。
 
 完整备份与迁移方法见 [Docker 数据持久化与备份](./DOCKER_DATA_AND_BACKUP.md)。
+
+[文档中心](./docs/README.md) · [发行说明](./RELEASE_POLICY.md) · [支持](./SUPPORT.md) · [许可与协议](./legal/README.md)

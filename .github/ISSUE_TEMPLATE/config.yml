@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 文档中心
+    url: https://scrapefun.com/#/docs
+    about: 安装、部署与日常使用说明。
+  - name: 账号、付费与授权支持
+    url: https://scrapefun.com/#/contact
+    about: 使用产品反馈入口或发送邮件至 scrapefun@outlook.com，请勿公开激活码。
+  - name: 安全漏洞报告
+    url: https://github.com/HaoweiLi97/ScrapeFun/blob/main/SECURITY.md
+    about: 按安全说明私密报告漏洞。

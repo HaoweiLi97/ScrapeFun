@@ -1,6 +1,6 @@
 # Docker 数据持久化、备份与恢复
 
-> 最后更新：2026 年 9 月 2 日
+> 文档更新：2026-09-28
 
 ScrapeFun 容器可以随时重建，业务数据必须保存在宿主机。当前唯一推荐的 Compose 写法是把整个数据根目录挂载到 `/app/data`：
 
@@ -16,6 +16,8 @@ services:
 ## 数据目录
 
 默认宿主机目录是一键部署目录旁的 `~/scrapefun-data`；NAS 手动 Compose 通常使用项目目录下的 `./scrapefun-data`。实际路径以 `.updater.env` 的 `SCRAPEFUN_DATA_DIR` 或 Compose 配置为准。
+
+部署配置与业务数据应一起保留。密钥、存储密码和备份文件不要上传公开 Issue；离机备份应限制访问或加密。
 
 主要内容包括：
 
@@ -120,6 +122,8 @@ cd ~/scrapefun
 
 ## 恢复后检查
 
+下列命令对应一键部署的 `docker-compose.remote.yml` / `.updater.env`。NAS 手动示例使用 `docker compose ps` 和 `docker compose logs --tail=200 app`；访问端口按实际配置替换。
+
 ```bash
 docker compose --env-file .updater.env -f docker-compose.remote.yml ps
 docker compose --env-file .updater.env -f docker-compose.remote.yml logs --tail=200 app
@@ -137,3 +141,5 @@ curl -fsS http://127.0.0.1:8096/health/ready
 - 不要只备份 SQLite 数据库；数据库和文件资源必须来自同一时间点。
 - NAS 删除 Compose 项目前，先确认面板不会同时删除绑定目录。
 - 更新或重建后，确认仍是同一个宿主机目录挂载到 `/app/data`。
+
+[文档中心](./docs/README.md) · [Docker 运维](./DOCKER_GUIDE.md) · [支持](./SUPPORT.md) · [许可与协议](./legal/README.md)
