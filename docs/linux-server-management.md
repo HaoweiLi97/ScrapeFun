@@ -20,6 +20,8 @@ curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/o
 
 Beta 在任一命令的末尾使用 `bash -s -- beta`（原生使用 `sudo bash -s -- beta`）。原生脚本会查找对应渠道的正式发布包，下载并检查 SHA-256，再安装运行；不会在用户服务器上编译源码。没有对应架构或渠道的发布包时，在修改现有安装前退出。
 
+满足上述系统要求后，运行对应的一键命令即可，无需再手动下载发行包或重复执行安装程序。门户下载页直接展示标准命令及复制按钮，Beta 命令放在下方的折叠区域；Docker 与原生 systemd 是两种可选安装方式，不需要依次执行。
+
 | 位置 | Docker | 原生 systemd |
 | --- | --- | --- |
 | 管理命令 | `~/scrapefun/scrapefun` | `sudo scrapefun` |
