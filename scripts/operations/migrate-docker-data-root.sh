@@ -58,11 +58,11 @@ fi
 mkdir -p "$TARGET_DATA_DIR"
 target_real="$(cd "$TARGET_DATA_DIR" && pwd -P)"
 mounts="$(docker inspect --format '{{range .Mounts}}{{println .Destination "|" .Source "|" .Type}}{{end}}' "$container_id")"
-root_mount="$(printf '%s\n' "$mounts" | awk -F ' \| ' '$1 == "/app/data" { print; exit }')"
+root_mount="$(printf '%s\n' "$mounts" | awk -F ' [|] ' '$1 == "/app/data" { print; exit }')"
 
 if [[ -n "$root_mount" ]]; then
-  root_source="$(printf '%s\n' "$root_mount" | awk -F ' \| ' '{ print $2 }')"
-  root_type="$(printf '%s\n' "$root_mount" | awk -F ' \| ' '{ print $3 }')"
+  root_source="$(printf '%s\n' "$root_mount" | awk -F ' [|] ' '{ print $2 }')"
+  root_type="$(printf '%s\n' "$root_mount" | awk -F ' [|] ' '{ print $3 }')"
   if [[ "$root_type" == "bind" && -d "$root_source" ]]; then
     source_real="$(cd "$root_source" && pwd -P)"
     if [[ "$source_real" == "$target_real" ]]; then

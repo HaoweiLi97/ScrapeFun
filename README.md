@@ -12,7 +12,7 @@
   <img src="./docs/images/library.jpg" alt="ScrapeFun 影视库：继续观看、分类筛选与海报浏览" width="960" />
 </div>
 
-> 文档更新：2026-09-28。各平台独立发布，具体版本、系统要求及安装注意事项以对应 Release 为准。
+> 文档更新：2026-10-20。各平台独立发布，具体版本、系统要求及安装注意事项以对应 Release 为准。
 
 ScrapeFun 将媒体刮削、资源浏览、播放、阅读和多用户管理集中在一个自托管服务中。你可以在 Linux / NAS、Mac 或 Windows 电脑上部署 Server，再通过浏览器或专用客户端连接。
 
@@ -24,7 +24,9 @@ ScrapeFun 将媒体刮削、资源浏览、播放、阅读和多用户管理集�
 
 | 类型 | 平台 | 公开安装方式 | 入口 |
 | --- | --- | --- | --- |
-| Server | Linux / NAS | Docker，`linux/amd64` / `linux/arm64` | [Docker 部署](./DOCKER_GUIDE.md) |
+| Server | Linux / NAS | Docker，默认构建 `linux/amd64` | [Docker 部署](./DOCKER_GUIDE.md) |
+| Server | Linux | 原生 systemd / amd64 | [安装说明](./DOCKER_GUIDE.md#原生-systemd-安装) · [稳定版](https://github.com/HaoweiLi97/scrapefun-server-linux/releases/latest) |
+| Server | Android | arm64-v8a APK | [安装说明](https://github.com/HaoweiLi97/scrapefun-server-android) · [稳定版](https://github.com/HaoweiLi97/scrapefun-server-android/releases/latest) |
 | Server | macOS | Apple Silicon / arm64 DMG | [安装说明](https://github.com/HaoweiLi97/scrapefun-server-macos) · [稳定版](https://github.com/HaoweiLi97/scrapefun-server-macos/releases/latest) |
 | Server | Windows | x64 安装程序 | [安装说明](https://github.com/HaoweiLi97/scrapefun-server-windows) · [稳定版](https://github.com/HaoweiLi97/scrapefun-server-windows/releases/latest) |
 | Client | Linux | x64 deb / AppImage | [安装说明](https://github.com/HaoweiLi97/scrapefun-client-linux) · [稳定版](https://github.com/HaoweiLi97/scrapefun-client-linux/releases/latest) |
@@ -32,7 +34,7 @@ ScrapeFun 将媒体刮削、资源浏览、播放、阅读和多用户管理集�
 | Client | Windows | x64 / ARM64 安装程序 | [安装说明](https://github.com/HaoweiLi97/scrapefun-client-windows) · [稳定版](https://github.com/HaoweiLi97/scrapefun-client-windows/releases/latest) |
 | Client | Android | arm64-v8a / armeabi-v7a APK | [安装说明](https://github.com/HaoweiLi97/scrapefun-client-android) · [稳定版](https://github.com/HaoweiLi97/scrapefun-client-android/releases/latest) |
 
-下载范围按 2026-09-28 已公开的稳定版资产核对。其他架构或包格式应先确认 Release 是否提供。
+可用架构与包格式以实际 Release 资产和 Docker 标签的镜像清单为准。
 
 ## 快速开始
 
@@ -42,7 +44,7 @@ Linux 主机安装 Docker 和 Docker Compose 插件后，运行：
 curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-compose-deploy.sh | bash -s -- stable
 ```
 
-按提示选择 GPU 模式。脚本默认使用 `~/scrapefun` 保存部署配置、`~/scrapefun-data` 保存业务数据，并启动 app 与独立 updater。
+脚本自动检测 GPU 并执行容器预检；可通过 `SCRAPEFUN_GPU_MODE` 显式指定模式。脚本默认使用 `~/scrapefun` 保存部署配置、`~/scrapefun-data` 保存业务数据，并启动 app 与独立 updater。
 
 部署完成后，在浏览器中打开：
 

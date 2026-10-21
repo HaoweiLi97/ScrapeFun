@@ -2,7 +2,7 @@
 
 **简体中文** · [English](./README.en.md)
 
-> 文档更新：2026-09-28
+> 文档更新：2026-10-20
 
 从部署方式开始选择文档。Server 管理数据和媒体库，Client 连接已有 Server；不同平台的安装程序和更新通道独立发布。
 
@@ -18,7 +18,7 @@
 
 ## 平台安装
 
-- Server：[macOS](https://github.com/HaoweiLi97/scrapefun-server-macos) · [Windows](https://github.com/HaoweiLi97/scrapefun-server-windows)
+- Server：[Linux 原生](../DOCKER_GUIDE.md#原生-systemd-安装) · [Android](https://github.com/HaoweiLi97/scrapefun-server-android) ·[macOS](https://github.com/HaoweiLi97/scrapefun-server-macos) · [Windows](https://github.com/HaoweiLi97/scrapefun-server-windows)
 - Client：[Linux](https://github.com/HaoweiLi97/scrapefun-client-linux) · [macOS](https://github.com/HaoweiLi97/scrapefun-client-macos) · [Windows](https://github.com/HaoweiLi97/scrapefun-client-windows) · [Android](https://github.com/HaoweiLi97/scrapefun-client-android)
 
 ## 扩展与支持

@@ -2,7 +2,7 @@
 
 **简体中文** · [English](./DOCKER_DATA_AND_BACKUP.en.md)
 
-> 文档更新：2026-09-28
+> 文档更新：2026-10-20
 
 ScrapeFun 容器可以随时重建，业务数据必须保存在宿主机。当前唯一推荐的 Compose 写法是把整个数据根目录挂载到 `/app/data`：
 
@@ -26,11 +26,12 @@ services:
 | 子目录 | 内容 | 应用内备份 |
 | --- | --- | --- |
 | `db` | SQLite 数据库、设置、用户、媒体库、进度和任务 | 包含 |
-| `images` | 海报、背景图、生成封面和阅读背景 | 包含 |
+| `images` | 海报、背景图、生成封面和阅读背景 | 标准备份可省略可重建远程图片 |
 | `user-avatars` | 用户头像 | 包含 |
 | `config` | 系统刮削器运行时配置 | 包含 |
 | `custom-scrapers` | 旧版兼容的自定义刮削器文件 | 存在时包含 |
 | `local-subtitles` | 本地字幕 | 包含 |
+| `artwork-sources`、`file-artwork`、`storage-credentials` | 图片来源、文件封面、存储凭据 | 包含 |
 | `video-proxy-cache`、`transcode-cache` | 视频代理和转码缓存 | 不包含，可重建 |
 | `comic-cache`、`image-cache`、`image-upscale-cache` | 漫画和图片缓存 | 不包含，可重建 |
 | `media-probe-v2`、`temp`、`logs`、`cache` | 探测、临时文件和日志 | 不包含，可重建 |
@@ -48,29 +49,33 @@ docker inspect scrapefun \
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-compose-deploy.sh \
-  | bash -s -- stable ~/scrapefun --migrate-data-root
+  | bash -s -- ~/scrapefun --migrate-data-root
 ```
 
-迁移工具会：
+命令沿用现有渠道；自定义部署请替换 `~/scrapefun`。迁移脚本不会自动导出应用备份，执行前必须自行导出并保留。
 
-1. 停止 app 的写入任务并保留一份应用内备份。
+迁移流程：
+
+1. 执行脚本前，自行暂停写入任务并导出应用内备份。
 2. 停止 app，但先不要删除旧容器。
 3. 将旧容器 `/app/data` 中未挂载的其他目录复制到统一宿主机数据根目录。
 4. 确认数据库、图片、配置、头像、字幕和其他目录都在同一个根目录。
 5. 把 Compose 改为单个根挂载，再重建 app。
-6. 验证登录、媒体库、图片、刮削器和播放后，才删除旧容器或迁移副本。
+6. 复制完成后安装器会重建 app；完成后验证登录、媒体库、图片、刮削器和播放，并保留事先导出的备份。
 
 无法判断哪些文件只存在于旧容器时，不要继续重建；先保留旧容器并寻求支持。
 
 ## 应用内备份（推荐）
 
-进入 `设置 → 通用 → 备份与恢复`，点击“导出”。当前 `snapshot-v4` 备份使用 SQLite 一致性快照，并为每个文件记录大小与 SHA-256。它包含数据库、图片、头像、刮削器配置和本地字幕；可再生成的媒体缓存、临时文件和日志不会进入备份。
+在设置页的备份与恢复中导出 ZIP。当前 `snapshot-v5` 包含一致性数据库快照、逐文件大小和 SHA-256、图片来源、文件封面、头像、本地字幕、存储凭据及刮削器文件。
 
-`snapshot-v3`、`snapshot-v2` 和 `backup.json` 仍可导入。恢复会在修改当前数据前完成路径、逐文件校验、空间和 SQLite 检查，并在中断时回滚。旧备份恢复成功后，应立即导出一份新的 `snapshot-v4`。应用备份可能包含存储连接配置，应加密保存并复制到另一台设备。
+标准备份默认省略已有可靠重建来源的远程图片，恢复后按来源重建；完整应用备份保留这些图片。两者均排除可再生成缓存、临时文件和日志，完整应用备份不等于宿主机完整备份。
+
+仍支持 `snapshot-v4`、`snapshot-v3`、`snapshot-v2` 和 `backup.json`。旧版本未必能导入 v5，恢复前核对格式兼容性。备份可能含存储密码，应限制访问或加密并保留离机副本。应用 ZIP 不包含宿主机 `server.env` 等部署配置，须单独备份。
 
 ## Docker 宿主机完整备份
 
-灾难恢复应同时备份数据目录与部署配置。一键部署会在部署目录安装经过校验的运维工具：
+灾难恢复应同时备份数据目录与部署配置。以下工具要求一键部署的 `docker-compose.remote.yml` 和 `.updater.env`，NAS 手动 Compose 不能直接套用，应按面板流程备份。运维工具安装在一键部署目录：
 
 ```bash
 cd ~/scrapefun
@@ -124,7 +129,7 @@ cd ~/scrapefun
 
 ## 恢复后检查
 
-下列命令对应一键部署的 `docker-compose.remote.yml` / `.updater.env`。NAS 手动示例使用 `docker compose ps` 和 `docker compose logs --tail=200 app`；访问端口按实际配置替换。
+下列命令对应一键部署的 `docker-compose.remote.yml` / `.updater.env`。NAS 手动示例使用 `docker compose --env-file .env --env-file .updater.env ps` 和 `docker compose --env-file .env --env-file .updater.env logs --tail=200 app`；访问端口按实际配置替换。
 
 ```bash
 docker compose --env-file .updater.env -f docker-compose.remote.yml ps

@@ -2,7 +2,7 @@
 
 [简体中文](./DOCKER_DATA_AND_BACKUP.md) · **English**
 
-> Updated: 2026-09-28
+> Updated: 2026-10-20
 
 Containers can be recreated; business data must remain on the host. The recommended Compose configuration mounts the complete data root at `/app/data`:
 
@@ -24,11 +24,12 @@ Keep deployment configuration with the business data. Do not upload secrets, sto
 | Subdirectory | Contents | Included in app backup |
 | --- | --- | --- |
 | `db` | SQLite database, settings, users, libraries, progress, and tasks | Yes |
-| `images` | Posters, backdrops, generated covers, and reading backgrounds | Yes |
+| `images` | Posters, backdrops, generated covers, and reading backgrounds | Standard may omit rebuildable remote images |
 | `user-avatars` | User avatars | Yes |
 | `config` | Runtime configuration for system scrapers | Yes |
 | `custom-scrapers` | Legacy-compatible custom scraper files | When present |
 | `local-subtitles` | Local subtitles | Yes |
+| `artwork-sources`, `file-artwork`, `storage-credentials` | Artwork sources, file covers, storage credentials | Yes |
 | `video-proxy-cache`, `transcode-cache` | Video proxy and transcoding caches | No; can be rebuilt |
 | `comic-cache`, `image-cache`, `image-upscale-cache` | Comic and image caches | No; can be rebuilt |
 | `media-probe-v2`, `temp`, `logs`, `cache` | Probe results, temporary files, and logs | No; can be rebuilt |
@@ -46,29 +47,33 @@ If multiple mounts such as `/app/data/db` and `/app/data/images` appear, do not 
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-compose-deploy.sh \
-  | bash -s -- stable ~/scrapefun --migrate-data-root
+  | bash -s -- ~/scrapefun --migrate-data-root
 ```
+
+The command preserves the current channel; replace `~/scrapefun` with your actual deployment directory. Export an application backup yourself before running it; the migration script does not create one automatically.
 
 The migration process:
 
-1. Stop app write tasks and retain an in-app backup.
+1. Before running the script, pause write tasks and export an in-app backup yourself.
 2. Stop app while retaining the old container.
 3. Copy other, unmounted directories from the old container's `/app/data` into the host's unified data root.
 4. Confirm the database, images, configuration, avatars, subtitles, and other directories are together.
 5. Change Compose to a single root mount and recreate app.
-6. Verify login, libraries, images, scrapers, and playback before deleting the old container or migration copies.
+6. The installer recreates app after a successful copy. Verify login, libraries, images, scrapers, and playback, and retain the exported backup.
 
 If you cannot determine which files exist only in the old container, retain it and seek support before proceeding.
 
 ## In-app backup (recommended)
 
-Open **Settings → General → Backup and Restore** and select **Export**. Current `snapshot-v4` backups use a consistent SQLite snapshot and record each file's size and SHA-256. They include the database, images, avatars, scraper configuration, and local subtitles. Rebuildable media caches, temporary files, and logs are excluded.
+Export a ZIP from Backup and Restore in Settings. Current `snapshot-v5` includes a consistent database snapshot, per-file sizes and SHA-256, artwork sources, file covers, avatars, local subtitles, storage credentials, and scraper files.
 
-Imports still support `snapshot-v3`, `snapshot-v2`, and `backup.json`. Restore checks paths, individual files, space, and SQLite before changing current data, and rolls back interrupted operations. Export a new `snapshot-v4` immediately after restoring an older backup. Backups may contain storage connection settings; encrypt them and copy them to another device.
+Standard backups omit remote images with reliable recorded rebuild sources and rebuild them after restoration. Full application backups retain those images. Both exclude reproducible caches, temporary files, and logs. A full application backup is not a complete host backup.
+
+Imports support `snapshot-v4`, `snapshot-v3`, `snapshot-v2`, and `backup.json`. Older applications may not import v5; verify compatibility first. Backups may contain storage passwords: restrict access or encrypt and keep an off-host copy. Application ZIPs do not include host deployment configuration such as `server.env`; back it up separately.
 
 ## Full host backup
 
-Disaster recovery needs both the data directory and deployment configuration. The one-click installer places verified operations tools in the deployment directory:
+Disaster recovery needs both data and deployment configuration. These tools require the one-click installer’s `docker-compose.remote.yml` and `.updater.env`; manual NAS Compose requires a separate backup workflow. The one-click installer places operations tools in its deployment directory:
 
 ```bash
 cd ~/scrapefun
@@ -122,7 +127,7 @@ Run isolated recovery drills regularly:
 
 ## Checks after recovery
 
-The following commands use the one-click deployment's `docker-compose.remote.yml` / `.updater.env`. The manual NAS example instead uses `docker compose ps` and `docker compose logs --tail=200 app`. Adjust access ports to match your configuration.
+The following commands use the one-click deployment's `docker-compose.remote.yml` / `.updater.env`. The manual NAS example instead uses `docker compose --env-file .env --env-file .updater.env ps` and `docker compose --env-file .env --env-file .updater.env logs --tail=200 app`. Adjust access ports to match your configuration.
 
 ```bash
 docker compose --env-file .updater.env -f docker-compose.remote.yml ps

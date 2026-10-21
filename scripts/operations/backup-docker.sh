@@ -111,7 +111,7 @@ verify_sqlite_database "${OP_DATA_DIR}/db/dev.db"
 data_tar="${stage_dir}/data.tar.gz"
 tar_args=(-czf "$data_tar" -C "$OP_DATA_DIR")
 if [[ "$INCLUDE_CACHES" -ne 1 ]]; then
-  for cache_dir in book-cache book-tts-cache comic-cache image-cache video-proxy-cache transcode-cache image-upscale-cache cache temp logs; do
+  for cache_dir in book-cache book-tts-cache comic-cache image-cache video-proxy-cache transcode-cache image-upscale-cache media-probe subtitle-mirror cache temp logs; do
     tar_args+=(--exclude="./${cache_dir}")
   done
 fi

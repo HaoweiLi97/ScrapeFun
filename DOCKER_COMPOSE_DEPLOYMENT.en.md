@@ -2,7 +2,7 @@
 
 [简体中文](./DOCKER_COMPOSE_DEPLOYMENT.md) · **English**
 
-> Updated: 2026-09-28
+> Updated: 2026-10-20
 
 For Synology Container Manager, QNAP Container Station, 1Panel, CasaOS, and other environments supporting Docker Compose.
 
@@ -56,6 +56,8 @@ SCRAPEFUN_UPDATER_TOKEN=REPLACE_WITH_THE_RANDOM_TOKEN_GENERATED_ABOVE
 
 Both files contain sensitive configuration. Restrict access and include them in secure backups.
 
+Create an empty `.updater.env` next to `.env` to store image and channel state. Load both files for subsequent commands so manual recreation keeps the version chosen by web updates. NAS panels must load both files or provide equivalent variables.
+
 ## Create docker-compose.yml
 
 ```yaml
@@ -63,7 +65,7 @@ name: scrapefun
 
 services:
   app:
-    image: haoweil/scrapefun:latest
+    image: ${SCRAPETAB_IMAGE:-haoweil/scrapefun:latest}
     container_name: scrapefun
     restart: unless-stopped
     ports:
@@ -75,7 +77,7 @@ services:
       PORT: 8096
       DATABASE_URL: file:/app/data/db/dev.db
       FLARESOLVERR_URL: http://host.docker.internal:8191/v1
-      UPDATE_CURRENT_TAG: latest
+      UPDATE_CURRENT_TAG: ${UPDATE_CURRENT_TAG:-latest}
       UPDATE_WEBHOOK_URL: http://updater:4182/update
       UPDATE_WEBHOOK_TOKEN: ${SCRAPEFUN_UPDATER_TOKEN:?Set the updater token in .env}
       UPDATE_DOCKERHUB_REPO: haoweil/scrapefun
@@ -94,7 +96,7 @@ services:
         max-file: "3"
 
   updater:
-    image: haoweil/scrapefun-updater:latest
+    image: ${SCRAPETAB_UPDATER_IMAGE:-haoweil/scrapefun-updater:latest}
     container_name: scrapefun-updater
     restart: unless-stopped
     working_dir: /workspace
@@ -145,17 +147,7 @@ Intel, most AMD, and most NAS integrated GPUs:
 services:
   app:
     devices:
-      - /dev/dri:/dev/dri
-```
-
-Some AMD hosts also require `/dev/kfd`:
-
-```yaml
-services:
-  app:
-    devices:
-      - /dev/dri:/dev/dri
-      - /dev/kfd:/dev/kfd
+      - /dev/dri/renderD128:/dev/dri/renderD128
 ```
 
 NVIDIA:
@@ -164,20 +156,32 @@ NVIDIA:
 services:
   app:
     gpus: all
+    environment:
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility,video,graphics
 ```
 
 Install NVIDIA Container Toolkit on the host first. Omit GPU configuration when you deliberately do not want hardware acceleration.
 
+Merge snippets into the existing app service and preserve its environment entries. Confirm the render node exists. Map the whole `/dev/dri` only if required by the NAS. VAAPI / Vulkan do not require `/dev/kfd`; NVIDIA Vulkan requires the `graphics` capability.
+
 ## Start
 
 ```bash
-docker compose up -d
+docker compose --env-file .env --env-file .updater.env config -q
+docker compose --env-file .env --env-file .updater.env up -d
 ```
 
-Check `docker compose ps`, then open:
+Check `docker compose --env-file .env --env-file .updater.env ps`, then open:
 
 ```text
 http://NAS_IP:8096
+```
+
+Check readiness using your actual host port:
+
+```bash
+curl -fsS http://127.0.0.1:8096/health/ready
 ```
 
 ## Change the access port
@@ -193,20 +197,13 @@ The address becomes `http://NAS_IP:18096`.
 
 ## Use beta
 
-Change both image tags and the current channel:
+Set these entries in `.updater.env`, then run the manual update commands. To return to Stable, change all three `beta` values to `latest`.
 
-```yaml
-services:
-  app:
-    image: haoweil/scrapefun:beta
-    environment:
-      UPDATE_CURRENT_TAG: beta
-
-  updater:
-    image: haoweil/scrapefun-updater:beta
+```dotenv
+SCRAPETAB_IMAGE=haoweil/scrapefun:beta
+SCRAPETAB_UPDATER_IMAGE=haoweil/scrapefun-updater:beta
+UPDATE_CURRENT_TAG=beta
 ```
-
-To return to stable, change both image tags and `UPDATE_CURRENT_TAG` to `latest`.
 
 ## Keep updater tokens consistent
 
@@ -236,9 +233,11 @@ FLARESOLVERR_URL: http://192.168.1.50:8191/v1
 
 Manual update:
 
+If `.updater.env` pins images with `@sha256` digests, `pull` keeps that fixed version. To upgrade along a channel, first set `SCRAPETAB_IMAGE` and `SCRAPETAB_UPDATER_IMAGE` to the desired `:latest` / `:beta` tags and set the matching `UPDATE_CURRENT_TAG`. Keep digests when recreating the same version.
+
 ```bash
-docker compose pull
-docker compose up -d --remove-orphans
+docker compose --env-file .env --env-file .updater.env pull
+docker compose --env-file .env --env-file .updater.env up -d
 ```
 
 An ordinary update does not require an initial `docker compose down`. Running `down` stops both app and updater and unnecessarily increases downtime. Consider it only when changing networks, the project name, or removing the whole project.
@@ -246,3 +245,23 @@ An ordinary update does not require an initial `docker compose down`. Running `d
 See [persistent data and backups](./DOCKER_DATA_AND_BACKUP.en.md) for full backup and migration instructions.
 
 [Documentation](./docs/README.en.md) · [Releases](./RELEASE_POLICY.en.md) · [Support](./SUPPORT.en.md) · [Licensing](./legal/README.en.md)
+
+## Comic enhancement: automatic GPU detection and setup
+
+The one-click script defaults to auto: WSL2 /dev/dxg takes priority, followed by NVIDIA and Intel/AMD DRI. Missing GPU dependencies are installed automatically; an installed, validated environment is reused. Comic enhancement uses NCNN Vulkan and does not require the CUDA Toolkit.
+
+On Ubuntu/Debian WSL2, the installer automatically builds and installs a verified isolated Dozen Vulkan driver. Native Linux installs missing Vulkan loader, tools and Mesa drivers. NVIDIA userspace Vulkan libraries must match the running driver version.
+
+On native Linux, NVIDIA Docker mode installs the NVIDIA Container Toolkit when missing and configures the local system Docker runtime. First-time configuration restarts Docker and may briefly affect other containers. Remote, custom and rootless daemons are not reconfigured automatically.
+
+The Windows GPU driver must already support WSL2 GPU passthrough. Dozen remains experimental; the RTX 4060 Ti has been verified. Driver installation on other devices and NAS systems depends on vendor support. Automatic dependency installation currently supports Ubuntu/Debian; other distributions need a preinstalled GPU environment.
+
+Before Docker startup, the installer tests hardware Vulkan and the five built-in enhancement engines as the actual service user. Software renderers such as llvmpipe/lavapipe are not accepted as hardware GPUs. Native installation checks host hardware Vulkan; run the engine capability tests from Settings after installation.
+
+WSL settings are written into the primary Compose file and native service environment and retained by one-click updates. The WSL Docker daemon must run in the same distribution with access to /dev/dxg and the driver directory.
+
+Set SCRAPEFUN_GPU_MODE=none to disable GPU environment installation, or explicitly select wsl, nvidia or dri. Failed hardware tests in auto mode report CPU fallback; explicit GPU mode failures stop deployment. Environment installation failures stop deployment without replacing existing app containers.
+
+Validation: the published v0.4.0 native and Docker releases passed Waifu2x Fast, Waifu2x, Real-CUGAN SE, Real-CUGAN Pro and Real-ESRGAN tests on an RTX 4060 Ti under WSL2. Images were enlarged from 512×768 to 1024×1536 in strict GPU mode without CPU fallback; observed GPU utilization peaked at 76%.
+
+Select GPU 0 and automatic tile size (tile=0) in the reader. Real-CUGAN crashed with tile=32 in this environment; validate real pages with automatic tiling first. A successful nvidia-smi query alone does not prove Vulkan works; use the Settings capability tests and actual enhancement results.

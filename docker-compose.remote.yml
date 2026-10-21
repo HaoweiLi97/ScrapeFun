@@ -10,7 +10,6 @@ services:
       - NODE_ENV=production
       - PORT=8096
       - DATABASE_URL=file:/app/data/db/dev.db
-      - FLARESOLVERR_URL=${FLARESOLVERR_URL:-http://host.docker.internal:8191/v1}
       - TMDB_API_KEY=${TMDB_API_KEY:-}
       - BANGUMI_API_KEY=${BANGUMI_API_KEY:-}
       - UPDATE_CURRENT_TAG=${UPDATE_CURRENT_TAG:-latest}
@@ -22,6 +21,7 @@ services:
       - NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES:-compute,utility,video,graphics}
       - TRANSCODE_HW_DECODE=${TRANSCODE_HW_DECODE:-auto}
       - TRANSCODE_HW_ACCEL=${TRANSCODE_HW_ACCEL:-auto}
+      # __APP_GPU_ENV__
     # __APP_GPU_BLOCK__
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -32,6 +32,7 @@ services:
       # image recreation even when an older installer did not know their names.
       - ${SCRAPEFUN_DATA_DIR:-./scrapefun-data}:/app/data
       - /etc/machine-id:/host/etc/machine-id:ro
+      # __APP_GPU_VOLUMES__
     init: true
     security_opt:
       - no-new-privileges:true

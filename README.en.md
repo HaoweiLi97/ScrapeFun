@@ -12,7 +12,7 @@
   <img src="./docs/images/library.jpg" alt="ScrapeFun media library: continue watching, category filters, and poster browsing" width="960" />
 </div>
 
-> Updated: 2026-09-28. Platforms ship independently. Check the relevant release for its version, system requirements, and installation notes.
+> Updated: 2026-10-20. Platforms ship independently. Check the relevant release for its version, system requirements, and installation notes.
 
 ScrapeFun brings metadata scraping, resource browsing, playback, reading, and user management into a self-hosted service. Deploy Server on Linux / NAS, macOS, or Windows, then connect through a browser or a dedicated Client.
 
@@ -24,7 +24,9 @@ Deploy a Server first, then install a Client if needed. Server stores libraries,
 
 | Type | Platform | Published installation format | Links |
 | --- | --- | --- | --- |
-| Server | Linux / NAS | Docker, `linux/amd64` / `linux/arm64` | [Docker deployment](./DOCKER_GUIDE.en.md) |
+| Server | Linux / NAS | Docker, builds default to `linux/amd64` | [Docker deployment](./DOCKER_GUIDE.en.md) |
+| Server | Linux | Native systemd / amd64 | [Installation](./DOCKER_GUIDE.en.md#native-systemd-installation) · [Stable release](https://github.com/HaoweiLi97/scrapefun-server-linux/releases/latest) |
+| Server | Android | arm64-v8a APK | [Installation](https://github.com/HaoweiLi97/scrapefun-server-android) · [Stable release](https://github.com/HaoweiLi97/scrapefun-server-android/releases/latest) |
 | Server | macOS | Apple Silicon / arm64 DMG | [Installation](https://github.com/HaoweiLi97/scrapefun-server-macos/blob/main/README.en.md) · [Stable release](https://github.com/HaoweiLi97/scrapefun-server-macos/releases/latest) |
 | Server | Windows | x64 installer | [Installation](https://github.com/HaoweiLi97/scrapefun-server-windows/blob/main/README.en.md) · [Stable release](https://github.com/HaoweiLi97/scrapefun-server-windows/releases/latest) |
 | Client | Linux | x64 deb / AppImage | [Installation](https://github.com/HaoweiLi97/scrapefun-client-linux/blob/main/README.en.md) · [Stable release](https://github.com/HaoweiLi97/scrapefun-client-linux/releases/latest) |
@@ -32,7 +34,7 @@ Deploy a Server first, then install a Client if needed. Server stores libraries,
 | Client | Windows | x64 / ARM64 installer | [Installation](https://github.com/HaoweiLi97/scrapefun-client-windows/blob/main/README.en.md) · [Stable release](https://github.com/HaoweiLi97/scrapefun-client-windows/releases/latest) |
 | Client | Android | arm64-v8a / armeabi-v7a APK | [Installation](https://github.com/HaoweiLi97/scrapefun-client-android/blob/main/README.en.md) · [Stable release](https://github.com/HaoweiLi97/scrapefun-client-android/releases/latest) |
 
-Formats above were checked against published stable assets on 2026-09-28. Check Release Assets before expecting another architecture or package format.
+Available architectures and formats follow the actual Release Assets and Docker tag manifests.
 
 ## Quick start
 
@@ -42,7 +44,7 @@ After installing Docker and the Docker Compose plugin on Linux, run:
 curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-compose-deploy.sh | bash -s -- stable
 ```
 
-Select a GPU mode when prompted. By default, the script stores deployment configuration in `~/scrapefun`, persistent data in `~/scrapefun-data`, and starts app plus a separate updater.
+The installer automatically detects GPU access and validates it inside the container; set `SCRAPEFUN_GPU_MODE` to choose a mode explicitly. By default, the script stores deployment configuration in `~/scrapefun`, persistent data in `~/scrapefun-data`, and starts app plus a separate updater.
 
 Open the following address after deployment:
 
