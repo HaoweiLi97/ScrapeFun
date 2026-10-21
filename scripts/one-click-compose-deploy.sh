@@ -988,7 +988,8 @@ imageUpscaleService.getRuntimeReport(true, 0).then(report => {
   const failed = report.engines.filter(engine => engine.available && !engine.test?.passed);
   console.log(JSON.stringify({ hardwareAvailable: report.hardwareAvailable, device: report.selectedDevice,
     engines: report.engines.map(engine => ({ id: engine.id, available: engine.available, passed: engine.test?.passed })) }));
-  process.exit(report.hardwareAvailable && report.supported && !failed.length ? 0 : 22);
+  const softwareExecution = report.engines.some(engine => /\[0\s+(?:llvmpipe|lavapipe|swiftshader)/i.test(engine.test?.detail || ''));
+  process.exit(report.hardwareAvailable && report.selectedDevice?.kind === 'hardware' && report.supported && !failed.length && !softwareExecution ? 0 : 22);
 }).catch(error => { console.error(error); process.exit(22); });
 JS
 EOF
