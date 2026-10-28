@@ -31,7 +31,61 @@ Beta 在任一命令的末尾使用 `bash -s -- beta`（原生使用 `sudo bash 
 | 日志 | Compose logs | systemd journal |
 | 自启 | Docker restart policy | `scrapefun.service` |
 
-脚本会等待 `/health/ready` 成功后显示完成和访问地址；仅进程存活不代表安装成功。默认端口 8096，首次安装可通过 `APP_HOST_PORT` 修改。原生配置文件由 root 持有，密钥不会显示在管理概览里。
+脚本会等待 `/health/ready` 成功后显示完成和访问地址；仅进程存活不代表安装成功。默认端口 8096；首次在终端安装会询问端口，直接回车沿用默认值。通过管道执行时从 `/dev/tty` 读取选择，不占用脚本输入。原生配置文件由 root 持有，密钥不会显示在管理概览里。
+
+### 自定义端口与无人值守安装
+
+本地原生安装或更新：
+
+```bash
+sudo bash scripts/one-click-native-deploy.sh stable --port 18096
+```
+
+Docker 使用同样的参数：
+
+```bash
+bash scripts/one-click-compose-deploy.sh stable --port 18096
+```
+
+公网原生命令：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-native-deploy.sh \
+  | sudo bash -s -- stable --port 18096 --non-interactive
+```
+
+端口优先级为 `--port` > `APP_HOST_PORT` > 已保存端口 > 8096。原生安装将实际端口写入 `server.env` 和 `management.env`；Docker 写入 `.updater.env`，容器内部仍使用 8096。更新不指定端口时保留原值；显式指定则修改端口，密钥和数据不变。端口须为 1–65535 的数字，原生安装会检查占用，绝不结束占用该端口的其他进程；低于 1024 时只为服务增加绑定低端口所需的 capability。
+
+`APP_HOST_PORT` 必须传给执行安装器的命令，例如 `sudo env APP_HOST_PORT=18096 bash scripts/one-click-native-deploy.sh`。不要把它仅放在管道左侧的 `curl` 前面。自动化中使用 `--non-interactive`（别名 `--yes`、`-y`），省略端口时采用已保存值或默认值。
+
+### 原生安装前检查与依赖
+
+```bash
+sudo bash scripts/one-click-native-deploy.sh --check
+sudo bash scripts/one-click-native-deploy.sh stable --install-deps --port 18096 --non-interactive
+```
+
+`--check`（别名 `--dry-run`）检查本机前提、路径、备份空间和目标端口，不安装依赖、不写入安装目录、不启动或停止服务；指定离线包时也校验 SHA-256。与 `--install-deps` 同时使用仍然只检查。管道运行检查命令时，可能下载辅助脚本到临时目录；不会下载应用发布包。
+
+原生入口检查 Linux amd64、glibc（至少 2.28）、运行中的 systemd、所需命令和 Node.js 20/22/24。不支持的架构、musl/Alpine、未启用 systemd 的 WSL 会明确退出。安装器还会在停服前检查发布包原生模块的动态链接依赖；具体运行库要求以所选发布包为准。
+
+默认只报告缺失依赖。显式使用 `--install-deps` 时，按当前系统的 `apt-get`、`dnf`、`yum`、`zypper` 或 `pacman` 安装缺失的基础包，使用已有软件源，不执行全系统升级。有些发行版的软件源没有 FFmpeg，需要先启用适用软件源或自行安装；脚本会停止并指出缺失命令。GPU 环境的自动补装范围仍见下文。
+
+没有兼容 Node 时，`--install-deps` 从 nodejs.org 下载 Node 22，并检查官方 SHA-256 清单，安装到配置目录的 `runtime/`，不替换全局 Node。后续更新复用该路径。显式 `--node PATH` 指向的程序不兼容时直接报错。应用数据仍在独立数据目录中。
+
+### 版本、路径与慢启动
+
+```bash
+sudo bash scripts/one-click-native-deploy.sh stable --version 0.4.2 --port 18096
+sudo bash scripts/one-click-native-deploy.sh stable \
+  --install-dir /opt/scrapefun-lab --data-dir /var/lib/scrapefun-lab \
+  --config-dir /etc/scrapefun-lab --service-name scrapefun-lab.service \
+  --service-user scrapefun-lab --gpu-mode none --health-timeout 600 --non-interactive
+```
+
+`--version` 选择对应 GitHub Release，并核对归档的版本和渠道；不指定时选择对应渠道的最新发布包。`--archive FILE` 可使用已下载的包和相邻 `.sha256` 文件。网络下载有连接/总时长限制、重试、低速超时和临时文件隔离，沿用 curl 的代理环境变量；失败不会替换旧程序。
+
+再次更新自定义实例时，只需指定 `--config-dir /etc/scrapefun-lab`，脚本会从该目录读取已保存的程序、数据、服务用户、服务名和 Node 路径。显式路径参数覆盖保存值；改变数据路径不会自动搬迁旧数据。GPU 配置未显式指定时保留已有配置。`--health-timeout` 范围为 1–86400 秒，也可使用 `SCRAPEFUN_HEALTH_TIMEOUT` 环境变量。
 
 ## 统一管理入口
 
@@ -54,7 +108,7 @@ sudo scrapefun restore /path/to/backup.tar.gz
 
 同机两种部署可以通过 `scrapefun --mode docker --deploy-dir /path/to/compose status` 明确选择；应用端口和 Docker updater 端口也要避免冲突。数据目录不会自动在两种部署之间搬迁。
 
-原生改端口或其他配置后编辑 `/etc/scrapefun/server.env` 并重启。可配置 `FFMPEG_PATH`、`FFPROBE_PATH`；GPU 驱动由主机负责，安装器为服务账号加入现有 video/render 组。Docker 自动检测 GPU 并补齐运行环境，安装前执行硬件 Vulkan 与漫画增强预检。
+原生可以重新运行安装入口并传入 `--port` 修改端口；也可编辑 `/etc/scrapefun/server.env` 后重启。可配置 `FFMPEG_PATH`、`FFPROBE_PATH`；GPU 驱动由主机负责，安装器为服务账号加入现有 video/render 组。Docker 自动检测 GPU 并补齐运行环境，安装前执行硬件 Vulkan 与漫画增强预检。
 
 ## 漫画增强：自动检测与安装显卡环境
 
@@ -78,13 +132,15 @@ WSL 配置直接写入主 Compose 文件和原生服务环境，后续一键更�
 
 ## 原生更新与数据保护
 
-原生更新先校验下载文件、压缩包路径和受保护服务端清单，再停止服务、检查 SQLite 并备份数据，最后切换程序。既有端口、密钥、配置和数据位置保持不变。失败时切回旧程序、旧服务配置和更新前数据，返回非零退出码；旧版本、失败版本和数据副本保留，供管理员检查。备份和安装使用同一个操作锁。
+原生更新先校验下载文件、压缩包路径、解压空间、运行库和受保护服务端清单，再停止服务、复查端口、检查 SQLite 并备份数据，最后切换程序。未显式覆盖的既有端口、密钥、配置和数据位置保持不变。配置先写入暂存目录，更新前备份保存原配置。失败或收到 INT/TERM/HUP 时切回旧程序、旧服务配置、管理工具和更新前数据；原本运行的服务恢复启动，返回非零退出码。首次安装失败不留下新服务的自启配置。成功通过就绪检查后才启用开机自启。旧版本、失败版本和数据副本保留，供管理员检查。备份和安装使用同一个操作锁，并发操作会明确退出。
+
+如果自动回退也失败，会保留暂存恢复资料和备份路径，并提示人工处理；数据恢复未确认成功时，不自动启动旧版本。系统依赖和 GPU 驱动的安装不属于应用数据事务，失败后不会自动卸载这些系统组件。
 
 新包使用与 Windows、Docker 相同的事务式 `prepare-storage`。已发布的旧 0.3.3 原生包没有这个入口，兼容启动会先做 SQLite 完整性检查和数据库快照，再在私有数据库副本上执行不带 `--accept-data-loss` 的 Prisma 同步。FTS 搜索缓存只在副本中清理，应用启动后重建；副本通过完整性检查后才提交。涉及可能丢失用户数据的结构变更会失败，不覆盖原数据库。相同 schema 的后续启动仅检查数据库完整性。
 
 Docker 更新沿用现有一键脚本，保留渠道、数据根、GPU 和迁移保护；Web 设置页仍使用已有 updater 更新流程。
 
-原生备份保存数据库、用户文件和一份 `server.env`，默认排除可重建缓存和日志；备份含密钥，权限为 0600，应放在数据目录之外。恢复先检查压缩包成员、校验和和 SQLite，保留原数据目录，再切换。恢复后检查就绪状态，失败则恢复原数据。原生恢复保留当前 `server.env`；归档中的配置用于管理员另行检查。Docker 继续使用已有备份、恢复、加密、远端复制和定时备份工具，详细选项见 [系统运维](./system-operations.md)。
+原生备份保存数据库、用户文件和一份 `server.env`，默认排除可重建缓存和日志；备份含密钥，权限为 0600，应放在数据目录之外。恢复先检查压缩包成员、校验和和 SQLite，保留原数据目录，再切换。恢复后检查就绪状态，失败则恢复原数据。原生恢复保留当前 `server.env`；归档中的配置用于管理员另行检查。Docker 继续使用已有备份、恢复、加密、远端复制和定时备份工具，详细选项见 [备份与恢复](../DOCKER_DATA_AND_BACKUP.md)。
 
 ## 本地和离线安装
 
@@ -107,5 +163,8 @@ sudo env SCRAPEFUN_NATIVE_ARCHIVE=/path/to/scrapefun-server-linux-amd64-0.3.3-st
 
 ```bash
 python3 scripts/operations/linux-server-tools.test.py -v
+python3 scripts/operations/linux-install-port.test.py -v
 bash scripts/operations/operations.test.sh
 ```
+
+安装场景测试在私有 mount namespace 中使用临时路径和模拟 systemctl/网络/包管理器，不操作主机上的真实服务。发行版命令分支通过模拟检查不代表已在所有发行版完成真实安装。设计参考 [Tailscale 安装脚本](https://tailscale.com/install.sh)、[Docker 安装脚本](https://get.docker.com/) 和 [Caddy 安装文档](https://caddyserver.com/docs/install)。

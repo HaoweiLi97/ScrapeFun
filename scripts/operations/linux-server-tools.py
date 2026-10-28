@@ -10,6 +10,8 @@ import sqlite3
 import tarfile
 import tempfile
 import subprocess
+import re
+import socket
 from datetime import datetime, timezone
 
 
@@ -68,6 +70,11 @@ def members(archive, allow_links=False):
 def extract(path, destination, allow_links=False):
     with tarfile.open(path, "r:gz") as archive:
         entries = members(archive, allow_links)
+        required = sum(entry.size for entry in entries if entry.isfile()) + 64 * 1024 * 1024
+        parent = Path(destination)
+        while not parent.exists(): parent = parent.parent
+        if shutil.disk_usage(parent).free < required:
+            raise ValueError(f"insufficient disk space for extraction: need {required // (1024 * 1024)} MiB")
         # Python 3.10 is supported on Ubuntu 22.04. Validation above also
         # rejects writes through symlinks, device nodes and escaping hardlinks.
         archive.extractall(destination, members=entries)
@@ -85,10 +92,65 @@ def check_db(root):
 def safe_root(value):
     raw = Path(value)
     path = raw.resolve()
-    broad = {Path(p) for p in ["/", "/var/lib", "/usr/local", "/home", "/etc", "/usr", "/opt", "/var", "/root", "/tmp"]}
-    if not raw.is_absolute() or raw.is_symlink() or path in broad or path == Path.home() or len(path.parts) < 3:
+    broad = {Path(p).resolve() for p in ["/", "/var/lib", "/usr/local", "/home", "/etc", "/usr", "/opt", "/var", "/root", "/tmp"]}
+    if not raw.is_absolute() or raw.is_symlink() or path in broad or path == Path.home().resolve() or len(path.parts) < 3:
         raise ValueError(f"unsafe directory: {value}")
     return path
+
+
+def deployment_paths(install, data, config):
+    paths = []
+    for value in (install, data, config):
+        path = safe_root(value)
+        if not re.fullmatch(r'/[A-Za-z0-9_./-]+', value) or '..' in Path(value).parts or path != Path(value):
+            raise ValueError('unsafe systemd deployment path: ' + value)
+        if path.exists() and not path.is_dir():
+            raise ValueError('deployment path must be a directory: ' + value)
+        paths.append(path)
+    for index, first in enumerate(paths):
+        for second in paths[index + 1:]:
+            if first == second or first in second.parents or second in first.parents:
+                raise ValueError('install, data and configuration directories must be separate')
+    for name in ('server.env', 'management.env', 'gpu.env', '.operations.lock', 'scrapefun'):
+        candidate = paths[2] / name
+        if candidate.is_symlink() or (candidate.exists() and not candidate.is_file()):
+            raise ValueError('configuration must be a regular file: ' + str(candidate))
+    for name in ('runtime', 'operations'):
+        directory = paths[2] / name
+        if directory.is_symlink() or (directory.exists() and not directory.is_dir()):
+            raise ValueError('management path must be a directory without symlinks: ' + str(directory))
+
+
+def check_port(port):
+    # Bind on every IPv4 interface, matching the default server HOST. Never
+    # kill the owner of an occupied port or assume a listening app is ours.
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as listener:
+        listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        try:
+            listener.bind(('0.0.0.0', port))
+        except OSError as error:
+            raise ValueError(f'TCP port {port} is unavailable: {error}; choose --port PORT') from error
+
+
+def backup_space(data, config):
+    # A snapshot temporarily holds the inner and outer archive together.
+    # Estimate conservatively without counting regenerable caches.
+    data = Path(data)
+    caches = {'cache', 'temp', 'logs', 'book-cache', 'book-tts-cache', 'comic-cache', 'image-cache',
+              'video-proxy-cache', 'transcode-cache', 'image-upscale-cache', 'media-probe', 'subtitle-mirror'}
+    size = 0
+    if data.is_dir():
+        for root, directories, files in os.walk(data, followlinks=False):
+            if Path(root) == data:
+                directories[:] = [name for name in directories if name not in caches]
+            for name in files:
+                file = Path(root) / name
+                if not file.is_symlink(): size += file.stat().st_size
+    parent = Path(config)
+    while not parent.exists(): parent = parent.parent
+    required = 2 * size + 64 * 1024 * 1024
+    if shutil.disk_usage(parent).free < required:
+        raise ValueError(f'insufficient backup disk space: need at least {required // (1024 * 1024)} MiB')
 
 
 def backup(data, config, output):
@@ -200,7 +262,7 @@ def prepare_legacy(data, schema, node):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=["extract-release", "backup", "verify-backup", "restore", "prepare-legacy"])
+    parser.add_argument("command", choices=["extract-release", "backup", "verify-backup", "restore", "prepare-legacy", "preflight", "check-port"])
     parser.add_argument("--archive")
     parser.add_argument("--destination")
     parser.add_argument("--data")
@@ -208,8 +270,16 @@ def main():
     parser.add_argument("--output")
     parser.add_argument("--schema")
     parser.add_argument("--node")
+    parser.add_argument("--install")
+    parser.add_argument("--port", type=int)
     args = parser.parse_args()
-    if args.command == "extract-release":
+    if args.command == "preflight":
+        deployment_paths(args.install, args.data, args.config)
+        backup_space(args.data, args.config)
+    elif args.command == "check-port":
+        if args.port is None or not 1 <= args.port <= 65535: raise ValueError('invalid port')
+        check_port(args.port)
+    elif args.command == "extract-release":
         extract(args.archive, args.destination, allow_links=True)
         roots = list(Path(args.destination).iterdir())
         if len(roots) != 1 or not (roots[0] / "start.sh").is_file() or not (roots[0] / "server/dist/index.js").is_file():

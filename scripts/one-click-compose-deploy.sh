@@ -8,10 +8,17 @@ ACTION="deploy"
 MIGRATE_LEGACY_DATA=0
 
 POSITIONAL_ARGS=()
-for argument in "$@"; do
-  case "$argument" in
-    --migrate-data-root) MIGRATE_LEGACY_DATA=1 ;;
-    *) POSITIONAL_ARGS+=("$argument") ;;
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --migrate-data-root) MIGRATE_LEGACY_DATA=1; shift ;;
+    --port)
+      [[ $# -ge 2 && -n "$2" ]] || { echo 'Error: --port requires a value' >&2; exit 1; }
+      APP_HOST_PORT="$2"; shift 2 ;;
+    --port=*)
+      APP_HOST_PORT="${1#*=}"
+      [[ -n "$APP_HOST_PORT" ]] || { echo 'Error: --port requires a value' >&2; exit 1; }
+      shift ;;
+    *) POSITIONAL_ARGS+=("$1"); shift ;;
   esac
 done
 set -- "${POSITIONAL_ARGS[@]}"
@@ -72,14 +79,17 @@ NC='\033[0m'
 usage() {
   cat <<EOF
 Usage:
-  ./scripts/one-click-compose-deploy.sh [stable|beta] [deploy_dir]
+  ./scripts/one-click-compose-deploy.sh [stable|beta] [deploy_dir] [--port PORT]
 
 Examples:
   ./scripts/one-click-compose-deploy.sh
   ./scripts/one-click-compose-deploy.sh beta
   ./scripts/one-click-compose-deploy.sh stable /opt/scrapefun
+  ./scripts/one-click-compose-deploy.sh stable /opt/scrapefun --port 18096
 
 Environment variables:
+  APP_HOST_PORT           Host port (1-65535, default: 8096).
+                           --port overrides this value and the saved port.
   IMAGE_REPOSITORIES       Space or comma separated image repositories to try.
                            Example: "haoweil/scrapefun registry.example.com/scrapefun"
   IMAGE_BUNDLE_BASE_URL    Base URL for GitHub Release docker load bundles.
@@ -132,6 +142,17 @@ read_env_value() {
 
   sed -n "s/^${key}=//p" "${file}" | tail -n 1
 }
+
+validate_app_host_port() {
+  if [[ ! "$APP_HOST_PORT" =~ ^[0-9]{1,5}$ ]] || (( 10#$APP_HOST_PORT < 1 || 10#$APP_HOST_PORT > 65535 )); then
+    echo 'Error: port must be a number between 1 and 65535.' >&2
+    exit 1
+  fi
+  APP_HOST_PORT="$((10#$APP_HOST_PORT))"
+}
+
+# Reject explicit invalid ports before creating files or querying Docker.
+if [[ -n "$APP_HOST_PORT" ]]; then validate_app_host_port; fi
 
 print_permission_help() {
   local path="$1"
@@ -430,6 +451,7 @@ EOF
 
 resolve_app_host_port() {
   if [[ -n "${APP_HOST_PORT}" ]]; then
+    validate_app_host_port
     return
   fi
 
@@ -438,6 +460,7 @@ resolve_app_host_port() {
     existing_port="$(read_env_value "APP_HOST_PORT" "${UPDATER_ENV_FILE}")"
     if [[ -n "${existing_port}" ]]; then
       APP_HOST_PORT="${existing_port}"
+      validate_app_host_port
       return
     fi
   fi
@@ -452,13 +475,9 @@ resolve_app_host_port() {
     requested_port="${requested_port//[[:space:]]/}"
     requested_port="${requested_port:-8096}"
 
-    if [[ ! "${requested_port}" =~ ^[0-9]+$ ]] || (( requested_port < 1 || requested_port > 65535 )); then
-      echo -e "${RED}Error: port must be a number between 1 and 65535.${NC}"
-      exit 1
-    fi
-
     APP_HOST_PORT="${requested_port}"
   fi
+  validate_app_host_port
 }
 
 resolve_data_dir() {

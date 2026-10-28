@@ -141,6 +141,19 @@ curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/o
 # Beta：将 sudo bash 换成 sudo bash -s -- beta
 ```
 
+首次终端安装会询问端口，默认 8096。指定端口、补齐基础依赖并无人值守安装：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-native-deploy.sh \
+  | sudo bash -s -- stable --port 18096 --install-deps --non-interactive
+```
+
+仅检查使用 `--check` 或 `--dry-run`，不会安装依赖或重启服务；指定版本使用 `--version 0.4.2`，本地包使用 `--archive /path/release.tar.gz`（旁边须有 `.sha256`）。端口优先级为 `--port` > `APP_HOST_PORT` > 已保存端口 > 8096，更新时不指定则保留原端口。Docker 一键入口也支持 `--port 18096`。环境变量应放在运行安装器的命令前，不能仅放在管道左侧的 curl 前。
+
+`--install-deps` 使用现有 apt-get/dnf/yum/zypper/pacman 软件源安装缺失基础包；FFmpeg 不在当前软件源时会明确报错。缺少兼容 Node 时从 nodejs.org 下载并校验独立 Node 22，保存在配置目录中，不替换全局 Node。原生包只支持 glibc Linux amd64 和运行中的 systemd；其他架构、Alpine/musl 或未启用 systemd 的 WSL 会提前退出。
+
+自定义路径使用 `--install-dir`、`--data-dir`、`--config-dir`；多实例另设 `--service-name` 和 `--service-user`。后续只指定 `--config-dir` 即可复用该实例的已有路径与服务设置。安装会检查目标端口、路径、运行库、磁盘空间和包完整性，通过应用就绪检查后才显示完成；失败或中断会恢复旧程序、配置、管理工具和更新前数据。完整参数与使用边界见 [Linux 服务端安装与管理](./docs/linux-server-management.md)。
+
 默认程序 `/opt/scrapefun`、数据 `/var/lib/scrapefun`、配置 `/etc/scrapefun/server.env`。使用 `sudo scrapefun status`、`health`、`logs --follow`、`update`、`backup` 管理；修改配置后运行 `sudo scrapefun restart`。备份含密钥，应存放在数据目录之外。原生归档使用 `sudo scrapefun restore /path/to/backup.tar.gz`，不能直接用于 Docker 恢复工具。
 
 ## 后续阅读
