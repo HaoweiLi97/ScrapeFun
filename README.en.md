@@ -133,7 +133,7 @@ volumes:
 
 Updating restarts Server and interrupts playback and background tasks. Back up first, update, then check login, libraries, images, and playback and reading progress. `latest` follows stable releases and `beta` follows prereleases; use an explicit version tag when you need a fixed version.
 
-macOS Server 0.3.3 is available only for Apple Silicon. It has an ad-hoc integrity signature and is neither Apple Developer ID signed nor notarized. Follow the [platform installation instructions](https://github.com/HaoweiLi97/scrapefun-server-macos/blob/main/README.en.md#installation-and-first-launch).
+macOS Server [0.4.2](https://github.com/HaoweiLi97/scrapefun-server-macos/releases/tag/v0.4.2) is available only for Apple Silicon. It has an ad-hoc integrity signature and is neither Apple Developer ID signed nor notarized. Follow the installation instructions in that release.
 
 ## Contact and licensing
 
