@@ -13,6 +13,7 @@ ScrapeFun 的商业许可仅覆盖权利人拥有权利且明确采用该许可�
 | 组件或资源 | 用途 | 官方项目与许可入口 |
 | --- | --- | --- |
 | Node.js | Server 运行时 | [Node.js LICENSE](https://github.com/nodejs/node/blob/main/LICENSE) |
+| heic-decode / libheif-js / libheif | HEIC/HEIF 图片解码 | [heic-decode ISC](https://github.com/catdad-experiments/heic-decode/blob/master/LICENSE)、[libheif-js LGPL-3.0](https://github.com/catdad-experiments/libheif-js)、[libheif LGPL-3.0](https://github.com/strukturag/libheif/blob/master/COPYING) |
 | Electron | 桌面客户端宿主 | [Electron LICENSE](https://github.com/electron/electron/blob/main/LICENSE) |
 | FFmpeg / FFprobe | 媒体探测、字幕及媒体处理 | [FFmpeg Legal](https://ffmpeg.org/legal.html) |
 | mpv / libmpv | 原生媒体播放 | [mpv Copyright](https://github.com/mpv-player/mpv/blob/master/Copyright) |

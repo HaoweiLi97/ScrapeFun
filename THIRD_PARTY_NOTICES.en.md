@@ -13,6 +13,7 @@ The table helps locate projects and licenses. Whether a component is included, i
 | Component or resource | Purpose | Official project and license reference |
 | --- | --- | --- |
 | Node.js | Server runtime | [Node.js LICENSE](https://github.com/nodejs/node/blob/main/LICENSE) |
+| heic-decode / libheif-js / libheif | HEIC/HEIF image decoding | [heic-decode ISC](https://github.com/catdad-experiments/heic-decode/blob/master/LICENSE), [libheif-js LGPL-3.0](https://github.com/catdad-experiments/libheif-js), [libheif LGPL-3.0](https://github.com/strukturag/libheif/blob/master/COPYING) |
 | Electron | Desktop client host | [Electron LICENSE](https://github.com/electron/electron/blob/main/LICENSE) |
 | FFmpeg / FFprobe | Media probing, subtitles, and media processing | [FFmpeg Legal](https://ffmpeg.org/legal.html) |
 | mpv / libmpv | Native media playback | [mpv Copyright](https://github.com/mpv-player/mpv/blob/master/Copyright) |
