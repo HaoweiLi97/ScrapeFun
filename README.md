@@ -28,10 +28,10 @@ ScrapeFun 将媒体刮削、资源浏览、播放、阅读和多用户管理集�
 | Server | Linux | 原生 systemd / amd64 | [安装说明](./DOCKER_GUIDE.md#原生-systemd-安装) · [稳定版](https://github.com/HaoweiLi97/scrapefun-server-linux/releases/latest) |
 | Server | Android | arm64-v8a APK | [安装说明](https://github.com/HaoweiLi97/scrapefun-server-android) · [稳定版](https://github.com/HaoweiLi97/scrapefun-server-android/releases/latest) |
 | Server | macOS | Apple Silicon / arm64 DMG | [安装说明](https://github.com/HaoweiLi97/scrapefun-server-macos) · [稳定版](https://github.com/HaoweiLi97/scrapefun-server-macos/releases/latest) |
-| Server | Windows | Microsoft Store / x64 | [Microsoft Store](https://apps.microsoft.com/detail/9N83B6RSWG01) · [安装说明](https://github.com/HaoweiLi97/scrapefun-server-windows) |
+| Server | Windows | x64 EXE / Microsoft Store MSIX | [GitHub 下载](https://github.com/HaoweiLi97/scrapefun-server-windows/releases/tag/v0.4.3) · [Microsoft Store](https://apps.microsoft.com/detail/9N83B6RSWG01) |
 | Client | Linux | x64 deb / AppImage | [安装说明](https://github.com/HaoweiLi97/scrapefun-client-linux) · [稳定版](https://github.com/HaoweiLi97/scrapefun-client-linux/releases/latest) |
 | Client | macOS | Apple Silicon / arm64 DMG | [安装说明](https://github.com/HaoweiLi97/scrapefun-client-macos) · [稳定版](https://github.com/HaoweiLi97/scrapefun-client-macos/releases/latest) |
-| Client | Windows | Microsoft Store / x64 | [Microsoft Store](https://apps.microsoft.com/detail/9NM3HPS675QH) · [安装说明](https://github.com/HaoweiLi97/scrapefun-client-windows) |
+| Client | Windows | x64 EXE / Microsoft Store APPX | [GitHub 下载](https://github.com/HaoweiLi97/scrapefun-client-windows/releases/tag/v0.1.3) · [Microsoft Store](https://apps.microsoft.com/detail/9NM3HPS675QH) |
 | Client | Android | arm64-v8a / armeabi-v7a APK | [安装说明](https://github.com/HaoweiLi97/scrapefun-client-android) · [稳定版](https://github.com/HaoweiLi97/scrapefun-client-android/releases/latest) |
 
 可用架构与包格式以实际 Release 资产和 Docker 标签的镜像清单为准。

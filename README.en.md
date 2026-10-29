@@ -28,10 +28,10 @@ Deploy a Server first, then install a Client if needed. Server stores libraries,
 | Server | Linux | Native systemd / amd64 | [Installation](./DOCKER_GUIDE.en.md#native-systemd-installation) · [Stable release](https://github.com/HaoweiLi97/scrapefun-server-linux/releases/latest) |
 | Server | Android | arm64-v8a APK | [Installation](https://github.com/HaoweiLi97/scrapefun-server-android) · [Stable release](https://github.com/HaoweiLi97/scrapefun-server-android/releases/latest) |
 | Server | macOS | Apple Silicon / arm64 DMG | [Installation](https://github.com/HaoweiLi97/scrapefun-server-macos/blob/main/README.en.md) · [Stable release](https://github.com/HaoweiLi97/scrapefun-server-macos/releases/latest) |
-| Server | Windows | Microsoft Store / x64 | [Microsoft Store](https://apps.microsoft.com/detail/9N83B6RSWG01) · [Installation](https://github.com/HaoweiLi97/scrapefun-server-windows/blob/main/README.en.md) |
+| Server | Windows | x64 EXE / Microsoft Store MSIX | [GitHub release](https://github.com/HaoweiLi97/scrapefun-server-windows/releases/tag/v0.4.3) · [Microsoft Store](https://apps.microsoft.com/detail/9N83B6RSWG01) |
 | Client | Linux | x64 deb / AppImage | [Installation](https://github.com/HaoweiLi97/scrapefun-client-linux/blob/main/README.en.md) · [Stable release](https://github.com/HaoweiLi97/scrapefun-client-linux/releases/latest) |
 | Client | macOS | Apple Silicon / arm64 DMG | [Installation](https://github.com/HaoweiLi97/scrapefun-client-macos/blob/main/README.en.md) · [Stable release](https://github.com/HaoweiLi97/scrapefun-client-macos/releases/latest) |
-| Client | Windows | Microsoft Store / x64 | [Microsoft Store](https://apps.microsoft.com/detail/9NM3HPS675QH) · [Installation](https://github.com/HaoweiLi97/scrapefun-client-windows/blob/main/README.en.md) |
+| Client | Windows | x64 EXE / Microsoft Store APPX | [GitHub release](https://github.com/HaoweiLi97/scrapefun-client-windows/releases/tag/v0.1.3) · [Microsoft Store](https://apps.microsoft.com/detail/9NM3HPS675QH) |
 | Client | Android | arm64-v8a / armeabi-v7a APK | [Installation](https://github.com/HaoweiLi97/scrapefun-client-android/blob/main/README.en.md) · [Stable release](https://github.com/HaoweiLi97/scrapefun-client-android/releases/latest) |
 
 Available architectures and formats follow the actual Release Assets and Docker tag manifests.

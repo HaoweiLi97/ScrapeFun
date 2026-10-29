@@ -19,6 +19,6 @@ Improve media identification, scan progress, task management, and Linux installa
 
 ## Before updating
 
-- Windows Server uses x64 APPX/MSIX packages. Separate EXE installers are no longer provided. Existing EXE users should back up data and follow the final migration instructions.
+- Windows Server provides x64 EXE installers on GitHub and APPX/MSIX through Microsoft Store. EXE users can continue using their existing installation channel; back up data before switching channels. GitHub EXEs are unsigned, so Windows may show an unknown publisher warning. Verify SHA-256 against this release.
 - Native Linux packages target glibc Linux amd64 and require the Node, systemd, and media dependencies listed in the installation guide.
 - Updating restarts the server and briefly interrupts playback and background work. Back up your data first.

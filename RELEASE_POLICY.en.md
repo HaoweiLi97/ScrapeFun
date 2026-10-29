@@ -9,16 +9,16 @@
 | Product | Stable version | Download assets | Release |
 | --- | --- | --- | --- |
 | macOS Server | 0.4.3 | arm64 DMG | [v0.4.3](https://github.com/HaoweiLi97/scrapefun-server-macos/releases/tag/v0.4.3) |
-| Windows Server | 0.4.2; 0.4.3 in Store certification | Microsoft Store / x64 MSIX | [Microsoft Store](https://apps.microsoft.com/detail/9N83B6RSWG01) |
+| Windows Server | 0.4.3 | x64 EXE, update package, SHA256SUMS; Microsoft Store channel | [v0.4.3](https://github.com/HaoweiLi97/scrapefun-server-windows/releases/tag/v0.4.3) · [Store](https://apps.microsoft.com/detail/9N83B6RSWG01) |
 | Linux Server | 0.4.3 | Native glibc Linux amd64 archive, SHA256SUMS | [v0.4.3](https://github.com/HaoweiLi97/scrapefun-server-linux/releases/tag/v0.4.3) |
 | Linux Client | 0.1.3 | x64 deb, AppImage, SHA256SUMS | [v0.1.3](https://github.com/HaoweiLi97/scrapefun-client-linux/releases/tag/v0.1.3) |
 | macOS Client | 0.1.3 | arm64 DMG, update ZIP | [v0.1.3](https://github.com/HaoweiLi97/scrapefun-client-macos/releases/tag/v0.1.3) |
-| Windows Client | 0.1.3 | Microsoft Store / x64 APPX | [Microsoft Store](https://apps.microsoft.com/detail/9NM3HPS675QH) |
+| Windows Client | 0.1.3 | x64 EXE, portable EXE, update files, SHA256SUMS; Microsoft Store APPX | [v0.1.3](https://github.com/HaoweiLi97/scrapefun-client-windows/releases/tag/v0.1.3) · [Store](https://apps.microsoft.com/detail/9NM3HPS675QH) |
 | Android Client | 0.2.8 | arm64-v8a / armeabi-v7a APKs, SHA256SUMS | [v0.2.8](https://github.com/HaoweiLi97/scrapefun-client-android/releases/tag/v0.2.8) |
 
 Docker 0.4.3 is published through [`haoweil/scrapefun:latest`](https://hub.docker.com/r/haoweil/scrapefun/tags); prereleases use `:beta`. The updater uses `haoweil/scrapefun-updater`. The 0.4.3 images target linux/amd64. Use `:0.4.3` to pin the version and keep app and updater on the same version.
 
-New Windows packages use Microsoft Store x64 APPX/MSIX. Separate EXE installers are no longer provided. Existing EXE users should export an application backup and follow the migration instructions. Server 0.4.3 has been submitted and will become available after certification; the Store may still offer 0.4.2 meanwhile.
+Windows GitHub releases provide x64 EXE installers and automatic-update files. Microsoft Store remains a separate APPX/MSIX channel, with availability determined by its listing. GitHub EXEs are unsigned; Windows may show an unknown publisher warning. Verify downloads against SHA256SUMS. Continue using the same installation channel, and back up data before switching channels.
 
 macOS Server 0.4.3 and Client 0.1.3 require Apple Silicon and macOS 26.0 or later. These packages have ad-hoc integrity signatures and are not Developer ID signed or notarized. Follow the installation steps in each release.
 
@@ -36,7 +36,7 @@ macOS Server 0.4.3 and Client 0.1.3 require Apple Silicon and macOS 26.0 or late
 | One-click Docker deployment | In-app updater or rerun the one-click script; omitting the channel preserves the existing channel |
 | Manual NAS Compose | Update images and recreate services; keep app and updater on the same channel |
 | macOS Server | In-app Sparkle update or install a newer DMG |
-| Windows Server | Microsoft Store updates; older EXE installations require backup and migration |
+| Windows Server | In-app updates for GitHub EXE installations; Microsoft Store updates for Store installations. Back up before switching channels. |
 | Linux AppImage Client | AppImage update or download and replace manually |
 | Linux deb Client | Install the newer package with the system package manager |
 | macOS / Windows Client | Client update mechanism or install the newer package over the current installation |

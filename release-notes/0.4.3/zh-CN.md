@@ -19,6 +19,6 @@
 
 ## 更新前须知
 
-- Windows 服务端采用 x64 APPX/MSIX 分发，不再提供单独的 EXE 安装包。旧 EXE 安装用户迁移前请备份数据，按最终发布的迁移说明操作。
+- Windows 服务端提供 GitHub x64 EXE 安装包，Microsoft Store 渠道使用 APPX/MSIX。EXE 用户可继续使用原安装渠道；切换渠道前请备份数据。GitHub EXE 未签名，Windows 可能显示未知发布者提示，请核对本发行页的 SHA-256。
 - Linux 原生包面向 glibc Linux amd64，需满足安装说明中的 Node、systemd 与媒体运行依赖要求。
 - 更新需要重启服务，播放和后台任务会短暂中断；更新前请保存数据备份。
