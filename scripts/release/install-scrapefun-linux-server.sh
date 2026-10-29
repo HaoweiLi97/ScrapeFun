@@ -55,11 +55,20 @@ DEPLOY_SOURCE="$OPS_SOURCE/one-click-native-deploy.sh"
 python3 "$OPS_SOURCE/linux-server-tools.py" preflight --install "$INSTALL_DIR" --data "$DATA_DIR" --config "$CONFIG_DIR"
 UNIT="/etc/systemd/system/$SERVICE"
 [[ ! -L "$UNIT" ]] || fail 'service unit is a symlink or masked; select another service name or resolve it before installing'
+UPDATER_SERVICE="${SERVICE%.service}-updater.service"
+UPDATER_PATH="${SERVICE%.service}-updater.path"
+for unit in "$UPDATER_SERVICE" "$UPDATER_PATH"; do
+  [[ ! -L "/etc/systemd/system/$unit" ]] || fail 'updater unit is a symlink or masked'
+done
 mkdir -p "$CONFIG_DIR" "$(dirname "$INSTALL_DIR")"
 exec 9>"$CONFIG_DIR/.operations.lock"
 flock -n 9 || fail 'another native operation is running'
 stage="$(mktemp -d "$(dirname "$INSTALL_DIR")/.scrapefun-install.XXXXXX")"
 old_install="" backup="" old_unit="" activated=0 succeeded=0 was_running=0 was_enabled=0 stopped=0
+updater_enabled=0 updater_active=0 updater_existed=0
+[[ ! -d "$CONFIG_DIR/updater" ]] || updater_existed=1
+systemctl is-enabled --quiet "$UPDATER_PATH" && updater_enabled=1
+systemctl is-active --quiet "$UPDATER_PATH" && updater_active=1
 phase='release validation'
 systemctl is-active --quiet "$SERVICE" && was_running=1
 systemctl is-enabled --quiet "$SERVICE" && was_enabled=1
@@ -79,6 +88,12 @@ cleanup() {
       exit "$code"
     fi
     if [[ $was_enabled -eq 0 ]]; then recover systemctl disable "$SERVICE"; fi
+    if ! systemctl stop "$UPDATER_PATH" && [[ $updater_active -eq 1 ]]; then rollback_failed=1; fi
+    if [[ $updater_enabled -eq 0 && -f "/etc/systemd/system/$UPDATER_PATH" ]]; then recover systemctl disable "$UPDATER_PATH"; fi
+    for unit in "$UPDATER_SERVICE" "$UPDATER_PATH"; do
+      if [[ -f "$stage/$unit" ]]; then recover cp "$stage/$unit" "/etc/systemd/system/$unit"; else recover rm -f -- "/etc/systemd/system/$unit"; fi
+    done
+    if [[ $updater_existed -eq 0 ]]; then recover rm -rf -- "$CONFIG_DIR/updater"; fi
     if [[ -d "$INSTALL_DIR" ]]; then recover mv -- "$INSTALL_DIR" "$INSTALL_DIR.failed-$(date +%s)-$$"; fi
     if [[ -n "$old_install" && -d "$old_install" ]]; then recover mv -- "$old_install" "$INSTALL_DIR"; fi
     if [[ -n "$backup" ]]; then
@@ -96,6 +111,7 @@ cleanup() {
       if [[ -e "$stage/old-$item" ]]; then recover mv -- "$stage/old-$item" "$CONFIG_DIR/$item"; fi
     done
     recover systemctl daemon-reload
+    if [[ $updater_active -eq 1 && $rollback_failed -eq 0 ]]; then recover systemctl start "$UPDATER_PATH"; fi
   fi
   if [[ $succeeded -eq 0 && $stopped -eq 1 && $was_running -eq 1 && $rollback_failed -eq 0 ]]; then recover systemctl start "$SERVICE"; fi
   if [[ $rollback_failed -ne 0 ]]; then
@@ -109,8 +125,20 @@ trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 trap 'exit 129' HUP
+UPDATER_SOURCE="$OPS_SOURCE/linux-native-updater.py"
+if [[ ! -f "$UPDATER_SOURCE" ]]; then
+  # Older installed one-click entries fetch the latest installer but do not
+  # know about this new helper. Bootstrap it before interrupting the old app.
+  UPDATER_SOURCE="$stage/linux-native-updater.py"
+  command -v curl >/dev/null || fail 'curl is required to download the native updater helper'
+  curl -fSL --connect-timeout 15 --max-time 120 --retry 2 \
+    "https://raw.githubusercontent.com/${GITHUB_REPO:-HaoweiLi97/ScrapeFun}/${GITHUB_BRANCH:-main}/scripts/operations/linux-native-updater.py" \
+    -o "$UPDATER_SOURCE" || fail 'could not download the native updater helper; rerun the current one-click installation script'
+fi
+python3 -c 'import ast,sys; ast.parse(open(sys.argv[1]).read())' "$UPDATER_SOURCE"
 printf '验证并解压发布包…\n'
-release="$(python3 "$OPS_SOURCE/linux-server-tools.py" extract-release --archive "$ARCHIVE" --destination "$stage")"
+mkdir -p "$stage/release"
+release="$(python3 "$OPS_SOURCE/linux-server-tools.py" extract-release --archive "$ARCHIVE" --destination "$stage/release")"
 CHANNEL="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["channel"])' "$release/RELEASE.json")"
 [[ -z "${SCRAPEFUN_NATIVE_CHANNEL:-}" || "$CHANNEL" == "$SCRAPEFUN_NATIVE_CHANNEL" ]] || fail 'archive channel differs from requested channel'
 if [[ -n "${SCRAPEFUN_NATIVE_VERSION:-}" ]]; then
@@ -154,6 +182,9 @@ fi
 [[ ! -f "$CONFIG_DIR/management.env" ]] || cp "$CONFIG_DIR/management.env" "$stage/old-management.env"
 [[ ! -f "$CONFIG_DIR/gpu.env" ]] || cp "$CONFIG_DIR/gpu.env" "$stage/old-gpu.env"
 [[ ! -f "$UNIT" ]] || { cp "$UNIT" "$stage/old.service"; old_unit="$stage/old.service"; }
+for unit in "$UPDATER_SERVICE" "$UPDATER_PATH"; do
+  [[ ! -f "/etc/systemd/system/$unit" ]] || cp "/etc/systemd/system/$unit" "$stage/$unit"
+done
 for item in scrapefun operations; do
   if [[ -e "$CONFIG_DIR/$item" ]]; then cp -a -- "$CONFIG_DIR/$item" "$stage/old-$item"; fi
 done
@@ -187,8 +218,9 @@ if [[ -n "${SCRAPEFUN_GPU_ENV_FILE:-}" ]]; then
   install -m 644 "$SCRAPEFUN_GPU_ENV_FILE" "$CONFIG_DIR/gpu.env"
 fi
 mv -- "$release" "$INSTALL_DIR"
-install -d -m 755 "$CONFIG_DIR/operations"
-for file in scrapefun.sh linux-server-tools.py; do install -m 755 "$OPS_SOURCE/$file" "$CONFIG_DIR/operations/$file"; done
+install -d -o root -g root -m 755 "$CONFIG_DIR/operations"
+for file in scrapefun.sh linux-server-tools.py; do install -o root -g root -m 755 "$OPS_SOURCE/$file" "$CONFIG_DIR/operations/$file"; done
+install -o root -g root -m 755 "$UPDATER_SOURCE" "$CONFIG_DIR/operations/linux-native-updater.py"
 install -m 755 "$DEPLOY_SOURCE" "$CONFIG_DIR/operations/one-click-native-deploy.sh"
 for gpu_helper in ensure-comic-gpu-environment.sh setup-wsl-comic-gpu.sh; do
   if [[ -f "$SCRIPT_DIR/../$gpu_helper" ]]; then
@@ -200,6 +232,7 @@ install -m 755 "$OPS_SOURCE/scrapefun.sh" "$CONFIG_DIR/scrapefun"
 # is removed. The one-click entry finds these under its own operations directory.
 install -d -m 755 "$CONFIG_DIR/operations/operations" "$CONFIG_DIR/operations/release"
 for file in scrapefun.sh linux-server-tools.py; do install -m 755 "$OPS_SOURCE/$file" "$CONFIG_DIR/operations/operations/$file"; done
+install -m 755 "$UPDATER_SOURCE" "$CONFIG_DIR/operations/operations/linux-native-updater.py"
 install -m 755 "$SCRIPT_DIR/install-scrapefun-linux-server.sh" "$CONFIG_DIR/operations/release/install-scrapefun-linux-server.sh"
 install -m 755 "$START_SOURCE" "$CONFIG_DIR/operations/release/start-scrapefun-linux-server.sh"
 cat > "$CONFIG_DIR/management.env" <<EOF
@@ -214,6 +247,34 @@ NODE_BIN=$NODE_BIN
 CHANNEL=$CHANNEL
 EOF
 chmod 644 "$CONFIG_DIR/management.env"
+install -d -o root -g root -m 755 "$CONFIG_DIR/updater"
+install -d -o "$SERVICE_USER" -g "$SERVICE_GROUP" -m 700 "$CONFIG_DIR/updater/requests"
+if [[ ! -f "$CONFIG_DIR/updater/status.json" ]]; then
+  printf '{"available":true,"status":"idle","running":false,"stage":"idle","progress":0}\n' > "$CONFIG_DIR/updater/status.json"
+  chmod 644 "$CONFIG_DIR/updater/status.json"
+fi
+cat > "/etc/systemd/system/$UPDATER_SERVICE" <<EOF
+[Unit]
+Description=ScrapeFun native server updater
+After=network-online.target
+Wants=network-online.target
+[Service]
+Type=oneshot
+ExecStart=$(command -v python3) $CONFIG_DIR/operations/linux-native-updater.py --config-dir $CONFIG_DIR
+TimeoutStartSec=infinity
+TimeoutStopSec=180
+KillMode=mixed
+UMask=0077
+EOF
+cat > "/etc/systemd/system/$UPDATER_PATH" <<EOF
+[Unit]
+Description=Watch for ScrapeFun native update requests
+[Path]
+PathExists=$CONFIG_DIR/updater/requests/request.json
+Unit=$UPDATER_SERVICE
+[Install]
+WantedBy=multi-user.target
+EOF
 cat > "$UNIT" <<EOF
 [Unit]
 Description=ScrapeFun Server
@@ -228,6 +289,9 @@ Environment=SCRAPEFUN_DATA_DIR=$DATA_DIR
 Environment=SCRAPEFUN_NODE_BINARY=$NODE_BIN
 EnvironmentFile=$ENV_FILE
 EnvironmentFile=-$CONFIG_DIR/gpu.env
+Environment=SCRAPEFUN_DESKTOP_UPDATER_KIND=linux-native
+Environment=SCRAPEFUN_DESKTOP_UPDATER_REQUEST_FILE=$CONFIG_DIR/updater/requests/request.json
+Environment=SCRAPEFUN_DESKTOP_UPDATER_STATUS_FILE=$CONFIG_DIR/updater/status.json
 WorkingDirectory=$INSTALL_DIR/server
 ExecStart=$INSTALL_DIR/start.sh
 Restart=on-failure
@@ -237,6 +301,7 @@ KillMode=control-group
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=full
+ReadWritePaths=$CONFIG_DIR/updater/requests
 UMask=0027
 [Install]
 WantedBy=multi-user.target
@@ -252,6 +317,7 @@ phase='service readiness'
 systemctl start "$SERVICE"
 bash "$CONFIG_DIR/scrapefun" wait-ready
 systemctl enable "$SERVICE"
+systemctl enable --now "$UPDATER_PATH"
 succeeded=1
 if [[ "$CONFIG_DIR" == /etc/scrapefun && "$SERVICE" == scrapefun.service ]]; then
   ln -sfn "$CONFIG_DIR/scrapefun" /usr/local/bin/scrapefun

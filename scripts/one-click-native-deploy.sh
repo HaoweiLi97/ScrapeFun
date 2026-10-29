@@ -181,7 +181,7 @@ fetch_script() {
   fi
 }
 printf '准备 Linux 原生安装工具…\n'
-for file in operations/scrapefun.sh operations/linux-server-tools.py release/install-scrapefun-linux-server.sh release/start-scrapefun-linux-server.sh; do fetch_script "$file"; done
+for file in operations/scrapefun.sh operations/linux-server-tools.py operations/linux-native-updater.py release/install-scrapefun-linux-server.sh release/start-scrapefun-linux-server.sh; do fetch_script "$file"; done
 if [[ -f "$ROOT_DIR/one-click-native-deploy.sh" ]]; then cp "$ROOT_DIR/one-click-native-deploy.sh" "$stage/operations/one-click-native-deploy.sh"; else
   download_file "$source_base/one-click-native-deploy.sh" "$stage/operations/one-click-native-deploy.sh"
 fi

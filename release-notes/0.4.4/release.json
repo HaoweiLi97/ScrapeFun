@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "version": "0.4.4",
+  "channel": "stable",
+  "releaseDate": "2026-10-29",
+  "targetPlatforms": ["linux-server"],
+  "restartRequired": true,
+  "minimumVersion": null,
+  "notes": {"zh-CN": "zh-CN.md", "en-US": "en-US.md"}
+}

@@ -134,6 +134,8 @@ Also check login, libraries, artwork, playback, and reading progress. If somethi
 
 ## Native systemd installation
 
+For existing installations, upgrade once to native Linux Server 0.4.4 using the command below or `sudo scrapefun update`. This installs the components required to manually install updates from the web interface. Keep the existing `--config-dir` for custom instances.
+
 Native releases support glibc Linux amd64. Requires running systemd, Node.js 20/22/24, Python 3, curl, FFmpeg, and FFprobe. The script downloads a release for the selected channel and verifies SHA-256 without compiling source on the host. It exits if no matching release is available.
 
 ```bash

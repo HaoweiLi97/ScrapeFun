@@ -10,9 +10,9 @@
 | --- | --- | --- | --- |
 | macOS Server | 0.4.3 | arm64 DMG | [v0.4.3](https://github.com/HaoweiLi97/scrapefun-server-macos/releases/tag/v0.4.3) |
 | Windows Server | 0.4.3 | x64 EXE、更新包、SHA256SUMS；另有商店渠道 | [v0.4.3](https://github.com/HaoweiLi97/scrapefun-server-windows/releases/tag/v0.4.3) · [商店](https://apps.microsoft.com/detail/9N83B6RSWG01) |
-| Linux Server | 0.4.3 | glibc Linux amd64 原生安装包、SHA256SUMS | [v0.4.3](https://github.com/HaoweiLi97/scrapefun-server-linux/releases/tag/v0.4.3) |
+| Linux Server | 0.4.4 | glibc Linux amd64 原生安装包、SHA256SUMS | [v0.4.4](https://github.com/HaoweiLi97/scrapefun-server-linux/releases/tag/v0.4.4) |
 | Android Server | 0.4.3 | arm64-v8a 签名 APK、更新清单、SHA256SUMS | [v0.4.3](https://github.com/HaoweiLi97/scrapefun-server-android/releases/tag/v0.4.3) |
-| Linux Client | 0.1.3 | x64 deb、AppImage、SHA256SUMS | [v0.1.3](https://github.com/HaoweiLi97/scrapefun-client-linux/releases/tag/v0.1.3) |
+| Linux Client | 0.1.4 | x64 deb、AppImage、SHA256SUMS | [v0.1.4](https://github.com/HaoweiLi97/scrapefun-client-linux/releases/tag/v0.1.4) |
 | macOS Client | 0.1.3 | arm64 DMG、更新 ZIP | [v0.1.3](https://github.com/HaoweiLi97/scrapefun-client-macos/releases/tag/v0.1.3) |
 | Windows Client | 0.1.3 | x64 EXE、便携版、更新文件、SHA256SUMS；另有商店 APPX | [v0.1.3](https://github.com/HaoweiLi97/scrapefun-client-windows/releases/tag/v0.1.3) · [商店](https://apps.microsoft.com/detail/9NM3HPS675QH) |
 | Android Client | 0.2.8 | arm64-v8a / armeabi-v7a APK、SHA256SUMS | [v0.2.8](https://github.com/HaoweiLi97/scrapefun-client-android/releases/tag/v0.2.8) |
@@ -22,6 +22,8 @@ Docker 0.4.3 已发布，稳定版通过 [`haoweil/scrapefun:latest`](https://hu
 Windows GitHub 发行提供 x64 EXE 安装包和自动更新文件；Microsoft Store 继续作为独立 APPX/MSIX 渠道，可用版本以商店为准。GitHub EXE 未签名，Windows 可能显示未知发布者提示，请用 SHA256SUMS 核对下载。可继续使用原安装渠道，切换渠道前请备份数据。
 
 macOS Server 0.4.3 和 Client 0.1.3 均要求 Apple Silicon 与 macOS 26.0 或更新系统，采用 ad-hoc 完整性签名，未经 Developer ID 签名和 Apple 公证；首次安装按对应 Release 说明操作。
+
+Linux 原生 Server 0.4.4 修复网页安装更新。已有安装需先重新运行一键安装命令，或执行一次 `sudo scrapefun update`；自定义实例保留 `--config-dir`。完成后可从网页手动安装更新。Linux Client 0.1.4 默认通过 X11 / XWayland 启动，Wayland 桌面需安装 XWayland。
 
 ## 频道与版本号
 

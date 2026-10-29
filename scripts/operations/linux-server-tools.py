@@ -115,10 +115,18 @@ def deployment_paths(install, data, config):
         candidate = paths[2] / name
         if candidate.is_symlink() or (candidate.exists() and not candidate.is_file()):
             raise ValueError('configuration must be a regular file: ' + str(candidate))
-    for name in ('runtime', 'operations'):
+    for name in ('runtime', 'operations', 'updater', 'updater/requests'):
         directory = paths[2] / name
         if directory.is_symlink() or (directory.exists() and not directory.is_dir()):
             raise ValueError('management path must be a directory without symlinks: ' + str(directory))
+    updater = paths[2] / 'updater'
+    if updater.exists():
+        if updater.stat().st_uid != 0 or updater.stat().st_mode & 0o022:
+            raise ValueError('updater directory must be root-owned and not writable by other users')
+        for name in ('status.json', 'worker.lock', 'update.log'):
+            file = updater / name
+            if file.is_symlink() or (file.exists() and (not file.is_file() or file.stat().st_uid != 0 or file.stat().st_mode & 0o022)):
+                raise ValueError('unsafe updater state: ' + str(file))
 
 
 def check_port(port):

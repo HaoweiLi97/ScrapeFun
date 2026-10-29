@@ -20,8 +20,6 @@ curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/o
 
 Beta 在任一命令的末尾使用 `bash -s -- beta`（原生使用 `sudo bash -s -- beta`）。原生脚本会查找对应渠道的正式发布包，下载并检查 SHA-256，再安装运行；不会在用户服务器上编译源码。没有对应架构或渠道的发布包时，在修改现有安装前退出。
 
-满足上述系统要求后，运行对应的一键命令即可，无需再手动下载发行包或重复执行安装程序。门户下载页直接展示标准命令及复制按钮，Beta 命令放在下方的折叠区域；Docker 与原生 systemd 是两种可选安装方式，不需要依次执行。
-
 | 位置 | Docker | 原生 systemd |
 | --- | --- | --- |
 | 管理命令 | `~/scrapefun/scrapefun` | `sudo scrapefun` |
@@ -132,6 +130,20 @@ WSL 配置直接写入主 Compose 文件和原生服务环境，后续一键更�
 
 ## 原生更新与数据保护
 
+原生安装支持在 Web 的“设置 → 服务器与维护 → 更新”检查版本并手动安装 stable/beta 更新，使用 Linux 服务端发布仓库与 amd64 归档。安装器配置独立的 `<服务名>-updater.path` 和 `<服务名>-updater.service`；应用仅能向专用请求目录提交固定格式的更新请求，root 更新服务负责执行已安装的管理脚本。更新进程独立于主服务，停服和重启不会中断更新；结果通过状态文件回传 Web，下载、安装详情保存在配置目录的 `updater/update.log`（仅 root 可读）。Web 备份/恢复和更新通过维护标记互斥，终端备份/安装继续共用操作锁。“保持最新版本”的自动安装仍未启用。
+
+已有原生安装需在包含此修复的服务端发布后，先通过当前一键安装入口或 `sudo scrapefun update` 更新一次，安装新服务端及 systemd 更新服务；自定义实例沿用对应配置目录。仅刷新浏览器或更改环境变量不能为旧服务端补上执行器。旧安装入口缺少新的更新辅助脚本时，安装器会在停服前补齐；新安装会保存辅助脚本，继续支持离线更新。
+
+诊断默认实例的 Web 更新器：
+
+```bash
+sudo systemctl status scrapefun-updater.path scrapefun-updater.service
+sudo journalctl -u scrapefun-updater.service -n 50 --no-pager
+sudo cat /etc/scrapefun/updater/update.log
+```
+
+`updater.service` 是按请求运行的 oneshot，空闲时显示 inactive 属于正常状态；`updater.path` 应处于 active。自定义服务名和配置目录需相应替换上述命令。
+
 原生更新先校验下载文件、压缩包路径、解压空间、运行库和受保护服务端清单，再停止服务、复查端口、检查 SQLite 并备份数据，最后切换程序。未显式覆盖的既有端口、密钥、配置和数据位置保持不变。配置先写入暂存目录，更新前备份保存原配置。失败或收到 INT/TERM/HUP 时切回旧程序、旧服务配置、管理工具和更新前数据；原本运行的服务恢复启动，返回非零退出码。首次安装失败不留下新服务的自启配置。成功通过就绪检查后才启用开机自启。旧版本、失败版本和数据副本保留，供管理员检查。备份和安装使用同一个操作锁，并发操作会明确退出。
 
 如果自动回退也失败，会保留暂存恢复资料和备份路径，并提示人工处理；数据恢复未确认成功时，不自动启动旧版本。系统依赖和 GPU 驱动的安装不属于应用数据事务，失败后不会自动卸载这些系统组件。
@@ -140,7 +152,7 @@ WSL 配置直接写入主 Compose 文件和原生服务环境，后续一键更�
 
 Docker 更新沿用现有一键脚本，保留渠道、数据根、GPU 和迁移保护；Web 设置页仍使用已有 updater 更新流程。
 
-原生备份保存数据库、用户文件和一份 `server.env`，默认排除可重建缓存和日志；备份含密钥，权限为 0600，应放在数据目录之外。恢复先检查压缩包成员、校验和和 SQLite，保留原数据目录，再切换。恢复后检查就绪状态，失败则恢复原数据。原生恢复保留当前 `server.env`；归档中的配置用于管理员另行检查。Docker 继续使用已有备份、恢复、加密、远端复制和定时备份工具，详细选项见 [备份与恢复](../DOCKER_DATA_AND_BACKUP.md)。
+原生备份保存数据库、用户文件和一份 `server.env`，默认排除可重建缓存和日志；备份含密钥，权限为 0600，应放在数据目录之外。恢复先检查压缩包成员、校验和和 SQLite，保留原数据目录，再切换。恢复后检查就绪状态，失败则恢复原数据。原生恢复保留当前 `server.env`；归档中的配置用于管理员另行检查。Docker 继续使用已有备份、恢复、加密、远端复制和定时备份工具，详细选项见 [系统运维](./system-operations.md)。
 
 ## 本地和离线安装
 
@@ -164,6 +176,7 @@ sudo env SCRAPEFUN_NATIVE_ARCHIVE=/path/to/scrapefun-server-linux-amd64-0.3.3-st
 ```bash
 python3 scripts/operations/linux-server-tools.test.py -v
 python3 scripts/operations/linux-install-port.test.py -v
+sudo python3 scripts/operations/linux-native-updater.test.py -v
 bash scripts/operations/operations.test.sh
 ```
 
