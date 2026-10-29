@@ -2,20 +2,23 @@
 
 **简体中文** · [English](./RELEASE_POLICY.en.md)
 
-> macOS 两项更新：2026-10-29。其他平台保留 2026-09-28 的公开发布快照；最新状态请打开对应 Release。
+> macOS、Linux、Docker 和 Windows 商店条目更新：2026-10-29。其余条目保留较早的公开发布快照；最新状态以对应发行页或商店为准。
 
 ## 已发布稳定版
 
 | 产品 | 稳定版 | 下载资产 | 发行页 |
 | --- | --- | --- | --- |
 | macOS Server | 0.4.3 | arm64 DMG | [v0.4.3](https://github.com/HaoweiLi97/scrapefun-server-macos/releases/tag/v0.4.3) |
-| Windows Server | 0.3.3 | x64 Setup.exe | [v0.3.3](https://github.com/HaoweiLi97/scrapefun-server-windows/releases/tag/v0.3.3) |
-| Linux Client | 0.0.4 | x64 deb、AppImage、SHA256SUMS | [v0.0.4](https://github.com/HaoweiLi97/scrapefun-client-linux/releases/tag/v0.0.4) |
+| Windows Server | 0.4.2；0.4.3 商店认证中 | Microsoft Store / x64 MSIX | [Microsoft Store](https://apps.microsoft.com/detail/9N83B6RSWG01) |
+| Linux Server | 0.4.3 | glibc Linux amd64 原生安装包、SHA256SUMS | [v0.4.3](https://github.com/HaoweiLi97/scrapefun-server-linux/releases/tag/v0.4.3) |
+| Linux Client | 0.1.3 | x64 deb、AppImage、SHA256SUMS | [v0.1.3](https://github.com/HaoweiLi97/scrapefun-client-linux/releases/tag/v0.1.3) |
 | macOS Client | 0.1.3 | arm64 DMG、更新 ZIP | [v0.1.3](https://github.com/HaoweiLi97/scrapefun-client-macos/releases/tag/v0.1.3) |
-| Windows Client | 0.0.5 | x64 / ARM64 Setup.exe | [v0.0.5](https://github.com/HaoweiLi97/scrapefun-client-windows/releases/tag/v0.0.5) |
+| Windows Client | 0.1.3 | Microsoft Store / x64 APPX | [Microsoft Store](https://apps.microsoft.com/detail/9NM3HPS675QH) |
 | Android Client | 0.2.8 | arm64-v8a / armeabi-v7a APK、SHA256SUMS | [v0.2.8](https://github.com/HaoweiLi97/scrapefun-client-android/releases/tag/v0.2.8) |
 
-Docker 的稳定版通过 [`haoweil/scrapefun:latest`](https://hub.docker.com/r/haoweil/scrapefun/tags) 分发，测试版通过 `:beta` 分发；updater 使用独立的 `haoweil/scrapefun-updater` 镜像。具体标签和摘要以注册表为准。
+Docker 0.4.3 已发布，稳定版通过 [`haoweil/scrapefun:latest`](https://hub.docker.com/r/haoweil/scrapefun/tags) 分发，测试版通过 `:beta` 分发；updater 使用独立的 `haoweil/scrapefun-updater` 镜像。当前 0.4.3 镜像为 linux/amd64，固定版本使用 `:0.4.3`，app 与 updater 应保持同一版本。
+
+Windows 新版使用 Microsoft Store 的 x64 APPX/MSIX，不再提供新版独立 EXE。旧 EXE 用户应先导出应用备份，再按安装说明迁移。Server 0.4.3 已提交商店，认证完成后才会上架；商店中实际可用版本可能暂时仍为 0.4.2。
 
 macOS Server 0.4.3 和 Client 0.1.3 均要求 Apple Silicon 与 macOS 26.0 或更新系统，采用 ad-hoc 完整性签名，未经 Developer ID 签名和 Apple 公证；首次安装按对应 Release 说明操作。
 
@@ -33,7 +36,7 @@ macOS Server 0.4.3 和 Client 0.1.3 均要求 Apple Silicon 与 macOS 26.0 或�
 | Docker 一键部署 | 应用内 updater 或重跑一键脚本；不指定频道时保留现有频道 |
 | NAS 手动 Compose | 更新镜像并重建服务；app 与 updater 频道保持一致 |
 | macOS Server | Sparkle 应用内更新，或下载安装新版 DMG |
-| Windows Server | Velopack 更新；旧 Inno 安装需先迁移一次 |
+| Windows Server | Microsoft Store 更新；旧 EXE 用户需备份并迁移 |
 | Linux AppImage Client | AppImage 更新，或手动下载替换 |
 | Linux deb Client | 使用系统包管理器安装新版包 |
 | macOS / Windows Client | 客户端更新机制，或覆盖安装新版安装包 |
