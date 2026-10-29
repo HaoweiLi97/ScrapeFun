@@ -133,7 +133,7 @@ volumes:
 
 更新会重启 Server，并中断正在进行的播放和后台任务。先备份，再更新，最后检查登录、媒体库、图片、播放与阅读进度。`latest` 是稳定版频道别名，`beta` 是测试版频道别名；需要固定版本时使用明确的版本标签。
 
-macOS Server [0.4.2](https://github.com/HaoweiLi97/scrapefun-server-macos/releases/tag/v0.4.2) 仅提供 Apple Silicon 版本，使用 ad-hoc 完整性签名，未经 Apple Developer ID 签名和公证。首次启动步骤见该版本的 Release 安装说明。
+macOS Server [0.4.3](https://github.com/HaoweiLi97/scrapefun-server-macos/releases/tag/v0.4.3) 仅提供 Apple Silicon 版本，最低系统为 macOS 26.0，使用 ad-hoc 完整性签名，未经 Apple Developer ID 签名和公证。首次启动步骤见该版本的 Release 安装说明。macOS Client [0.1.3](https://github.com/HaoweiLi97/scrapefun-client-macos/releases/tag/v0.1.3) 同样面向 Apple Silicon / macOS 26.0 或更新系统，采用未公证的 ad-hoc 签名。
 
 ## 联系与授权
 

@@ -133,7 +133,7 @@ volumes:
 
 Updating restarts Server and interrupts playback and background tasks. Back up first, update, then check login, libraries, images, and playback and reading progress. `latest` follows stable releases and `beta` follows prereleases; use an explicit version tag when you need a fixed version.
 
-macOS Server [0.4.2](https://github.com/HaoweiLi97/scrapefun-server-macos/releases/tag/v0.4.2) is available only for Apple Silicon. It has an ad-hoc integrity signature and is neither Apple Developer ID signed nor notarized. Follow the installation instructions in that release.
+macOS Server [0.4.3](https://github.com/HaoweiLi97/scrapefun-server-macos/releases/tag/v0.4.3) requires an Apple Silicon Mac running macOS 26.0 or later. It has an ad-hoc integrity signature and is neither Apple Developer ID signed nor notarized. Follow the installation instructions in that release. macOS Client [0.1.3](https://github.com/HaoweiLi97/scrapefun-client-macos/releases/tag/v0.1.3) also requires Apple Silicon and macOS 26.0 or later, with an ad-hoc signature and no Apple notarization.
 
 ## Contact and licensing
 

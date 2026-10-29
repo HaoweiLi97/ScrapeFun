@@ -2,20 +2,22 @@
 
 [简体中文](./RELEASE_POLICY.md) · **English**
 
-> Updated: 2026-09-28. The version table is a snapshot of public releases checked on this date. Open each release page for the current status.
+> macOS entries updated: 2026-10-29. Other entries retain the 2026-09-28 snapshot. Open each release page for the current status.
 
 ## Published stable releases
 
 | Product | Stable version | Download assets | Release |
 | --- | --- | --- | --- |
-| macOS Server | 0.3.3 | arm64 DMG | [v0.3.3](https://github.com/HaoweiLi97/scrapefun-server-macos/releases/tag/v0.3.3) |
+| macOS Server | 0.4.3 | arm64 DMG | [v0.4.3](https://github.com/HaoweiLi97/scrapefun-server-macos/releases/tag/v0.4.3) |
 | Windows Server | 0.3.3 | x64 Setup.exe | [v0.3.3](https://github.com/HaoweiLi97/scrapefun-server-windows/releases/tag/v0.3.3) |
 | Linux Client | 0.0.4 | x64 deb, AppImage, SHA256SUMS | [v0.0.4](https://github.com/HaoweiLi97/scrapefun-client-linux/releases/tag/v0.0.4) |
-| macOS Client | 0.0.4 | arm64 DMG, update ZIP | [v0.0.4](https://github.com/HaoweiLi97/scrapefun-client-macos/releases/tag/v0.0.4) |
+| macOS Client | 0.1.3 | arm64 DMG, update ZIP | [v0.1.3](https://github.com/HaoweiLi97/scrapefun-client-macos/releases/tag/v0.1.3) |
 | Windows Client | 0.0.5 | x64 / ARM64 Setup.exe | [v0.0.5](https://github.com/HaoweiLi97/scrapefun-client-windows/releases/tag/v0.0.5) |
 | Android Client | 0.2.8 | arm64-v8a / armeabi-v7a APKs, SHA256SUMS | [v0.2.8](https://github.com/HaoweiLi97/scrapefun-client-android/releases/tag/v0.2.8) |
 
 Docker stable releases are distributed through [`haoweil/scrapefun:latest`](https://hub.docker.com/r/haoweil/scrapefun/tags), and prereleases through `:beta`. The updater uses the separate `haoweil/scrapefun-updater` image. The registry is authoritative for specific tags and digests.
+
+macOS Server 0.4.3 and Client 0.1.3 require Apple Silicon and macOS 26.0 or later. These packages have ad-hoc integrity signatures and are not Developer ID signed or notarized. Follow the installation steps in each release.
 
 ## Channels and version numbers
 
