@@ -2,7 +2,7 @@
 
 **简体中文** · [English](./RELEASE_POLICY.en.md)
 
-> macOS、Linux、Docker 和 Windows 商店条目更新：2026-10-29。其余条目保留较早的公开发布快照；最新状态以对应发行页或商店为准。
+> macOS、Linux、Docker、Windows 和 Android Server 条目更新：2026-10-29。其余条目保留较早的公开发布快照；最新状态以对应发行页或商店为准。
 
 ## 已发布稳定版
 
@@ -11,6 +11,7 @@
 | macOS Server | 0.4.3 | arm64 DMG | [v0.4.3](https://github.com/HaoweiLi97/scrapefun-server-macos/releases/tag/v0.4.3) |
 | Windows Server | 0.4.3 | x64 EXE、更新包、SHA256SUMS；另有商店渠道 | [v0.4.3](https://github.com/HaoweiLi97/scrapefun-server-windows/releases/tag/v0.4.3) · [商店](https://apps.microsoft.com/detail/9N83B6RSWG01) |
 | Linux Server | 0.4.3 | glibc Linux amd64 原生安装包、SHA256SUMS | [v0.4.3](https://github.com/HaoweiLi97/scrapefun-server-linux/releases/tag/v0.4.3) |
+| Android Server | 0.4.3 | arm64-v8a 签名 APK、更新清单、SHA256SUMS | [v0.4.3](https://github.com/HaoweiLi97/scrapefun-server-android/releases/tag/v0.4.3) |
 | Linux Client | 0.1.3 | x64 deb、AppImage、SHA256SUMS | [v0.1.3](https://github.com/HaoweiLi97/scrapefun-client-linux/releases/tag/v0.1.3) |
 | macOS Client | 0.1.3 | arm64 DMG、更新 ZIP | [v0.1.3](https://github.com/HaoweiLi97/scrapefun-client-macos/releases/tag/v0.1.3) |
 | Windows Client | 0.1.3 | x64 EXE、便携版、更新文件、SHA256SUMS；另有商店 APPX | [v0.1.3](https://github.com/HaoweiLi97/scrapefun-client-windows/releases/tag/v0.1.3) · [商店](https://apps.microsoft.com/detail/9NM3HPS675QH) |

@@ -6,7 +6,8 @@
   "targetPlatforms": [
     "docker",
     "windows-server",
-    "linux-server"
+    "linux-server",
+    "android-server"
   ],
   "restartRequired": true,
   "minimumVersion": null,
