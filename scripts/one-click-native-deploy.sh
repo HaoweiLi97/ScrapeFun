@@ -6,10 +6,16 @@ set -euo pipefail
 main() {
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 fail() { printf 'Error: %s\n' "$*" >&2; exit 1; }
+node_supported() {
+  local node_release
+  node_release="$("$1" --version 2>/dev/null)" || return 1
+  [[ "$node_release" =~ ^v(22|24)\.([0-9]+)\.[0-9]+$ ]] || return 1
+  [[ "${BASH_REMATCH[1]}" == 24 || "${BASH_REMATCH[2]}" -ge 13 ]]
+}
 usage() {
   cat <<'EOF'
 Usage: one-click-native-deploy.sh [stable|beta] [OPTIONS]
-Requires Linux amd64, systemd, Node.js 20/22/24, Python 3, curl and ffmpeg.
+Requires Linux amd64, systemd, Node.js 22.13+ or 24, Python 3, curl and ffmpeg.
 Defaults: /opt/scrapefun, /var/lib/scrapefun, /etc/scrapefun; port 8096.
   --port PORT             Override APP_HOST_PORT and the saved port (1-65535).
   --version VERSION       Install a specific release instead of the latest.
@@ -172,7 +178,9 @@ source_base="https://raw.githubusercontent.com/${GITHUB_REPO:-HaoweiLi97/ScrapeF
 mkdir -p "$stage/operations" "$stage/release"
 fetch_script() {
   local relative="$1" target="$stage/$1"
-  if [[ -f "$ROOT_DIR/$relative" ]]; then cp "$ROOT_DIR/$relative" "$target"; else
+  # Offline archives/source-local first installs can reuse adjacent tools.
+  # Online upgrades must not keep reinstalling their old host implementation.
+  if [[ -f "$ROOT_DIR/$relative" && ( -n "${SCRAPEFUN_NATIVE_ARCHIVE:-}" || ! -f "$state" ) ]]; then cp "$ROOT_DIR/$relative" "$target"; else
     download_file "$source_base/$relative" "$target"
   fi
   if [[ "$relative" == *.sh ]]; then
@@ -182,18 +190,22 @@ fetch_script() {
 }
 printf '准备 Linux 原生安装工具…\n'
 for file in operations/scrapefun.sh operations/linux-server-tools.py operations/linux-native-updater.py release/install-scrapefun-linux-server.sh release/start-scrapefun-linux-server.sh; do fetch_script "$file"; done
-if [[ -f "$ROOT_DIR/one-click-native-deploy.sh" ]]; then cp "$ROOT_DIR/one-click-native-deploy.sh" "$stage/operations/one-click-native-deploy.sh"; else
+if [[ -f "$ROOT_DIR/one-click-native-deploy.sh" && ( -n "${SCRAPEFUN_NATIVE_ARCHIVE:-}" || ! -f "$state" ) ]]; then cp "$ROOT_DIR/one-click-native-deploy.sh" "$stage/operations/one-click-native-deploy.sh"; else
   download_file "$source_base/one-click-native-deploy.sh" "$stage/operations/one-click-native-deploy.sh"
 fi
 python3 "$stage/operations/linux-server-tools.py" preflight --install "$SCRAPEFUN_INSTALL_DIR" --data "$SCRAPEFUN_DATA_DIR" --config "$SCRAPEFUN_CONFIG_DIR"
-if [[ -z "${SCRAPEFUN_NODE_BINARY:-}" ]] && { [[ ! -x "$node_binary" ]] || ! [[ "$("$node_binary" -p "process.versions.node.split('.')[0]" 2>/dev/null)" =~ ^(20|22|24)$ ]]; }; then
+if [[ -z "${SCRAPEFUN_NODE_BINARY:-}" ]] && { ! node_supported "$node_binary"; }; then
   for candidate in "$SCRAPEFUN_CONFIG_DIR"/runtime/node-v22.*-linux-x64/bin/node; do
-    if [[ -x "$candidate" && "$("$candidate" -p "process.versions.node.split('.')[0]" 2>/dev/null)" == 22 ]]; then node_binary="$candidate"; break; fi
+    if node_supported "$candidate"; then node_binary="$candidate"; break; fi
   done
 fi
-if [[ ! -x "$node_binary" ]] || ! [[ "$("$node_binary" -p "process.versions.node.split('.')[0]" 2>/dev/null)" =~ ^(20|22|24)$ ]]; then
-  [[ -z "${SCRAPEFUN_NODE_BINARY:-}" ]] || fail 'specified --node must be an executable Node.js 20/22/24 binary'
-  [[ $INSTALL_DEPS -eq 1 && $CHECK_ONLY -eq 0 ]] || fail 'Node.js 20/22/24 is required; use --node PATH or --install-deps'
+if ! node_supported "$node_binary"; then
+  [[ -z "${SCRAPEFUN_NODE_BINARY:-}" ]] || fail 'specified --node must be an executable Node.js 22.13+ or 24 binary'
+  # An existing installation previously accepted Node 20/early 22. Upgrade its
+  # private runtime before touching the running application, without replacing
+  # the machine's system Node. Explicit --node still remains an explicit choice.
+  if [[ -f "$state" && -z "${SCRAPEFUN_NATIVE_ARCHIVE:-}" ]]; then INSTALL_DEPS=1; fi
+  [[ $INSTALL_DEPS -eq 1 && $CHECK_ONLY -eq 0 ]] || fail 'Node.js 22.13+ or 24 is required; use --node PATH or --install-deps'
   printf '从 nodejs.org 安装独立 Node.js 22 运行时…\n'
   download_file https://nodejs.org/dist/index.json "$stage/node-index.json"
   node_version="$(python3 - "$stage/node-index.json" <<'PY'
@@ -225,6 +237,7 @@ PY
   mv -- "$stage/node/$node_name" "$runtime"
   node_binary="$runtime/bin/node"
 fi
+node_supported "$node_binary" || fail 'Node.js 22.13+ or 24 is required'
 export SCRAPEFUN_NODE_BINARY="$(readlink -f -- "$node_binary")"
 selected_port="${APP_HOST_PORT:-$(read_setting PORT "$SCRAPEFUN_CONFIG_DIR/server.env")}"
 selected_port="${selected_port:-8096}"

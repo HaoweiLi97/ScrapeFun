@@ -12,6 +12,12 @@ NODE_BIN="${SCRAPEFUN_NODE_BINARY:-$(command -v node || true)}"
 OPS_SOURCE="${SCRAPEFUN_OPERATION_SOURCE:-$SCRIPT_DIR/../operations}"
 START_SOURCE="${SCRAPEFUN_START_SOURCE:-$SCRIPT_DIR/start-scrapefun-linux-server.sh}"
 fail() { printf 'Error: %s\n' "$*" >&2; exit 1; }
+node_supported() {
+  local node_release
+  node_release="$("$1" --version 2>/dev/null)" || return 1
+  [[ "$node_release" =~ ^v(22|24)\.([0-9]+)\.[0-9]+$ ]] || return 1
+  [[ "${BASH_REMATCH[1]}" == 24 || "${BASH_REMATCH[2]}" -ge 13 ]]
+}
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --help|-h) printf 'Usage: install-scrapefun-linux-server.sh ARCHIVE.tar.gz [--port PORT]\nPort: --port > APP_HOST_PORT > saved PORT > 8096 (1-65535).\n'; exit 0 ;;
@@ -40,9 +46,9 @@ for required in python3 systemctl flock ffmpeg ffprobe sha256sum runuser useradd
 expected="$(awk 'NR==1 {print $1}' "$ARCHIVE.sha256")"
 [[ "$expected" =~ ^[a-fA-F0-9]{64}$ ]] || fail 'invalid release checksum'
 printf '%s  %s\n' "$expected" "$ARCHIVE" | sha256sum --check --strict -
-[[ -x "$NODE_BIN" ]] || fail 'Node.js 20/22/24 is required'
+[[ -x "$NODE_BIN" ]] || fail 'Node.js 22.13+ or 24 is required'
 NODE_BIN="$(readlink -f -- "$NODE_BIN")"
-[[ "$("$NODE_BIN" -p "process.versions.node.split('.')[0]")" =~ ^(20|22|24)$ ]] || fail 'Node.js 20/22/24 is required'
+node_supported "$NODE_BIN" || fail 'Node.js 22.13+ or 24 is required'
 [[ "$(uname -s)" == Linux && "$(uname -m)" == x86_64 ]] || fail 'native release supports Linux amd64'
 [[ -d /run/systemd/system ]] || fail 'systemd must be running; enable systemd in WSL before installing'
 for file in scrapefun.sh linux-server-tools.py; do [[ -f "$OPS_SOURCE/$file" ]] || fail "management script missing: $file"; done
@@ -145,9 +151,20 @@ if [[ -n "${SCRAPEFUN_NATIVE_VERSION:-}" ]]; then
   release_version="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("version", ""))' "$release/RELEASE.json")"
   [[ "$release_version" == "$SCRAPEFUN_NATIVE_VERSION" ]] || fail 'archive version differs from requested version'
 fi
-install -m 755 "$START_SOURCE" "$release/start.sh"
-install -d -m 755 "$release/operations"
-install -m 755 "$OPS_SOURCE/linux-server-tools.py" "$release/operations/linux-server-tools.py"
+INSTALLER_SOURCE="$SCRIPT_DIR/install-scrapefun-linux-server.sh"
+# Prefer the checksum-verified archive's matching host tools. Older archives
+# without these files retain the external compatibility installer path.
+if [[ -f "$release/operations/linux-native-updater.py" && -f "$release/operations/scrapefun.sh" && -f "$release/operations/linux-server-tools.py" && -f "$release/one-click-native-deploy.sh" && -f "$release/start.sh" ]]; then
+  OPS_SOURCE="$release/operations"
+  UPDATER_SOURCE="$OPS_SOURCE/linux-native-updater.py"
+  DEPLOY_SOURCE="$release/one-click-native-deploy.sh"
+  START_SOURCE="$release/start.sh"
+  [[ ! -f "$release/release/install-scrapefun-linux-server.sh" ]] || INSTALLER_SOURCE="$release/release/install-scrapefun-linux-server.sh"
+else
+  install -m 755 "$START_SOURCE" "$release/start.sh"
+  install -d -m 755 "$release/operations"
+  install -m 755 "$OPS_SOURCE/linux-server-tools.py" "$release/operations/linux-server-tools.py"
+fi
 # Verify the immutable server before stopping an existing service.
 (cd "$release/server" && "$NODE_BIN" scripts/verify-protected.cjs)
 for module in "$release/server/dist/pro-runtime/"*.node; do
@@ -176,7 +193,7 @@ fi
 # Existing hand-edited env files may lack a final newline.
 [[ ! -s "$stage/server.env" || -z "$(tail -c 1 "$stage/server.env")" ]] || printf '\n' >> "$stage/server.env"
 if ! grep -q '^PORT=' "$stage/server.env"; then printf 'PORT=%s\n' "$port" >> "$stage/server.env"; fi
-if ! grep -q '^APP_AUTH_SECRET=.' "$stage/server.env"; then
+if ! grep -q '^APP_AUTH_SECRET=.' "$stage/server.env" && ! grep -q '^JWT_SECRET=.' "$stage/server.env"; then
   printf 'APP_AUTH_SECRET=%s\n' "$("$NODE_BIN" -e "process.stdout.write(require('node:crypto').randomBytes(48).toString('base64url'))")" >> "$stage/server.env"
 fi
 [[ ! -f "$CONFIG_DIR/management.env" ]] || cp "$CONFIG_DIR/management.env" "$stage/old-management.env"
@@ -217,7 +234,8 @@ install -o root -g "$SERVICE_GROUP" -m 640 "$stage/server.env" "$ENV_FILE"
 if [[ -n "${SCRAPEFUN_GPU_ENV_FILE:-}" ]]; then
   install -m 644 "$SCRAPEFUN_GPU_ENV_FILE" "$CONFIG_DIR/gpu.env"
 fi
-mv -- "$release" "$INSTALL_DIR"
+# Sources below may point inside the staged release; install management files
+# before moving that directory into its final immutable location.
 install -d -o root -g root -m 755 "$CONFIG_DIR/operations"
 for file in scrapefun.sh linux-server-tools.py; do install -o root -g root -m 755 "$OPS_SOURCE/$file" "$CONFIG_DIR/operations/$file"; done
 install -o root -g root -m 755 "$UPDATER_SOURCE" "$CONFIG_DIR/operations/linux-native-updater.py"
@@ -233,8 +251,10 @@ install -m 755 "$OPS_SOURCE/scrapefun.sh" "$CONFIG_DIR/scrapefun"
 install -d -m 755 "$CONFIG_DIR/operations/operations" "$CONFIG_DIR/operations/release"
 for file in scrapefun.sh linux-server-tools.py; do install -m 755 "$OPS_SOURCE/$file" "$CONFIG_DIR/operations/operations/$file"; done
 install -m 755 "$UPDATER_SOURCE" "$CONFIG_DIR/operations/operations/linux-native-updater.py"
-install -m 755 "$SCRIPT_DIR/install-scrapefun-linux-server.sh" "$CONFIG_DIR/operations/release/install-scrapefun-linux-server.sh"
+install -m 755 "$INSTALLER_SOURCE" "$CONFIG_DIR/operations/release/install-scrapefun-linux-server.sh"
 install -m 755 "$START_SOURCE" "$CONFIG_DIR/operations/release/start-scrapefun-linux-server.sh"
+mv -- "$release" "$INSTALL_DIR"
+OPS_SOURCE="$CONFIG_DIR/operations"
 cat > "$CONFIG_DIR/management.env" <<EOF
 MODE=native
 INSTALL_DIR=$INSTALL_DIR

@@ -7,12 +7,18 @@ CONTAINER_NAME="scrapefun"
 TARGET_DATA_DIR=""
 MANIFEST_FILE=""
 LEAVE_STOPPED=0
+ALLOW_RELOCATION=1
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 usage() {
   cat <<'EOF'
 Usage:
   migrate-docker-data-root.sh --check --target DATA_DIR [--container NAME]
   migrate-docker-data-root.sh --migrate --target DATA_DIR [--container NAME] [--manifest FILE] [--leave-stopped]
+  migrate-docker-data-root.sh --upgrade --target DATA_DIR [--container NAME] [--leave-stopped]
+
+--upgrade reuses existing same-root bind mounts and migrates only unmounted
+entries. A change of data location still requires explicit --migrate.
 
 Exit status for --check:
   0  the container already uses TARGET_DATA_DIR as the /app/data root bind mount
@@ -24,6 +30,7 @@ while [[ "$#" -gt 0 ]]; do
   case "$1" in
     --check) MODE="check" ;;
     --migrate) MODE="migrate" ;;
+    --upgrade) MODE="migrate"; ALLOW_RELOCATION=0 ;;
     --container)
       [[ "$#" -ge 2 ]] || { usage >&2; exit 1; }
       CONTAINER_NAME="$2"
@@ -78,6 +85,69 @@ printf 'Target root: %s\n' "$target_real" >&2
 
 if [[ "$MODE" == "check" ]]; then
   exit 2
+fi
+
+# The official old layout already persists its large child directories in the
+# chosen root. Reuse those mounts instead of copying/hashing them a second time.
+reuse_mounts=1
+[[ -z "$root_mount" ]] || reuse_mounts=0
+database_mount=0
+while IFS= read -r mount; do
+  destination="$(printf '%s\n' "$mount" | awk -F ' [|] ' '{print $1}')"
+  case "$destination" in /app/data/*) ;; *) continue ;; esac
+  relative="${destination#/app/data/}"
+  source="$(printf '%s\n' "$mount" | awk -F ' [|] ' '{print $2}')"
+  kind="$(printf '%s\n' "$mount" | awk -F ' [|] ' '{print $3}')"
+  [[ "$relative" != */* && "$kind" == bind && -d "$source" ]] || { reuse_mounts=0; continue; }
+  actual="$(cd "$source" && pwd -P)"
+  expected="$(cd "$target_real/$relative" 2>/dev/null && pwd -P || true)"
+  [[ "$actual" == "$expected" ]] || reuse_mounts=0
+  [[ "$relative" != db ]] || database_mount=1
+done <<< "$mounts"
+[[ $database_mount -eq 1 ]] || reuse_mounts=0
+if [[ $ALLOW_RELOCATION -eq 0 && $reuse_mounts -ne 1 ]]; then
+  printf 'Error: this layout changes data locations; use --migrate-data-root explicitly after checking the source and target paths.\n' >&2
+  exit 1
+fi
+
+if [[ $reuse_mounts -eq 1 ]]; then
+  merger="$SCRIPT_DIR/migrate-data-root.cjs"
+  [[ -f "$merger" ]] || merger="$SCRIPT_DIR/../updater/migrate-data-root.cjs"
+  [[ -f "$merger" ]] || { printf 'Error: persistent-data merger is missing.\n' >&2; exit 1; }
+  was_running="$(docker inspect --format '{{.State.Running}}' "$container_id")"
+  inspection_image=""
+  migration_receipt="$(mktemp "${TMPDIR:-/tmp}/scrapefun-migration-receipt.XXXXXX")"
+  migration_complete=0
+  cleanup_fast() {
+    rm -f "$migration_receipt"
+    [[ -z "$inspection_image" ]] || docker image rm "$inspection_image" >/dev/null 2>&1 || true
+    if [[ $migration_complete -ne 1 && "$was_running" == true ]]; then docker start "$container_id" >/dev/null 2>&1 || true; fi
+  }
+  trap cleanup_fast EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+  trap 'exit 129' HUP
+  [[ "$was_running" != true ]] || docker stop --time 60 "$container_id" >/dev/null
+  inspection_image="$(docker commit "$container_id")"
+  mounts_json="$(docker inspect --format '{{json .Mounts}}' "$container_id")"
+  merge_code="$(cat "$merger")
+const skipped = new Set(JSON.parse(process.argv[3]).filter(m => m.Destination.startsWith('/app/data/')).map(m => m.Destination.slice(10)));
+const receipt = [];
+mergeDataRoot(process.argv[1], process.argv[2], skipped, receipt);
+console.log('# Verified unmounted entries only; existing persistent mounts were reused.');
+for (const file of receipt) console.log(file.sha256 + '  ' + file.path);"
+  docker run --rm --network none --read-only --user 0 --entrypoint node \
+    --volume "$target_real:/upgrade-target" "$inspection_image" \
+    -e "$merge_code" /app/data /upgrade-target "$mounts_json" > "$migration_receipt"
+  MANIFEST_FILE="${MANIFEST_FILE:-$(dirname "$target_real")/scrapefun-data-migration-$(date -u +%Y%m%dT%H%M%SZ).sha256}"
+  mkdir -p "$(dirname "$MANIFEST_FILE")"
+  cp "$migration_receipt" "$MANIFEST_FILE"
+  chmod 600 "$MANIFEST_FILE"
+  migration_complete=1
+  if [[ "$was_running" == true && $LEAVE_STOPPED -ne 1 ]]; then docker start "$container_id" >/dev/null; fi
+  printf 'Migration completed; existing mounted databases/images were reused without copying.\n'
+  printf 'Verification manifest (migrated entries only): %s\n' "$MANIFEST_FILE"
+  exit 0
 fi
 
 staging_dir="$(mktemp -d "${TMPDIR:-/tmp}/scrapefun-data-migration.XXXXXX")"

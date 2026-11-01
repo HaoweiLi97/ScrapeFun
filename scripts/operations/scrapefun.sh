@@ -78,7 +78,14 @@ fi
 PORT="${PORT:-8096}"
 [[ "$PORT" =~ ^[0-9]+$ && "$PORT" -gt 0 && "$PORT" -le 65535 ]] || fail 'invalid configured port'
 root_exec() { if [[ $EUID -eq 0 ]]; then "$@"; else sudo -- "$@"; fi; }
-compose() { docker compose --env-file "$ENV_FILE" -f "$DEPLOY_DIR/docker-compose.remote.yml" "$@"; }
+compose() {
+  local files=()
+  [[ ! -f "$DEPLOY_DIR/server.env" ]] || files+=(--env-file "$DEPLOY_DIR/server.env")
+  [[ ! -f "$DEPLOY_DIR/.env" ]] || files+=(--env-file "$DEPLOY_DIR/.env")
+  files+=(--env-file "$ENV_FILE" -f "$DEPLOY_DIR/docker-compose.remote.yml")
+  [[ ! -f "$DEPLOY_DIR/.updater-compose-compat.json" ]] || files+=(-f "$DEPLOY_DIR/.updater-compose-compat.json")
+  docker compose "${files[@]}" "$@"
+}
 service_action() {
   printf '%s: %s …\n' "$MODE" "$1"
   if [[ "$MODE" == docker ]]; then
@@ -154,7 +161,7 @@ update() {
   if [[ "$MODE" == docker ]]; then bash "$OPS/one-click-compose-deploy.sh" "$channel" "$DEPLOY_DIR"; else
     root_exec env SCRAPEFUN_INSTALL_DIR="$INSTALL_DIR" SCRAPEFUN_DATA_DIR="$DATA_DIR" \
       SCRAPEFUN_CONFIG_DIR="$DEPLOY_DIR" SCRAPEFUN_SERVICE_NAME="$SERVICE" \
-      SCRAPEFUN_SERVICE_USER="$SERVICE_USER" SCRAPEFUN_NODE_BINARY="$NODE_BIN" \
+      SCRAPEFUN_SERVICE_USER="$SERVICE_USER" \
       bash "$OPS/one-click-native-deploy.sh" "$channel"
   fi
 }

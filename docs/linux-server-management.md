@@ -1,6 +1,6 @@
 # Linux 服务端安装与管理
 
-Linux 服务端保留两种安装方式，两者提供同一套 Web 管理界面和 API。普通 Linux 主机可选 Docker Compose 或原生 systemd；NAS 可使用 Docker；ARM64 设备必须先确认对应标签提供 ARM64 镜像，不能直接使用 amd64 镜像。原生发布包目前仅支持 glibc Linux amd64，需要 Node.js 20/22/24、Python 3、curl、systemd、FFmpeg 和 FFprobe，硬件加速还需要主机驱动。
+Linux 服务端保留两种安装方式，两者提供同一套 Web 管理界面和 API。普通 Linux 主机可选 Docker Compose 或原生 systemd；NAS 可使用 Docker；ARM64 设备必须先确认对应标签提供 ARM64 镜像，不能直接使用 amd64 镜像。原生发布包目前仅支持 glibc Linux amd64，需要 Node.js 22.13+ 或 24、Python 3、curl、systemd、FFmpeg 和 FFprobe，硬件加速还需要主机驱动。
 
 一键安装脚本和部署说明随公共部署仓库发布；下列公网命令使用 main 分支当前版本。
 
@@ -65,7 +65,7 @@ sudo bash scripts/one-click-native-deploy.sh stable --install-deps --port 18096 
 
 `--check`（别名 `--dry-run`）检查本机前提、路径、备份空间和目标端口，不安装依赖、不写入安装目录、不启动或停止服务；指定离线包时也校验 SHA-256。与 `--install-deps` 同时使用仍然只检查。管道运行检查命令时，可能下载辅助脚本到临时目录；不会下载应用发布包。
 
-原生入口检查 Linux amd64、glibc（至少 2.28）、运行中的 systemd、所需命令和 Node.js 20/22/24。不支持的架构、musl/Alpine、未启用 systemd 的 WSL 会明确退出。安装器还会在停服前检查发布包原生模块的动态链接依赖；具体运行库要求以所选发布包为准。
+原生入口检查 Linux amd64、glibc（至少 2.28）、运行中的 systemd、所需命令和 Node.js 22.13+ 或 24。不支持的架构、musl/Alpine、未启用 systemd 的 WSL 会明确退出。安装器还会在停服前检查发布包原生模块的动态链接依赖；具体运行库要求以所选发布包为准。
 
 默认只报告缺失依赖。显式使用 `--install-deps` 时，按当前系统的 `apt-get`、`dnf`、`yum`、`zypper` 或 `pacman` 安装缺失的基础包，使用已有软件源，不执行全系统升级。有些发行版的软件源没有 FFmpeg，需要先启用适用软件源或自行安装；脚本会停止并指出缺失命令。GPU 环境的自动补装范围仍见下文。
 
@@ -84,6 +84,9 @@ sudo bash scripts/one-click-native-deploy.sh stable \
 `--version` 选择对应 GitHub Release，并核对归档的版本和渠道；不指定时选择对应渠道的最新发布包。`--archive FILE` 可使用已下载的包和相邻 `.sha256` 文件。网络下载有连接/总时长限制、重试、低速超时和临时文件隔离，沿用 curl 的代理环境变量；失败不会替换旧程序。
 
 再次更新自定义实例时，只需指定 `--config-dir /etc/scrapefun-lab`，脚本会从该目录读取已保存的程序、数据、服务用户、服务名和 Node 路径。显式路径参数覆盖保存值；改变数据路径不会自动搬迁旧数据。GPU 配置未显式指定时保留已有配置。`--health-timeout` 范围为 1–86400 秒，也可使用 `SCRAPEFUN_HEALTH_TIMEOUT` 环境变量。
+
+
+当前升级工具会在已有实例使用旧 Node 时先准备兼容的独立 Node，再替换服务；离线更新须预先提供兼容运行时。在线升级刷新宿主辅助脚本，并优先使用发行包内匹配的工具。更早的管理命令尚未包含这套衔接时，先重新运行最新一键入口，沿用原配置目录。
 
 ## 统一管理入口
 

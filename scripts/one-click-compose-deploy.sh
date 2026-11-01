@@ -21,7 +21,7 @@ while [[ $# -gt 0 ]]; do
     *) POSITIONAL_ARGS+=("$1"); shift ;;
   esac
 done
-set -- "${POSITIONAL_ARGS[@]}"
+set -- ${POSITIONAL_ARGS[@]+"${POSITIONAL_ARGS[@]}"}
 
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
   ACTION="$1"
@@ -109,9 +109,9 @@ Environment variables:
   NVIDIA_VISIBLE_DEVICES   NVIDIA device index/UUID list (default: all).
   NVIDIA_DRIVER_CAPABILITIES
                            Must include video and graphics (default: compute,utility,video,graphics).
-  --migrate-data-root      After a legacy mount is detected, stop the old app,
-                           copy its complete /app/data view, verify conflicts,
-                           and then switch to the root bind mount.
+  --migrate-data-root      Allow an explicit migration to another data location.
+                           Legacy child mounts in the same data root are
+                           upgraded automatically without copying mounted data.
 
 Notes:
   - default port is 8096
@@ -140,7 +140,11 @@ read_env_value() {
     return
   fi
 
-  sed -n "s/^${key}=//p" "${file}" | tail -n 1
+  local value
+  value="$(sed -n "s/^${key}=//p" "${file}" | tail -n 1)"
+  value="${value%$'\r'}"
+  if [[ "$value" == \"*\" || "$value" == \'*\' ]]; then value="${value:1:${#value}-2}"; fi
+  printf '%s\n' "$value"
 }
 
 validate_app_host_port() {
@@ -200,6 +204,9 @@ resolve_channel() {
   fi
 
   if [[ -f "${UPDATER_ENV_FILE}" ]]; then
+    local saved_channel
+    saved_channel="$(read_env_value UPDATE_DEFAULT_CHANNEL "$UPDATER_ENV_FILE")"
+    if [[ "$saved_channel" == stable || "$saved_channel" == beta ]]; then CHANNEL="$saved_channel"; return; fi
     local existing_tag
     existing_tag="$(read_env_value "UPDATE_CURRENT_TAG" "${UPDATER_ENV_FILE}")"
     if [[ "${existing_tag}" == "beta" ]]; then
@@ -343,6 +350,11 @@ install_operation_scripts() {
   # Keep a pristine template for installed updates. The deployment's rendered
   # Compose file no longer contains the GPU marker and cannot be reused as input.
   cp "${COMPOSE_TARGET}" "${OPERATIONS_DIR}/docker-compose.template.yml"
+  if [[ -f "$ROOT_DIR/scripts/updater/migrate-data-root.cjs" ]]; then
+    cp "$ROOT_DIR/scripts/updater/migrate-data-root.cjs" "$OPERATIONS_DIR/migrate-data-root.cjs"
+  else
+    download_file "https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/scripts/updater/migrate-data-root.cjs" "$OPERATIONS_DIR/migrate-data-root.cjs"
+  fi
   for operation_file in \
     docker-operations-common.sh \
     migrate-docker-data-root.sh \
@@ -463,6 +475,11 @@ resolve_app_host_port() {
       validate_app_host_port
       return
     fi
+  fi
+
+  if [[ -f "${LEGACY_ENV_FILE}" ]]; then
+    APP_HOST_PORT="$(read_env_value APP_HOST_PORT "$LEGACY_ENV_FILE")"
+    if [[ -n "$APP_HOST_PORT" ]]; then validate_app_host_port; return; fi
   fi
 
   APP_HOST_PORT="8096"
@@ -788,6 +805,20 @@ SCRAPEFUN_WSL_GPU_ADAPTER=${SCRAPEFUN_WSL_GPU_ADAPTER}
 COMPOSE_PROJECT_NAME=scrapefun
 EOF
 
+  # Keep user-provided interpolation variables when updating managed keys.
+  if [[ -f "$UPDATER_ENV_FILE" ]]; then
+    local merged_file
+    merged_file="$(create_deploy_tmp_file '.updater.env.merge')"
+    awk '
+      NR==FNR { pos=index($0,"="); if(pos) { key=substr($0,1,pos-1); values[key]=$0; order[++n]=key }; next }
+      { pos=index($0,"="); key=pos?substr($0,1,pos-1):"";
+        if(key in values) { if(!seen[key]++) print values[key] } else print }
+      END { for(i=1;i<=n;i++) if(!seen[order[i]]) print values[order[i]] }
+    ' "$tmp_file" "$UPDATER_ENV_FILE" > "$merged_file"
+    rm -f "$tmp_file"
+    tmp_file="$merged_file"
+  fi
+
   if [[ -f "${UPDATER_ENV_FILE}" ]] && cmp -s "${tmp_file}" "${UPDATER_ENV_FILE}"; then
     rm -f "${tmp_file}"
     chmod 600 "${UPDATER_ENV_FILE}" 2>/dev/null || echo -e "${YELLOW}Warning: could not restrict permissions on ${UPDATER_ENV_FILE}.${NC}"
@@ -800,6 +831,13 @@ EOF
     exit 1
   fi
   chmod 600 "${UPDATER_ENV_FILE}" 2>/dev/null || echo -e "${YELLOW}Warning: could not restrict permissions on ${UPDATER_ENV_FILE}.${NC}"
+}
+
+compose_deploy() {
+  local files=()
+  [[ ! -f "$SERVER_ENV_FILE" ]] || files+=(--env-file "$SERVER_ENV_FILE")
+  [[ ! -f "$LEGACY_ENV_FILE" ]] || files+=(--env-file "$LEGACY_ENV_FILE")
+  docker compose ${files[@]+"${files[@]}"} --env-file "$UPDATER_ENV_FILE" -f "$COMPOSE_TARGET" "$@"
 }
 
 remove_legacy_container_if_needed() {
@@ -842,14 +880,10 @@ ensure_legacy_data_is_safe() {
     exit 1
   fi
 
-  if [[ "${MIGRATE_LEGACY_DATA}" -ne 1 ]]; then
-    echo -e "${RED}Error: the existing container does not use the configured /app/data root mount.${NC}"
-    echo -e "${RED}Re-run with --migrate-data-root to copy and verify legacy container data before replacement.${NC}"
-    exit 1
-  fi
-
+  local migration_mode=--upgrade
+  [[ "$MIGRATE_LEGACY_DATA" -ne 1 ]] || migration_mode=--migrate
   "${migration_script}" \
-    --migrate \
+    "$migration_mode" \
     --container scrapefun \
     --target "${SCRAPEFUN_DATA_DIR}" \
     --manifest "${DEPLOY_DIR}/data-migration-$(date -u +%Y%m%dT%H%M%SZ).sha256" \
@@ -865,7 +899,7 @@ try_pull_images() {
     echo -e "${YELLOW}Trying image source: ${repository}:${TAG}${NC}"
     write_updater_env_file "${repository}"
 
-    if docker compose --env-file "${UPDATER_ENV_FILE}" -f "${COMPOSE_TARGET}" pull; then
+    if compose_deploy pull; then
       SELECTED_REPOSITORY="${repository}"
       return 0
     fi
@@ -936,7 +970,7 @@ load_image_bundle() {
 }
 
 validate_compose_configuration() {
-  if ! docker compose --env-file "${UPDATER_ENV_FILE}" -f "${COMPOSE_TARGET}" config --quiet; then
+  if ! compose_deploy config --quiet; then
     echo -e "${RED}Error: generated Docker Compose configuration is invalid.${NC}"
     if [[ "${SCRAPEFUN_GPU_MODE}" == "nvidia" ]]; then
       echo -e "${RED}Confirm that Docker Compose supports the 'gpus' service field and NVIDIA Container Toolkit is installed.${NC}"
@@ -1171,13 +1205,15 @@ if ! run_gpu_preflight; then
 fi
 
 ensure_legacy_data_is_safe
+# The freshly rendered template now carries the complete deployment contract.
+rm -f "$DEPLOY_DIR/.updater-compose-compat.json"
 remove_legacy_container_if_needed "scrapefun"
 remove_legacy_container_if_needed "scrapefun-updater"
 if [[ "${ACTION}" == "update" ]]; then
   echo -e "${YELLOW}Recreating changed Compose services without stopping the project...${NC}"
-  docker compose --env-file "${UPDATER_ENV_FILE}" -f "${COMPOSE_TARGET}" up -d --remove-orphans
+  compose_deploy up -d --remove-orphans
 else
-  docker compose --env-file "${UPDATER_ENV_FILE}" -f "${COMPOSE_TARGET}" up -d
+  compose_deploy up -d
 fi
 
 bash "${DEPLOY_DIR}/scrapefun" wait-ready
