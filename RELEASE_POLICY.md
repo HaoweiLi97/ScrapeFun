@@ -2,18 +2,18 @@
 
 **简体中文** · [English](./RELEASE_POLICY.en.md)
 
-> macOS、Linux、Docker、Windows 和 Android Server 条目更新：2026-10-29。其余条目保留较早的公开发布快照；最新状态以对应发行页或商店为准。
+> macOS 条目更新：2026-10-31。其他平台保留既有公开发布记录；最新状态以对应发行页或商店为准。
 
 ## 已发布稳定版
 
 | 产品 | 稳定版 | 下载资产 | 发行页 |
 | --- | --- | --- | --- |
-| macOS Server | 0.4.3 | arm64 DMG | [v0.4.3](https://github.com/HaoweiLi97/scrapefun-server-macos/releases/tag/v0.4.3) |
+| macOS Server | 0.5.0 | arm64 DMG、SHA-256 / 手动安装 | [v0.5.0](https://github.com/HaoweiLi97/scrapefun-server-macos/releases/tag/v0.5.0) |
 | Windows Server | 0.4.3 | x64 EXE、更新包、SHA256SUMS；另有商店渠道 | [v0.4.3](https://github.com/HaoweiLi97/scrapefun-server-windows/releases/tag/v0.4.3) · [商店](https://apps.microsoft.com/detail/9N83B6RSWG01) |
 | Linux Server | 0.4.4 | glibc Linux amd64 原生安装包、SHA256SUMS | [v0.4.4](https://github.com/HaoweiLi97/scrapefun-server-linux/releases/tag/v0.4.4) |
 | Android Server | 0.4.3 | arm64-v8a 签名 APK、更新清单、SHA256SUMS | [v0.4.3](https://github.com/HaoweiLi97/scrapefun-server-android/releases/tag/v0.4.3) |
 | Linux Client | 0.1.4 | x64 deb、AppImage、SHA256SUMS | [v0.1.4](https://github.com/HaoweiLi97/scrapefun-client-linux/releases/tag/v0.1.4) |
-| macOS Client | 0.1.3 | arm64 DMG、更新 ZIP | [v0.1.3](https://github.com/HaoweiLi97/scrapefun-client-macos/releases/tag/v0.1.3) |
+| macOS Client | 0.5.0 | arm64 DMG、SHA-256 / 手动安装 | [v0.5.0](https://github.com/HaoweiLi97/scrapefun-client-macos/releases/tag/v0.5.0) |
 | Windows Client | 0.1.3 | x64 EXE、便携版、更新文件、SHA256SUMS；另有商店 APPX | [v0.1.3](https://github.com/HaoweiLi97/scrapefun-client-windows/releases/tag/v0.1.3) · [商店](https://apps.microsoft.com/detail/9NM3HPS675QH) |
 | Android Client | 0.2.8 | arm64-v8a / armeabi-v7a APK、SHA256SUMS | [v0.2.8](https://github.com/HaoweiLi97/scrapefun-client-android/releases/tag/v0.2.8) |
 
@@ -21,7 +21,7 @@ Docker 0.4.3 已发布，稳定版通过 [`haoweil/scrapefun:latest`](https://hu
 
 Windows GitHub 发行提供 x64 EXE 安装包和自动更新文件；Microsoft Store 继续作为独立 APPX/MSIX 渠道，可用版本以商店为准。GitHub EXE 未签名，Windows 可能显示未知发布者提示，请用 SHA256SUMS 核对下载。可继续使用原安装渠道，切换渠道前请备份数据。
 
-macOS Server 0.4.3 和 Client 0.1.3 均要求 Apple Silicon 与 macOS 26.0 或更新系统，采用 ad-hoc 完整性签名，未经 Developer ID 签名和 Apple 公证；首次安装按对应 Release 说明操作。
+macOS Server 0.5.0 需要 Apple Silicon / macOS 27.0 或更新系统，Client 0.5.0 需要 Apple Silicon / macOS 26.5 或更新系统。两者采用 ad-hoc 完整性签名，未经 Developer ID 签名和 Apple 公证；本版只提供手动下载安装，不提供应用内自动升级，首次安装按各自 Release 说明操作。
 
 Linux 原生 Server 0.4.4 修复网页安装更新。已有安装需先重新运行一键安装命令，或执行一次 `sudo scrapefun update`；自定义实例保留 `--config-dir`。完成后可从网页手动安装更新。Linux Client 0.1.4 默认通过 X11 / XWayland 启动，Wayland 桌面需安装 XWayland。
 
@@ -38,11 +38,11 @@ Linux 原生 Server 0.4.4 修复网页安装更新。已有安装需先重新运
 | --- | --- |
 | Docker 一键部署 | 应用内 updater 或重跑一键脚本；不指定频道时保留现有频道 |
 | NAS 手动 Compose | 更新镜像并重建服务；app 与 updater 频道保持一致 |
-| macOS Server | Sparkle 应用内更新，或下载安装新版 DMG |
+| macOS Server | 0.5.0 手动下载 DMG 并替换应用；先备份并退出旧服务 |
 | Windows Server | GitHub EXE 使用内置更新，商店安装由 Microsoft Store 更新；切换渠道前请备份 |
 | Linux AppImage Client | AppImage 更新，或手动下载替换 |
 | Linux deb Client | 使用系统包管理器安装新版包 |
-| macOS / Windows Client | 客户端更新机制，或覆盖安装新版安装包 |
+| macOS / Windows Client | macOS 0.5.0 手动覆盖安装；Windows 继续使用原安装渠道的更新方式 |
 | Android Client | 应用校验更新信息后交由系统安装器安装，或手动安装同签名新版 APK |
 
 ## 升级与兼容性
