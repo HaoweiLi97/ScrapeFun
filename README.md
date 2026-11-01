@@ -36,7 +36,7 @@ ScrapeFun 将媒体刮削、资源浏览、播放、阅读和多用户管理集�
 
 可用架构与包格式以实际 Release 资产和 Docker 标签的镜像清单为准。
 
-0.5.0 的 Windows、Linux、Android 服务端和客户端现已提供下载。Windows 的 GitHub 下载为 EXE，商店安装由 Microsoft Store 提供 MSIX/APPX；商店更新需等待审核。Windows EXE 尚未签名，可能显示 SmartScreen 提示。Android 客户端使用新的签名密钥，旧签名版本无法直接覆盖安装，请先保存配置与进度。Linux 客户端需要 glibc 2.34+ 和 X11/XWayland。详情见 [服务端更新说明](./release-notes/0.5.0/zh-CN.md)。
+0.5.0 的 Windows、Linux、Android 服务端和客户端现已提供下载。Windows 的 GitHub 下载为 EXE，商店安装由 Microsoft Store 提供 MSIX/APPX；商店客户端 0.5.0 已上架，服务端 0.5.0 正在审核。Windows EXE 尚未签名，可能显示 SmartScreen 提示。Android 客户端使用新的签名密钥，旧签名版本无法直接覆盖安装，请先保存配置与进度。Linux 客户端需要 glibc 2.34+ 和 X11/XWayland。详情见 [服务端更新说明](./release-notes/0.5.0/zh-CN.md)。
 
 ## 快速开始
 

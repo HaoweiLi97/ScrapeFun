@@ -36,7 +36,7 @@ Deploy a Server first, then install a Client if needed. Server stores libraries,
 
 Available architectures and formats follow the actual Release Assets and Docker tag manifests.
 
-Windows, Linux and Android Server and Client downloads are available for 0.5.0. GitHub Windows downloads are EXE installers; Microsoft Store distributes MSIX/APPX after certification. Windows EXEs are unsigned and may trigger SmartScreen. The Android Client uses a new signing key and cannot update an older signing identity in place; save configuration and progress first. The Linux Client requires glibc 2.34+ and X11/XWayland. See the [Server release notes](./release-notes/0.5.0/en-US.md).
+Windows, Linux and Android Server and Client downloads are available for 0.5.0. GitHub Windows downloads are EXE installers; Microsoft Store distributes MSIX/APPX; Client 0.5.0 is published and Server 0.5.0 is in certification. Windows EXEs are unsigned and may trigger SmartScreen. The Android Client uses a new signing key and cannot update an older signing identity in place; save configuration and progress first. The Linux Client requires glibc 2.34+ and X11/XWayland. See the [Server release notes](./release-notes/0.5.0/en-US.md).
 
 ## Quick start
 
