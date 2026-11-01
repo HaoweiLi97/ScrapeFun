@@ -27,6 +27,8 @@ Native Linux Server 0.4.4 fixes web-based installation of updates. Existing inst
 
 ## Channels and version numbers
 
+New releases follow [SemVer](https://semver.org/): stable fixes use three-part versions such as 0.5.0 → 0.5.1; only prereleases use -beta.N or -rc.N suffixes. The previous -patch.N naming plan is retired and remains supported only when reading historical versions for upgrades. Platforms advance independently; numeric Store package identities are separate from public versions.
+
 - **stable**: the default deployment channel. GitHub normally uses `v<version>`; Docker uses version tags and the `latest` alias.
 - **beta**: for trying prereleases. GitHub prerelease tags normally include `-beta`; Docker uses version tags and the `beta` alias.
 - Platforms release independently. Server and Client version numbers may differ. Matching version numbers alone do not prove identical features or protocols.
