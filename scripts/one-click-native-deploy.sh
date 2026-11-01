@@ -7,8 +7,9 @@ main() {
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 fail() { printf 'Error: %s\n' "$*" >&2; exit 1; }
 detect_package_manager() {
-  local families family candidates candidate
-  families="$(ID='' ID_LIKE=''; . "${1:-/etc/os-release}" || exit 1; printf '%s %s' "$ID" "$ID_LIKE")" || return 1
+  local families family candidates candidate release_file="${1:-/etc/os-release}"
+  if [[ $# -eq 0 && ! -f "$release_file" ]]; then release_file=/usr/lib/os-release; fi
+  families="$(ID='' ID_LIKE=''; . "$release_file" || exit 1; printf '%s %s' "$ID" "$ID_LIKE")" || return 1
   for family in $families; do
     case "$family" in
       debian|ubuntu) candidates='apt-get' ;;
@@ -130,6 +131,11 @@ if [[ $NON_INTERACTIVE -eq 0 && -z "${APP_HOST_PORT+x}" && ! -f "$SCRAPEFUN_CONF
 fi
 [[ "$(uname -s)" == Linux && "$(uname -m)" == x86_64 ]] || fail 'native releases currently support Linux amd64; use Docker for other architectures'
 [[ -d /run/systemd/system ]] || fail 'systemd must be running (enable systemd in WSL before installing)'
+os_release_file=/etc/os-release
+[[ -f "$os_release_file" ]] || os_release_file=/usr/lib/os-release
+[[ -f "$os_release_file" ]] || fail 'cannot identify Linux: os-release is missing'
+os_identity="$(ID='' VERSION_ID=''; . "$os_release_file"; printf '%s %s' "$ID" "$VERSION_ID")"
+printf '检测到 Linux: %s · %s\n' "$os_identity" "$(uname -m)"
 libc="$(getconf GNU_LIBC_VERSION 2>/dev/null || true)"
 [[ "$libc" == 'glibc '* ]] || fail 'native releases require glibc Linux; musl/Alpine is not supported'
 libc_version="${libc#glibc }"
@@ -155,7 +161,7 @@ if [[ ${#missing[@]} -gt 0 ]]; then
         case "$manager" in apt-get) packages+=(passwd) ;; dnf|yum) packages+=(shadow-utils) ;; *) packages+=(shadow) ;; esac ;;
       python3) if [[ "$manager" == pacman ]]; then packages+=(python); else packages+=(python3); fi ;;
       ffmpeg|ffprobe)
-        if [[ "$manager" == dnf || "$manager" == yum ]] && ( . /etc/os-release; [[ "${ID:-}" == fedora ]] ); then
+        if [[ "$manager" == dnf || "$manager" == yum ]] && ( . "$os_release_file"; [[ "${ID:-}" == fedora ]] ); then
           packages+=(ffmpeg-free)
         else packages+=(ffmpeg); fi ;;
       systemctl) packages+=(systemd) ;;
@@ -212,6 +218,7 @@ if [[ -f "$ROOT_DIR/one-click-native-deploy.sh" && ( -n "${SCRAPEFUN_NATIVE_ARCH
   download_file "$source_base/one-click-native-deploy.sh" "$stage/operations/one-click-native-deploy.sh"
 fi
 python3 "$stage/operations/linux-server-tools.py" preflight --install "$SCRAPEFUN_INSTALL_DIR" --data "$SCRAPEFUN_DATA_DIR" --config "$SCRAPEFUN_CONFIG_DIR"
+python3 "$stage/operations/linux-server-tools.py" system-check --install "$SCRAPEFUN_INSTALL_DIR" --data "$SCRAPEFUN_DATA_DIR" --config "$SCRAPEFUN_CONFIG_DIR"
 if [[ -z "${SCRAPEFUN_NODE_BINARY:-}" ]] && { ! node_supported "$node_binary"; }; then
   for candidate in "$SCRAPEFUN_CONFIG_DIR"/runtime/node-v22.*-linux-x64/bin/node; do
     if node_supported "$candidate"; then node_binary="$candidate"; break; fi
@@ -257,6 +264,10 @@ PY
 fi
 node_supported "$node_binary" || fail 'Node.js 22.13+ or 24 is required'
 export SCRAPEFUN_NODE_BINARY="$(readlink -f -- "$node_binary")"
+python3 - "$stage/operations/linux-server-tools.py" "$SCRAPEFUN_INSTALL_DIR" "$SCRAPEFUN_DATA_DIR" "$SCRAPEFUN_CONFIG_DIR" "$SCRAPEFUN_NODE_BINARY" <<'PY'
+import runpy, sys
+runpy.run_path(sys.argv[1])['filesystem_check'](*sys.argv[2:])
+PY
 saved_port="$(read_setting PORT "$SCRAPEFUN_CONFIG_DIR/server.env")"
 if [[ "$saved_port" =~ ^[0-9]{1,5}$ ]]; then saved_port="$((10#$saved_port))"; fi
 selected_port="${APP_HOST_PORT:-$saved_port}"
@@ -276,6 +287,9 @@ if [[ $CHECK_ONLY -eq 1 ]]; then
     expected="$(awk 'NR==1 {print $1}' "$archive.sha256")"
     [[ "$expected" =~ ^[a-fA-F0-9]{64}$ ]] || fail 'invalid release checksum'
     printf '%s  %s\n' "$expected" "$archive" | sha256sum --check --strict -
+    python3 "$stage/operations/linux-server-tools.py" check-archive --archive "$archive" --install "$SCRAPEFUN_INSTALL_DIR" --node "$SCRAPEFUN_NODE_BINARY"
+  else
+    printf '未指定发布包：本次只检查主机，包内运行库将在正式安装停服前检查。\n'
   fi
   printf '安装前检查通过；未安装或重启服务。\n'; return
 fi

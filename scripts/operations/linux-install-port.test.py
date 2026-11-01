@@ -215,6 +215,28 @@ fi
         return subprocess.run(self.command(*arguments, entry=entry), capture_output=True, text=True,
                               env={**self.env, **environment}, timeout=30)
 
+    def test_noexec_application_mount_fails_before_stopping_service(self):
+        self.install.mkdir()
+        command = self.command()
+        command[6] = ('mount --bind "$SCRAPEFUN_INSTALL_DIR" "$SCRAPEFUN_INSTALL_DIR"; '
+                      'mount -o remount,bind,noexec "$SCRAPEFUN_INSTALL_DIR"; ' + command[6])
+        result = subprocess.run(command, env=self.env, capture_output=True, text=True, timeout=30)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('noexec', result.stderr)
+        self.assertFalse(self.config.exists())
+        self.assertNotIn('stop ', self.log.read_text() if self.log.exists() else '')
+
+    def test_missing_prisma_engine_fails_before_stopping_service(self):
+        release = self.root / 'source/release'
+        (release / 'server/node_modules/@prisma/client').mkdir(parents=True)
+        with tarfile.open(self.archive, 'w:gz') as archive:
+            archive.add(release, arcname='release')
+        Path(str(self.archive) + '.sha256').write_text(hashlib.sha256(self.archive.read_bytes()).hexdigest() + '\n')
+        result = self.run_install()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('missing its Prisma query engine', result.stderr)
+        self.assertNotIn('stop ', self.log.read_text() if self.log.exists() else '')
+
     def assert_success(self, result, port):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn(f'PORT={port}\n', (self.config / 'server.env').read_text())

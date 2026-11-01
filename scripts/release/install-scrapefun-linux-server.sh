@@ -61,6 +61,7 @@ DEPLOY_SOURCE="$OPS_SOURCE/one-click-native-deploy.sh"
 # Restrict systemd paths to literal safe characters; reject broad directories,
 # symlinks and nested layouts before any write, move or service interruption.
 python3 "$OPS_SOURCE/linux-server-tools.py" preflight --install "$INSTALL_DIR" --data "$DATA_DIR" --config "$CONFIG_DIR"
+python3 "$OPS_SOURCE/linux-server-tools.py" system-check --install "$INSTALL_DIR" --data "$DATA_DIR" --config "$CONFIG_DIR" --node "$NODE_BIN"
 UNIT="/etc/systemd/system/$SERVICE"
 [[ ! -L "$UNIT" ]] || fail 'service unit is a symlink or masked; select another service name or resolve it before installing'
 UPDATER_SERVICE="${SERVICE%.service}-updater.service"
@@ -168,13 +169,8 @@ fi
 chmod 755 "$release/start.sh"
 bash -n "$release/start.sh" || fail 'invalid native startup script'
 # Verify the immutable server before stopping an existing service.
-(cd "$release/server" && "$NODE_BIN" scripts/verify-protected.cjs)
-for module in "$release/server/dist/pro-runtime/"*.node; do
-  [[ -f "$module" ]] || continue
-  command -v ldd >/dev/null || fail 'ldd is required to check native runtime libraries'
-  libraries="$(ldd "$module" 2>&1)" || fail "incompatible native runtime libraries: $libraries"
-  if grep -q 'not found' <<< "$libraries"; then fail "missing native runtime libraries: $libraries"; fi
-done
+python3 "$OPS_SOURCE/linux-server-tools.py" release-check --install "$release" --node "$NODE_BIN"
+prisma_engine="$(python3 "$OPS_SOURCE/linux-server-tools.py" prisma-engine --install "$release")"
 if ! id -u "$SERVICE_USER" >/dev/null 2>&1; then
   if getent group "$SERVICE_USER" >/dev/null; then user_group=(--gid "$SERVICE_USER"); else user_group=(--user-group); fi
   useradd --system "${user_group[@]}" --home-dir "$DATA_DIR" --shell "$(command -v nologin || command -v false)" "$SERVICE_USER"
@@ -184,6 +180,9 @@ SERVICE_GROUP="$(id -gn "$SERVICE_USER")"
 runuser -u "$SERVICE_USER" -- "$NODE_BIN" --version >/dev/null || fail 'Node.js must be accessible to the service account; use a system installation'
 install -d -o "$SERVICE_USER" -g "$SERVICE_GROUP" -m 0750 "$DATA_DIR"
 install -d -o root -g "$SERVICE_GROUP" -m 0755 "$CONFIG_DIR"
+runuser -u "$SERVICE_USER" -- /usr/bin/test -x "$(dirname "$INSTALL_DIR")" || fail 'application parent directory must be accessible to the service user'
+runuser -u "$SERVICE_USER" -- /usr/bin/test -x "$CONFIG_DIR" || fail 'configuration directory must be accessible to the service user'
+runuser -u "$SERVICE_USER" -- /usr/bin/test -w "$DATA_DIR" || fail 'data directory must be writable by the service user'
 # Stage configuration so backup and failed-update rollback retain the old port
 # and secret. Publish it only when the new installation is activated.
 if [[ -f "$ENV_FILE" ]]; then
@@ -327,12 +326,19 @@ UMask=0027
 [Install]
 WantedBy=multi-user.target
 EOF
+if [[ -n "$prisma_engine" ]]; then
+  printf '\n[Service]\nEnvironment=PRISMA_QUERY_ENGINE_LIBRARY=%s/%s\n' "$INSTALL_DIR" "$prisma_engine" >> "$UNIT"
+fi
 # Enable actual GPU access under the unprivileged service account.
 for group in video render; do if getent group "$group" >/dev/null; then usermod -a -G "$group" "$SERVICE_USER"; fi; done
 if (( port < 1024 )); then
   sed -i '/^NoNewPrivileges=true/a AmbientCapabilities=CAP_NET_BIND_SERVICE\nCapabilityBoundingSet=CAP_NET_BIND_SERVICE' "$UNIT"
 fi
 systemctl daemon-reload
+if [[ -e /sys/fs/selinux/enforce ]]; then
+  restorecon -RF "$INSTALL_DIR" "$DATA_DIR" "$CONFIG_DIR" "$UNIT" \
+    "/etc/systemd/system/$UPDATER_SERVICE" "/etc/systemd/system/$UPDATER_PATH"
+fi
 printf '启动服务并检查应用就绪状态…\n'
 phase='service readiness'
 systemctl start "$SERVICE"

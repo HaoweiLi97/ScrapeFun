@@ -20,6 +20,77 @@ tools = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(tools)
 
 
+class SystemPreflight(unittest.TestCase):
+    def test_archive_preflight_uses_target_disk_and_cleans_up_after_failure(self):
+        with tempfile.TemporaryDirectory() as directory:
+            parent = Path(directory)
+            install = parent / 'not-created/app'
+            def extracted(archive, scratch, destination):
+                self.assertEqual(Path(scratch).parent, parent)
+                self.assertEqual(destination, install)
+                release = Path(scratch) / 'release'
+                release.mkdir()
+                (release / 'start.sh').write_text('#!/bin/sh\n')
+                return release
+            with patch.object(tools, 'extract_release', side_effect=extracted), patch.object(tools.subprocess, 'run'), patch.object(tools, 'release_check', side_effect=ValueError('incompatible engine')):
+                with self.assertRaisesRegex(ValueError, 'incompatible engine'):
+                    tools.check_archive('unused.tar.gz', install, '/usr/bin/node')
+            self.assertEqual(list(parent.iterdir()), [])
+
+    def test_prisma_engine_prefers_native_then_validated_bundled_fallback(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            client = root / 'server/node_modules/.prisma/client'
+            client.mkdir(parents=True)
+            debian = client / 'libquery_engine-debian-openssl-3.0.x.so.node'
+            debian.touch()
+            with patch.object(tools, 'os_release', return_value={'ID': 'fedora'}):
+                self.assertEqual(tools.prisma_engine(root), debian)
+                rhel = client / 'libquery_engine-rhel-openssl-3.0.x.so.node'
+                rhel.touch()
+                self.assertEqual(tools.prisma_engine(root), rhel)
+            with patch.object(tools, 'os_release', return_value={'ID': 'ubuntu'}):
+                self.assertEqual(tools.prisma_engine(root), debian)
+            debian.unlink(); rhel.unlink()
+            (root / 'server/node_modules/@prisma/client').mkdir(parents=True)
+            with self.assertRaisesRegex(ValueError, 'missing.*query engine'): tools.prisma_engine(root)
+
+    def test_os_release_precedence_fallback_and_no_execution(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            etc, usr = root / 'etc-release', root / 'usr-release'
+            usr.write_text('ID=debian\nVERSION_ID="12"\n')
+            self.assertEqual(tools.os_release((etc, usr))['ID'], 'debian')
+            etc.write_text('ID=fedora\nVERSION_ID="43"\nPRETTY_NAME="$(touch must-not-execute)"\n')
+            result = tools.os_release((etc, usr))
+            self.assertEqual(result['ID'], 'fedora')
+            self.assertEqual(result['PRETTY_NAME'], '$(touch must-not-execute)')
+            self.assertFalse((root / 'must-not-execute').exists())
+            etc.write_text('ID=custom\n')
+            self.assertNotIn('VERSION_ID', tools.os_release((etc, usr)))
+
+    def test_mount_selection_uses_closest_mount_and_filesystem_flags(self):
+        with tempfile.TemporaryDirectory() as directory:
+            info = Path(directory) / 'mountinfo'
+            info.write_text('1 0 8:1 / / rw - ext4 /dev/a rw\n'
+                            '2 1 8:2 / /opt rw,noexec - ext4 /dev/b rw\n'
+                            '3 2 8:3 / /opt/exec rw - ext4 /dev/c rw\n'
+                            '4 1 8:4 / /data rw - ext4 /dev/d ro\n')
+            self.assertIn('noexec', tools.mount_options('/opt/app', info))
+            self.assertNotIn('noexec', tools.mount_options('/opt/exec/app', info))
+            self.assertNotIn('noexec', tools.mount_options('/optional/app', info))
+            self.assertIn('ro', tools.mount_options('/data/app', info))
+
+    def test_readonly_noexec_and_exhausted_inodes_are_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            paths = [str(Path(directory) / name) for name in ('app', 'data', 'config')]
+            for options, message in [({'ro'}, 'read-only'), ({'noexec'}, 'noexec')]:
+                with patch.object(tools, 'mount_options', return_value=options):
+                    with self.assertRaisesRegex(ValueError, message): tools.filesystem_check(*paths)
+            with patch.object(tools, 'mount_options', return_value=set()), patch.object(tools.os, 'statvfs', return_value=SimpleNamespace(f_files=1000, f_favail=0)):
+                with self.assertRaisesRegex(ValueError, 'inodes'): tools.filesystem_check(*paths)
+
+
 class ArchiveExtraction(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()

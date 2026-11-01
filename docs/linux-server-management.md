@@ -58,12 +58,29 @@ curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/o
 
 ### 原生安装前检查与依赖
 
+原生发布包按 CPU 架构和运行库选择，目前统一使用 Linux amd64 包。脚本优先读取 `/etc/os-release`，不存在时读取 `/usr/lib/os-release`；使用 `ID`、`VERSION_ID` 报告系统，`ID_LIKE` 只用于选择依赖包管理器，不把同一系统家族自动视为已验证。
+
+| 发行版 | 版本 | 依赖来源 | 验证范围 |
+| --- | --- | --- | --- |
+| Ubuntu | 22.04 | apt / ffmpeg | WSL2：0.5.0 安装、重复安装、同版本更新 |
+| Ubuntu | 24.04 | apt / ffmpeg | 虚拟机：安装、重复安装、跨版本更新、失败回退、重启自启通过 |
+| Debian | 12 | apt / ffmpeg | 虚拟机：安装、重复安装、跨版本更新、失败回退、重启自启通过 |
+| Fedora | 43 | dnf / ffmpeg-free | 同上；SELinux Enforcing、firewalld 保持启用 |
+| 其他 glibc 发行版或版本 | — | 根据 ID / ID_LIKE 选择 | 未验证；通过前置检查不代表完整兼容认证 |
+| Alpine / musl、非 amd64、无运行中 systemd | — | — | 当前原生包不支持，安装前退出 |
+
+运行时兼容表由 `scripts/operations/linux-server-tools.py` 维护，运行 `python3 .../linux-server-tools.py compatibility` 可查看。硬件加速与编解码格式另受主机驱动和发行版 FFmpeg 包限制；Fedora 使用官方 `ffmpeg-free`，不会自动添加第三方软件源或关闭 SELinux / 防火墙。
+
 ```bash
 sudo bash scripts/one-click-native-deploy.sh --check
 sudo bash scripts/one-click-native-deploy.sh stable --install-deps --port 18096 --non-interactive
 ```
 
-`--check`（别名 `--dry-run`）检查本机前提、路径、备份空间和目标端口，不安装依赖、不写入安装目录、不启动或停止服务；指定离线包时也校验 SHA-256。与 `--install-deps` 同时使用仍然只检查。管道运行检查命令时，可能下载辅助脚本到临时目录；不会下载应用发布包。
+`--check`（别名 `--dry-run`）检查系统身份、架构、glibc、systemd、依赖命令、Node、路径、只读 / noexec 挂载、可用 inode、备份空间和目标端口，并报告 SELinux 与防火墙状态。它不安装依赖、不写入安装目录、不启动或停止服务；与 `--install-deps` 同时使用仍然只检查。管道运行时可能下载辅助脚本到临时目录，不会下载应用发布包。
+
+添加 `--archive FILE` 会进一步校验 SHA-256、目标磁盘解压空间，临时解压验证启动脚本、发布清单、原生动态库，并用包内数据库引擎连接临时 SQLite 执行查询。临时文件自动清理，不操作应用数据库。未指定包时明确提示只完成主机检查，不能据此判断某个发布包一定可运行。实际安装在停服前执行相同的包验证，并检查服务账号能访问程序父目录、配置目录和写入数据目录。
+
+安装器会明确指定已经通过数据库查询测试的包内 Prisma 引擎，避免 Fedora 因自动选择不同的引擎名称而启动失败。SELinux 启用时按系统策略恢复安装文件标签；远程访问所需的防火墙规则由管理员按网络范围配置，脚本不会自动开放端口。
 
 原生入口检查 Linux amd64、glibc（至少 2.28）、运行中的 systemd、所需命令和 Node.js 22.13+ 或 24。不支持的架构、musl/Alpine、未启用 systemd 的 WSL 会明确退出。安装器还会在停服前检查发布包原生模块的动态链接依赖；具体运行库要求以所选发布包为准。
 

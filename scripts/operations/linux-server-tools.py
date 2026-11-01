@@ -12,7 +12,154 @@ import tempfile
 import subprocess
 import re
 import socket
+import shlex
+import platform
 from datetime import datetime, timezone
+
+
+# The CLI and the installation report share this compatibility matrix.
+# Unlisted versions require the same capability checks, but are not certified.
+LINUX_SUPPORT = {
+    'ubuntu': {'22.04': 'WSL verified (0.5.0 install/reinstall/update)', '24.04': 'VM verified (0.4.4 -> 0.5.0, rollback, reboot)'},
+    'debian': {'12': 'VM verified (0.4.4 -> 0.5.0, rollback, reboot)'},
+    'fedora': {'43': 'VM verified (SELinux Enforcing, firewalld, rollback, reboot)'},
+}
+
+
+def os_release(paths=('/etc/os-release', '/usr/lib/os-release')):
+    source = next((Path(path) for path in paths if Path(path).is_file()), None)
+    if source is None:
+        raise ValueError('cannot identify Linux: /etc/os-release and /usr/lib/os-release are missing')
+    result = {}
+    for line in source.read_text().splitlines():
+        key, separator, value = line.partition('=')
+        if separator and key in ('ID', 'ID_LIKE', 'VERSION_ID', 'PRETTY_NAME'):
+            fields = shlex.split(value, comments=True)
+            result[key] = ' '.join(fields)
+    return result
+
+
+def mount_options(path, mountinfo='/proc/self/mountinfo'):
+    path = Path(path).resolve()
+    found = (0, set())
+    for line in Path(mountinfo).read_text().splitlines():
+        fields, _, filesystem = line.partition(' - ')
+        fields = fields.split()
+        mount = Path(re.sub(r'\\([0-7]{3})', lambda m: chr(int(m[1], 8)), fields[4]))
+        if path == mount or mount in path.parents:
+            if len(mount.parts) >= found[0]:
+                found = (len(mount.parts), set(fields[5].split(',')) | set(filesystem.split()[2].split(',')))
+    return found[1]
+
+
+def filesystem_check(install, data, config, node=None):
+    for value in (install, data, config):
+        parent = Path(value)
+        while not parent.exists(): parent = parent.parent
+        options = mount_options(parent)
+        if 'ro' in options:
+            raise ValueError('read-only deployment filesystem: ' + value)
+        if 'noexec' in options and (value == install or (node and Path(value) in Path(node).parents)):
+            raise ValueError('noexec filesystem cannot run application/runtime: ' + value)
+        stat = os.statvfs(parent)
+        if stat.f_files and stat.f_favail < 256:
+            raise ValueError('insufficient free inodes: ' + value)
+
+
+def system_check(install, data, config, node=None):
+    identity = os_release()
+    status = LINUX_SUPPORT.get(identity.get('ID'), {}).get(identity.get('VERSION_ID'), 'unverified distribution/version')
+    print('OS: {} {} | {}'.format(identity.get('ID', 'unknown'), identity.get('VERSION_ID', 'unknown'), status), flush=True)
+    libc = os.confstr('CS_GNU_LIBC_VERSION') or ''
+    if platform.system() != 'Linux' or platform.machine() != 'x86_64':
+        raise ValueError('only Linux amd64 native releases are available')
+    if not libc.startswith('glibc ') or tuple(int(n) for n in libc.split()[1].split('.')[:2]) < (2, 28):
+        raise ValueError('glibc 2.28+ is required; musl/Alpine is unsupported')
+    if not Path('/run/systemd/system').is_dir():
+        raise ValueError('systemd must be running; enable it in WSL before installing')
+    deployment_paths(install, data, config)
+    filesystem_check(install, data, config, node)
+    backup_space(data, config)
+    print('PASS: amd64, {}, systemd, deployment paths, writable mounts and backup space'.format(libc), flush=True)
+    enforcing = Path('/sys/fs/selinux/enforce')
+    if enforcing.exists():
+        mode = 'Enforcing' if enforcing.read_text().strip() == '1' else 'Permissive'
+        if not shutil.which('restorecon'):
+            raise ValueError('SELinux is enabled but restorecon is missing; install policycoreutils')
+    else:
+        mode = 'disabled/unavailable'
+    print('SELinux: ' + mode, flush=True)
+    if shutil.which('firewall-cmd'):
+        active = subprocess.run(['firewall-cmd', '--state'], capture_output=True, text=True).returncode == 0
+        print('firewalld: ' + ('active; allow the selected TCP port in the appropriate zone for remote access' if active else 'inactive'), flush=True)
+    if shutil.which('ufw'):
+        result = subprocess.run(['ufw', 'status'], capture_output=True, text=True)
+        print('UFW: ' + result.stdout.splitlines()[0] if result.stdout else 'UFW: status unavailable', flush=True)
+
+
+def prisma_engine(release):
+    release = Path(release)
+    client = release / 'server/node_modules/.prisma/client'
+    candidates = sorted(client.glob('libquery_engine-*.so.node'))
+    if not candidates:
+        if (release / 'server/node_modules/@prisma/client').exists():
+            raise ValueError('release is missing its Prisma query engine')
+        return None
+    identity = os_release()
+    families = (identity.get('ID', '') + ' ' + identity.get('ID_LIKE', '')).split()
+    family = 'rhel' if any(item in families for item in ('fedora', 'rhel', 'centos')) else 'debian'
+    # Published amd64 archives contain a Debian-named glibc/OpenSSL 3 engine.
+    # Select the host-specific engine when present; the bundled fallback must
+    # pass an actual SQLite query before we allow it on another distribution.
+    for target in (family + '-openssl-3.0.x', 'debian-openssl-3.0.x'):
+        candidate = client / ('libquery_engine-' + target + '.so.node')
+        if candidate in candidates: return candidate
+    if len(candidates) == 1: return candidates[0]
+    raise ValueError('cannot select a compatible Prisma query engine from this release')
+
+
+def release_check(release, node):
+    release = Path(release)
+    subprocess.run([node, 'scripts/verify-protected.cjs'], cwd=release / 'server', check=True)
+    modules = list((release / 'server/dist/pro-runtime').glob('*.node'))
+    engine = prisma_engine(release)
+    if engine: modules.append(engine)
+    for module in modules:
+        result = subprocess.run(['ldd', str(module)], capture_output=True, text=True)
+        if result.returncode or 'not found' in result.stdout + result.stderr:
+            raise ValueError('incompatible native runtime libraries for {}: {}'.format(module.name, result.stdout + result.stderr))
+    if engine:
+        with tempfile.TemporaryDirectory(prefix='scrapefun-db-check-') as scratch:
+            probe = "const {PrismaClient}=require('@prisma/client'); const db=new PrismaClient({datasources:{db:{url:process.env.SCRAPEFUN_PROBE_DB}}}); (async()=>{try{await db.$queryRawUnsafe('SELECT 1');}catch(e){console.error(e.message);process.exitCode=1;}finally{await db.$disconnect();}})();"
+            result = subprocess.run([node, '-e', probe], cwd=release / 'server', capture_output=True, text=True, timeout=45,
+                                    env={**os.environ, 'PRISMA_QUERY_ENGINE_LIBRARY': str(engine.resolve()),
+                                         'SCRAPEFUN_PROBE_DB': 'file:' + scratch + '/probe.db'})
+            if result.returncode:
+                raise ValueError('Prisma database engine preflight failed: ' + result.stderr)
+        print('PASS: Prisma SQLite connection (' + engine.name + ')', flush=True)
+    print('PASS: protected release manifest and native runtime libraries', flush=True)
+
+
+def extract_release(archive, destination, install=None):
+    extract(archive, destination, allow_links=True, space_destination=install)
+    roots = list(Path(destination).iterdir())
+    if len(roots) != 1 or not (roots[0] / 'start.sh').is_file() or not (roots[0] / 'server/dist/index.js').is_file():
+        raise ValueError('invalid Linux server release layout')
+    release = json.loads((roots[0] / 'RELEASE.json').read_text())
+    if release.get('architecture') != 'amd64' or release.get('channel') not in ['stable', 'beta']:
+        raise ValueError('unsupported Linux server release')
+    return roots[0]
+
+
+def check_archive(archive, install, node):
+    # Fedora commonly mounts /tmp as a small tmpfs. Validate on the target
+    # filesystem, in a disposable sibling, without modifying the installed app.
+    parent = Path(install).parent
+    while not parent.exists(): parent = parent.parent
+    with tempfile.TemporaryDirectory(prefix='.scrapefun-check-', dir=parent) as scratch:
+        release = extract_release(archive, scratch, install)
+        subprocess.run(['bash', '-n', str(release / 'start.sh')], check=True)
+        release_check(release, node)
 
 
 def digest(path):
@@ -67,14 +214,18 @@ def members(archive, allow_links=False):
     return entries
 
 
-def extract(path, destination, allow_links=False):
+def extract(path, destination, allow_links=False, space_destination=None):
     with tarfile.open(path, "r:gz") as archive:
         entries = members(archive, allow_links)
         required = sum(entry.size for entry in entries if entry.isfile()) + 64 * 1024 * 1024
-        parent = Path(destination)
-        while not parent.exists(): parent = parent.parent
-        if shutil.disk_usage(parent).free < required:
-            raise ValueError(f"insufficient disk space for extraction: need {required // (1024 * 1024)} MiB")
+        for target in {str(destination), str(space_destination or destination)}:
+            parent = Path(target)
+            while not parent.exists(): parent = parent.parent
+            if shutil.disk_usage(parent).free < required:
+                raise ValueError(f"insufficient disk space for extraction at {parent}: need {required // (1024 * 1024)} MiB")
+            stat = os.statvfs(parent)
+            if stat.f_files and stat.f_favail < len(entries) + 128:
+                raise ValueError('insufficient free inodes for release extraction at ' + str(parent))
         # members() validates paths, links and file types before extraction.
         # Keep archive permissions/metadata instead of relying on the default
         # filter, which changes in Python 3.14. Older Python 3.10 builds lack
@@ -275,7 +426,7 @@ def prepare_legacy(data, schema, node):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=["extract-release", "backup", "verify-backup", "restore", "prepare-legacy", "preflight", "check-port"])
+    parser.add_argument("command", choices=["extract-release", "backup", "verify-backup", "restore", "prepare-legacy", "preflight", "check-port", "system-check", "release-check", "compatibility", "prisma-engine", "check-archive"])
     parser.add_argument("--archive")
     parser.add_argument("--destination")
     parser.add_argument("--data")
@@ -286,21 +437,27 @@ def main():
     parser.add_argument("--install")
     parser.add_argument("--port", type=int)
     args = parser.parse_args()
-    if args.command == "preflight":
+    if args.command == 'compatibility':
+        print('| Distribution | Version | Validation |\n| --- | --- | --- |')
+        for distribution, versions in LINUX_SUPPORT.items():
+            for version, status in versions.items(): print('| {} | {} | {} |'.format(distribution, version, status))
+    elif args.command == 'system-check':
+        system_check(args.install, args.data, args.config, args.node)
+    elif args.command == 'release-check':
+        release_check(args.install, args.node)
+    elif args.command == 'prisma-engine':
+        engine = prisma_engine(args.install)
+        if engine: print(engine.relative_to(args.install))
+    elif args.command == 'check-archive':
+        check_archive(args.archive, args.install, args.node)
+    elif args.command == "preflight":
         deployment_paths(args.install, args.data, args.config)
         backup_space(args.data, args.config)
     elif args.command == "check-port":
         if args.port is None or not 1 <= args.port <= 65535: raise ValueError('invalid port')
         check_port(args.port)
     elif args.command == "extract-release":
-        extract(args.archive, args.destination, allow_links=True)
-        roots = list(Path(args.destination).iterdir())
-        if len(roots) != 1 or not (roots[0] / "start.sh").is_file() or not (roots[0] / "server/dist/index.js").is_file():
-            raise ValueError("invalid Linux server release layout")
-        release = json.loads((roots[0] / "RELEASE.json").read_text())
-        if release.get("architecture") != "amd64" or release.get("channel") not in ["stable", "beta"]:
-            raise ValueError("unsupported Linux server release")
-        print(roots[0])
+        print(extract_release(args.archive, args.destination, args.install))
     elif args.command == "backup":
         backup(args.data, args.config, args.output)
     elif args.command == "restore":
@@ -315,5 +472,5 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except (ValueError, OSError, tarfile.TarError, sqlite3.Error, KeyError, subprocess.CalledProcessError) as error:
+    except (ValueError, OSError, tarfile.TarError, sqlite3.Error, KeyError, subprocess.SubprocessError) as error:
         raise SystemExit(f"Error: {error}")
