@@ -154,7 +154,11 @@ if [[ ${#missing[@]} -gt 0 ]]; then
       useradd)
         case "$manager" in apt-get) packages+=(passwd) ;; dnf|yum) packages+=(shadow-utils) ;; *) packages+=(shadow) ;; esac ;;
       python3) if [[ "$manager" == pacman ]]; then packages+=(python); else packages+=(python3); fi ;;
-      ffprobe) packages+=(ffmpeg) ;; systemctl) packages+=(systemd) ;;
+      ffmpeg|ffprobe)
+        if [[ "$manager" == dnf || "$manager" == yum ]] && ( . /etc/os-release; [[ "${ID:-}" == fedora ]] ); then
+          packages+=(ffmpeg-free)
+        else packages+=(ffmpeg); fi ;;
+      systemctl) packages+=(systemd) ;;
       *) packages+=("$required") ;;
     esac
   done

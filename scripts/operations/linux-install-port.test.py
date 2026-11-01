@@ -725,6 +725,8 @@ fi
                 self.assert_success(result, 8096)
                 commands = package_log.read_text()
                 self.assertIn('ffmpeg', commands)
+                if manager == 'dnf': self.assertIn('ffmpeg-free', commands)
+                else: self.assertNotIn('ffmpeg-free', commands)
                 self.assertIn('util-linux', commands)
                 self.assertIn(user_package, commands)
                 self.assertNotIn('upgrade', commands)
