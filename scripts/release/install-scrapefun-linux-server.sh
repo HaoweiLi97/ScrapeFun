@@ -75,11 +75,11 @@ stage="$(mktemp -d "$(dirname "$INSTALL_DIR")/.scrapefun-install.XXXXXX")"
 old_install="" backup="" old_unit="" activated=0 succeeded=0 was_running=0 was_enabled=0 stopped=0
 updater_enabled=0 updater_active=0 updater_existed=0
 [[ ! -d "$CONFIG_DIR/updater" ]] || updater_existed=1
-systemctl is-enabled --quiet "$UPDATER_PATH" && updater_enabled=1
+systemctl is-enabled --quiet "$UPDATER_PATH" 2>/dev/null && updater_enabled=1
 systemctl is-active --quiet "$UPDATER_PATH" && updater_active=1
 phase='release validation'
 systemctl is-active --quiet "$SERVICE" && was_running=1
-systemctl is-enabled --quiet "$SERVICE" && was_enabled=1
+systemctl is-enabled --quiet "$SERVICE" 2>/dev/null && was_enabled=1
 cleanup() {
   local code=$?
   trap '' INT TERM HUP
