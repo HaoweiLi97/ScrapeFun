@@ -75,9 +75,14 @@ def extract(path, destination, allow_links=False):
         while not parent.exists(): parent = parent.parent
         if shutil.disk_usage(parent).free < required:
             raise ValueError(f"insufficient disk space for extraction: need {required // (1024 * 1024)} MiB")
-        # Python 3.10 is supported on Ubuntu 22.04. Validation above also
-        # rejects writes through symlinks, device nodes and escaping hardlinks.
-        archive.extractall(destination, members=entries)
+        # members() validates paths, links and file types before extraction.
+        # Keep archive permissions/metadata instead of relying on the default
+        # filter, which changes in Python 3.14. Older Python 3.10 builds lack
+        # filter support; detect the API because it was also backported.
+        if hasattr(tarfile, "data_filter"):
+            archive.extractall(destination, members=entries, filter="fully_trusted")
+        else:
+            archive.extractall(destination, members=entries)
 
 
 def check_db(root):

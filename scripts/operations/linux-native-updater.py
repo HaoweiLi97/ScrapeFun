@@ -156,8 +156,12 @@ def run(config):
             atomic_json(status_file, status)
             # Leave the request present until status is final, preventing a
             # second API request from overtaking a running installation.
-            request_file.unlink(missing_ok=True)
-            install_lock.unlink(missing_ok=True)
+            # Python versions before 3.8 do not accept missing_ok on unlink.
+            for file in (request_file, install_lock):
+                try:
+                    file.unlink()
+                except FileNotFoundError:
+                    pass
             for sig, handler in previous_signals.items():
                 signal.signal(sig, handler)
 

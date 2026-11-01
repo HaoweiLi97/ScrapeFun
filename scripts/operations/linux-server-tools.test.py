@@ -9,13 +9,84 @@ import sqlite3
 import subprocess
 import tarfile
 import tempfile
+from types import SimpleNamespace
 import unittest
+import warnings
 from unittest.mock import patch
 
 DIRECTORY = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location('tools', DIRECTORY / 'linux-server-tools.py')
 tools = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(tools)
+
+
+class ArchiveExtraction(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+        self.archive = self.root / 'release.tar.gz'
+        with tarfile.open(self.archive, 'w:gz') as archive:
+            directory = tarfile.TarInfo('root'); directory.type = tarfile.DIRTYPE; directory.mode = 0o750
+            archive.addfile(directory)
+            content = b'#!/bin/sh\nexit 0\n'
+            script = tarfile.TarInfo('root/start.sh'); script.mode = 0o755; script.size = len(content)
+            archive.addfile(script, io.BytesIO(content))
+            config = tarfile.TarInfo('root/server.env'); config.mode = 0o440; config.size = 6
+            archive.addfile(config, io.BytesIO(b'KEY=1\n'))
+
+    def assert_extracted(self, destination):
+        self.assertEqual((destination / 'root/start.sh').read_bytes(), b'#!/bin/sh\nexit 0\n')
+        self.assertEqual((destination / 'root/server.env').read_bytes(), b'KEY=1\n')
+        if os.name == 'posix':
+            self.assertEqual((destination / 'root').stat().st_mode & 0o777, 0o750)
+            self.assertEqual((destination / 'root/start.sh').stat().st_mode & 0o777, 0o755)
+            self.assertEqual((destination / 'root/server.env').stat().st_mode & 0o777, 0o440)
+
+    @unittest.skipUnless(hasattr(tarfile, 'data_filter'), 'requires extraction filters')
+    def test_explicit_policy_avoids_warnings_and_preserves_permissions(self):
+        def reject_default(member, destination):
+            raise AssertionError('extraction must explicitly select its policy')
+        destination = self.root / 'extract'
+        with patch.object(tarfile.TarFile, 'extraction_filter', staticmethod(reject_default)):
+            with warnings.catch_warnings():
+                warnings.simplefilter('error', DeprecationWarning)
+                tools.extract(self.archive, destination)
+        self.assert_extracted(destination)
+
+    def test_python_without_filter_api_still_extracts(self):
+        with tarfile.open(self.archive, 'r:gz') as archive:
+            class LegacyArchive:
+                def __enter__(self): return self
+                def __exit__(self, *args): pass
+                def getmembers(self): return archive.getmembers()
+                # Deliberately accept only the pre-filter API's arguments.
+                def extractall(self, destination, members):
+                    options = {'filter': 'fully_trusted'} if hasattr(tarfile, 'data_filter') else {}
+                    archive.extractall(destination, members=members, **options)
+            legacy_tarfile = SimpleNamespace(open=lambda *args: LegacyArchive())
+            destination = self.root / 'legacy'
+            with patch.object(tools, 'tarfile', legacy_tarfile):
+                tools.extract(self.archive, destination)
+        self.assert_extracted(destination)
+
+    @unittest.skipUnless(os.name == 'posix', 'requires POSIX links')
+    def test_release_extracts_safe_symlinks_and_hardlinks(self):
+        with tarfile.open(self.archive, 'w:gz') as archive:
+            content = b'console.log("prisma");\n'
+            script = tarfile.TarInfo('root/server/node_modules/prisma/build/index.js'); script.size = len(content)
+            archive.addfile(script, io.BytesIO(content))
+            link = tarfile.TarInfo('root/server/node_modules/.bin/prisma')
+            link.type = tarfile.SYMTYPE; link.linkname = '../prisma/build/index.js'; archive.addfile(link)
+            hardlink = tarfile.TarInfo('root/prisma.js')
+            hardlink.type = tarfile.LNKTYPE; hardlink.linkname = script.name; archive.addfile(hardlink)
+        destination = self.root / 'links'
+        with warnings.catch_warnings():
+            warnings.simplefilter('error', DeprecationWarning)
+            tools.extract(self.archive, destination, allow_links=True)
+        self.assertTrue((destination / link.name).is_symlink())
+        self.assertEqual((destination / link.name).read_bytes(), content)
+        self.assertTrue(os.path.samefile(destination / script.name, destination / hardlink.name))
 
 
 class Snapshots(unittest.TestCase):
@@ -185,6 +256,15 @@ class Manager(unittest.TestCase):
         result = self.run_manager('menu')
         self.assertEqual(result.returncode, 0)
         self.assertIn('Usage:', result.stdout)
+
+    def test_status_propagates_health_failure(self):
+        self.assertNotEqual(self.run_manager('status', CURL_STATUS='22').returncode, 0)
+
+    def test_local_health_bypasses_proxy(self):
+        (self.bin / 'curl').write_text('#!/bin/sh\n[ "$1" = --noproxy ] && [ "$2" = "*" ]\n')
+        for command in ('health', 'wait-ready'):
+            result = self.run_manager(command, http_proxy='http://127.0.0.1:1', SCRAPEFUN_HEALTH_TIMEOUT='1')
+            self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_update_preserves_beta_channel_and_passes_deploy_directory(self):
         mock = self.deploy / 'operations/one-click-compose-deploy.sh'

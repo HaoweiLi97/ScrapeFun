@@ -99,14 +99,17 @@ url() {
     [[ "$address" == *:* ]] || printf '局域网: http://%s:%s\n' "$address" "$PORT"
   done
 }
-health() { curl --fail --silent --show-error --max-time 5 "http://127.0.0.1:$PORT/health/ready"; printf '\n'; }
+health() {
+  curl --noproxy '*' --fail --silent --show-error --max-time 5 "http://127.0.0.1:$PORT/health/ready" || return $?
+  printf '\n'
+}
 wait_ready() {
   local timeout="${SCRAPEFUN_HEALTH_TIMEOUT:-180}" deadline
   [[ "$timeout" =~ ^[0-9]+$ ]] || fail 'invalid health timeout'
   deadline=$((SECONDS + timeout))
   printf '等待服务就绪（最多 %s 秒）…\n' "$timeout"
   while (( SECONDS < deadline )); do
-    if curl --fail --silent --max-time 5 "http://127.0.0.1:$PORT/health/ready" >/dev/null; then printf '服务已就绪。\n'; return; fi
+    if curl --noproxy '*' --fail --silent --max-time 5 "http://127.0.0.1:$PORT/health/ready" >/dev/null; then printf '服务已就绪。\n'; return; fi
     sleep 2
   done
   printf '服务未就绪。请运行 %s logs 和 %s doctor。\n' "$SELF" "$SELF" >&2

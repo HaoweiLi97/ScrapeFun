@@ -28,12 +28,14 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 ENV_FILE="$CONFIG_DIR/server.env"
+existing_port=""
+if [[ -f "$ENV_FILE" ]]; then existing_port="$(sed -n 's/^PORT=//p' "$ENV_FILE" | tail -n 1)"; fi
+existing_port="${existing_port%$'\r'}"
+if [[ "$existing_port" == \"*\" || "$existing_port" == \'*\' ]]; then existing_port="${existing_port:1:${#existing_port}-2}"; fi
+if [[ "$existing_port" =~ ^[0-9]{1,5}$ ]]; then existing_port="$((10#$existing_port))"; fi
 port="${APP_HOST_PORT-}"
 if [[ -z "${APP_HOST_PORT+x}" ]]; then
-  if [[ -f "$ENV_FILE" ]]; then port="$(sed -n 's/^PORT=//p' "$ENV_FILE" | tail -n 1)"; fi
-  port="${port%$'\r'}"
-  if [[ "$port" == \"*\" || "$port" == \'*\' ]]; then port="${port:1:${#port}-2}"; fi
-  port="${port:-8096}"
+  port="${existing_port:-8096}"
 fi
 [[ "$port" =~ ^[0-9]{1,5}$ ]] && (( 10#$port >= 1 && 10#$port <= 65535 )) \
   || fail 'port must be a number between 1 and 65535'
@@ -87,7 +89,8 @@ cleanup() {
   if [[ $succeeded -eq 0 ]]; then
     printf '安装失败（%s，退出码 %s）。日志: journalctl -u %s -n 50 --no-pager\n' "$phase" "$code" "$SERVICE" >&2
   fi
-  if [[ $succeeded -eq 0 && $activated -eq 1 ]]; then
+  # A signal can arrive after mv succeeds but before activated is assigned.
+  if [[ $succeeded -eq 0 && ( $activated -eq 1 || ( -n "$old_install" && -d "$old_install" ) ) ]]; then
     printf '更新失败，正在恢复旧版本和数据…\n' >&2
     if ! systemctl stop "$SERVICE"; then
       printf '无法停止失败服务，未继续回退。请人工检查；恢复资料保留在: %s\n' "$stage" >&2
@@ -152,19 +155,18 @@ if [[ -n "${SCRAPEFUN_NATIVE_VERSION:-}" ]]; then
   [[ "$release_version" == "$SCRAPEFUN_NATIVE_VERSION" ]] || fail 'archive version differs from requested version'
 fi
 INSTALLER_SOURCE="$SCRIPT_DIR/install-scrapefun-linux-server.sh"
-# Prefer the checksum-verified archive's matching host tools. Older archives
-# without these files retain the external compatibility installer path.
+# Keep the archive's application startup paired with its runtime. Management
+# tools come from this installer so script-only fixes also apply to old releases.
 if [[ -f "$release/operations/linux-native-updater.py" && -f "$release/operations/scrapefun.sh" && -f "$release/operations/linux-server-tools.py" && -f "$release/one-click-native-deploy.sh" && -f "$release/start.sh" ]]; then
-  OPS_SOURCE="$release/operations"
-  UPDATER_SOURCE="$OPS_SOURCE/linux-native-updater.py"
-  DEPLOY_SOURCE="$release/one-click-native-deploy.sh"
   START_SOURCE="$release/start.sh"
-  [[ ! -f "$release/release/install-scrapefun-linux-server.sh" ]] || INSTALLER_SOURCE="$release/release/install-scrapefun-linux-server.sh"
 else
   install -m 755 "$START_SOURCE" "$release/start.sh"
   install -d -m 755 "$release/operations"
   install -m 755 "$OPS_SOURCE/linux-server-tools.py" "$release/operations/linux-server-tools.py"
 fi
+# Git/source archives can carry start.sh as 0644. systemd executes it directly.
+chmod 755 "$release/start.sh"
+bash -n "$release/start.sh" || fail 'invalid native startup script'
 # Verify the immutable server before stopping an existing service.
 (cd "$release/server" && "$NODE_BIN" scripts/verify-protected.cjs)
 for module in "$release/server/dist/pro-runtime/"*.node; do
@@ -206,7 +208,6 @@ for item in scrapefun operations; do
   if [[ -e "$CONFIG_DIR/$item" ]]; then cp -a -- "$CONFIG_DIR/$item" "$stage/old-$item"; fi
 done
 phase='port and backup preflight'
-existing_port="$(sed -n 's/^PORT=//p' "$ENV_FILE" 2>/dev/null | tail -n 1 || true)"
 if [[ $was_running -eq 0 || "$port" != "$existing_port" ]]; then
   python3 "$OPS_SOURCE/linux-server-tools.py" check-port --port "$port"
 fi

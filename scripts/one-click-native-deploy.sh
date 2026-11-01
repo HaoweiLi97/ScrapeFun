@@ -6,6 +6,24 @@ set -euo pipefail
 main() {
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 fail() { printf 'Error: %s\n' "$*" >&2; exit 1; }
+detect_package_manager() {
+  local families family candidates candidate
+  families="$(ID='' ID_LIKE=''; . "${1:-/etc/os-release}" || exit 1; printf '%s %s' "$ID" "$ID_LIKE")" || return 1
+  for family in $families; do
+    case "$family" in
+      debian|ubuntu) candidates='apt-get' ;;
+      fedora|rhel|centos|rocky|almalinux|amzn) candidates='dnf yum' ;;
+      suse|sles|opensuse|opensuse-*) candidates='zypper' ;;
+      arch|manjaro) candidates='pacman' ;;
+      *) continue ;;
+    esac
+    for candidate in $candidates; do
+      if command -v "$candidate" >/dev/null; then printf '%s' "$candidate"; return 0; fi
+    done
+    return 1
+  done
+  return 1
+}
 node_supported() {
   local node_release
   node_release="$("$1" --version 2>/dev/null)" || return 1
@@ -128,11 +146,7 @@ if [[ ${#missing[@]} -gt 0 ]]; then
   printf '安装缺失的系统依赖: %s\n' "${missing[*]}"
   # Use only the distribution's configured repositories; do not replace them
   # or perform a whole-system upgrade. Verify actual tools after installation.
-  manager=''
-  for candidate in apt-get dnf yum zypper pacman; do
-    if command -v "$candidate" >/dev/null; then manager="$candidate"; break; fi
-  done
-  [[ -n "$manager" ]] || fail "no supported package manager (apt-get/dnf/yum/zypper/pacman); manually install: ${missing[*]}"
+  manager="$(detect_package_manager)" || fail "cannot select this distribution's package manager from /etc/os-release; manually install: ${missing[*]}"
   packages=()
   for required in "${missing[@]}"; do
     case "$required" in
@@ -239,11 +253,13 @@ PY
 fi
 node_supported "$node_binary" || fail 'Node.js 22.13+ or 24 is required'
 export SCRAPEFUN_NODE_BINARY="$(readlink -f -- "$node_binary")"
-selected_port="${APP_HOST_PORT:-$(read_setting PORT "$SCRAPEFUN_CONFIG_DIR/server.env")}"
+saved_port="$(read_setting PORT "$SCRAPEFUN_CONFIG_DIR/server.env")"
+if [[ "$saved_port" =~ ^[0-9]{1,5}$ ]]; then saved_port="$((10#$saved_port))"; fi
+selected_port="${APP_HOST_PORT:-$saved_port}"
 selected_port="${selected_port:-8096}"
 [[ "$selected_port" =~ ^[0-9]{1,5}$ ]] && (( 10#$selected_port >= 1 && 10#$selected_port <= 65535 )) || fail 'invalid saved port; specify --port PORT'
 selected_port="$((10#$selected_port))"
-if ! systemctl is-active --quiet "$SCRAPEFUN_SERVICE_NAME" || [[ "$selected_port" != "$(read_setting PORT "$SCRAPEFUN_CONFIG_DIR/server.env")" ]]; then
+if ! systemctl is-active --quiet "$SCRAPEFUN_SERVICE_NAME" || [[ "$selected_port" != "$saved_port" ]]; then
   python3 "$stage/operations/linux-server-tools.py" check-port --port "$selected_port"
 fi
 printf 'Linux amd64 · glibc %s · Node %s\n服务: %s · 渠道: %s · 端口: %s\n程序: %s\n数据: %s\n配置: %s\n' \

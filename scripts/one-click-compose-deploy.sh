@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+# Execute only after the complete script has arrived through curl | bash.
+main() {
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ACTION="deploy"
@@ -1237,3 +1239,5 @@ echo ""
 echo -e "Later update by running the same one-click command again:"
 echo -e "  ${YELLOW}curl -fsSL https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/scripts/one-click-compose-deploy.sh | bash -s -- ${CHANNEL} ${DEPLOY_DIR}${NC}"
 echo -e "Or use the app Settings page to switch Stable/Beta and click Update."
+}
+main "$@"
