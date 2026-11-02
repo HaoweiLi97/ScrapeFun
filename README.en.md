@@ -36,6 +36,8 @@ Deploy a Server first, then install a Client if needed. Server stores libraries,
 
 Available architectures and formats follow the actual Release Assets and Docker tag manifests.
 
+Android Client [0.5.1 stable](https://github.com/HaoweiLi97/scrapefun-client-android/releases/tag/v0.5.1) is available with improved remote connection maintenance and automatic reconnection, in ARM64 and ARMv7 APKs. It retains the 0.5.0 signing identity for in-place updates. See the [Android Client release notes](./release-notes/android-client/0.5.1/en-US.md).
+
 Windows, Linux and Android Server and Client downloads are available for 0.5.0. GitHub Windows downloads are EXE installers; Microsoft Store distributes MSIX/APPX; Client 0.5.0 is published and Server 0.5.0 is in certification. Windows EXEs are unsigned and may trigger SmartScreen. The Android Client uses a new signing key and cannot update an older signing identity in place; save configuration and progress first. The Linux Client requires glibc 2.34+ and X11/XWayland. See the [Server release notes](./release-notes/0.5.0/en-US.md).
 
 ## Quick start
