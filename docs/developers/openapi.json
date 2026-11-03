@@ -2549,6 +2549,156 @@
         },
         "x-required-role": "admin"
       }
+    },
+    "/api/settings/ai/text/models": {
+      "post": {
+        "operationId": "listTextAiModels",
+        "summary": "Retrieve model IDs from the submitted AI provider",
+        "description": "Administrator required. Contacts the submitted provider without saving settings. A model list does not prove that a selected model can execute.",
+        "tags": [
+          "AI settings"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "AI provider API base or full chat/completions URL, without embedded credentials"
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "writeOnly": true,
+                    "description": "AI provider key, distinct from the Server session token"
+                  }
+                },
+                "required": [
+                  "url",
+                  "key"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "models": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "keyStatus": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error; inspect HTTP status and body. Error fields vary by endpoint.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-required-role": "admin"
+      }
+    },
+    "/api/settings/ai/text/test": {
+      "post": {
+        "operationId": "testTextAiConnection",
+        "summary": "Test a submitted text AI connection and model",
+        "description": "Administrator required. Contacts the submitted provider and may incur usage. Does not save settings or bind a feature. Inspect error, code, keyStatus, and solution on failure; not every 502 means an invalid key.",
+        "tags": [
+          "AI settings"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "AI provider API base or full chat/completions URL, without embedded credentials"
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "writeOnly": true,
+                    "description": "AI provider key, distinct from the Server session token"
+                  },
+                  "model": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "url",
+                  "key",
+                  "model"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "keyStatus": {
+                      "type": "string"
+                    },
+                    "latencyMs": {
+                      "type": "number"
+                    },
+                    "model": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error; inspect HTTP status and body. Error fields vary by endpoint.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-required-role": "admin"
+      }
     }
   },
   "components": {

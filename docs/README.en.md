@@ -23,6 +23,8 @@ Start with your deployment method. Server manages data and libraries; Client con
 
 ## Extensions and support
 
+- [Common settings](developers/settings.en.md) · [AI connections and configuration](developers/ai-settings.en.md)
+
 - [API integration reference](developers/api.en.md) · [OpenAPI](developers/openapi.json)
 - [Scraper development](developers/scrapers.en.md) · [Testing and management API](developers/scraper-api.en.md) · [Extension examples](developers/examples/)
 

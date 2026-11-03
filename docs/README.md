@@ -23,6 +23,8 @@
 
 ## 扩展与支持
 
+- [常用设置指南](developers/settings.md) · [AI 接入与配置](developers/ai-settings.md)
+
 - [API 接入参考](developers/api.md) · [OpenAPI](developers/openapi.json)
 - [刮削器开发参考](developers/scrapers.md) · [测试与管理 API](developers/scraper-api.md) · [扩展示例](developers/examples/)
 

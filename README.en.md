@@ -116,6 +116,7 @@ View artwork, metadata, descriptions, characters, and reading actions together.
 | Task | Guide |
 | --- | --- |
 | API integration and automation | [Authentication, media, and tasks](./docs/developers/api.en.md) · [OpenAPI](./docs/developers/openapi.json) |
+| Settings and AI connections | [Common settings](./docs/developers/settings.en.md) · [Text, voice, and image AI](./docs/developers/ai-settings.en.md) |
 | Author and manage scrapers | [Methods and data formats](./docs/developers/scrapers.en.md) · [Testing and management API](./docs/developers/scraper-api.en.md) |
 | Linux installation, updates, and channel changes | [Docker deployment and operations](./DOCKER_GUIDE.en.md) |
 | Manual NAS configuration | [Docker Compose deployment](./DOCKER_COMPOSE_DEPLOYMENT.en.md) |

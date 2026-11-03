@@ -116,6 +116,7 @@ http://服务器IP:8096
 | 任务 | 文档 |
 | --- | --- |
 | API 接入与自动化 | [认证、媒体与任务](./docs/developers/api.md) · [OpenAPI](./docs/developers/openapi.json) |
+| 设置与 AI 接入 | [常用设置](./docs/developers/settings.md) · [文本、语音与图像 AI](./docs/developers/ai-settings.md) |
 | 编写与管理刮削器 | [方法与数据格式](./docs/developers/scrapers.md) · [测试和管理 API](./docs/developers/scraper-api.md) |
 | Linux 安装、更新与频道切换 | [Docker 部署与运维](./DOCKER_GUIDE.md) |
 | 在 NAS 面板手动配置 | [Docker Compose 部署](./DOCKER_COMPOSE_DEPLOYMENT.md) |
