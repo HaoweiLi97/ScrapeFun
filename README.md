@@ -12,7 +12,7 @@
   <img src="./docs/images/library.jpg" alt="ScrapeFun 影视库：继续观看、分类筛选与海报浏览" width="960" />
 </div>
 
-> 文档更新：2026-11-01。各平台独立发布，具体版本、系统要求及安装注意事项以对应 Release 为准。
+> 文档更新：2026-11-03。各平台独立发布，具体版本、系统要求及安装注意事项以对应 Release 为准。
 
 ScrapeFun 将媒体刮削、资源浏览、播放、阅读和多用户管理集中在一个自托管服务中。你可以在 Linux / NAS、Mac 或 Windows 电脑上部署 Server，再通过浏览器或专用客户端连接。
 
@@ -115,6 +115,8 @@ http://服务器IP:8096
 
 | 任务 | 文档 |
 | --- | --- |
+| API 接入与自动化 | [认证、媒体与任务](./docs/developers/api.md) · [OpenAPI](./docs/developers/openapi.json) |
+| 编写与管理刮削器 | [方法与数据格式](./docs/developers/scrapers.md) · [测试和管理 API](./docs/developers/scraper-api.md) |
 | Linux 安装、更新与频道切换 | [Docker 部署与运维](./DOCKER_GUIDE.md) |
 | 在 NAS 面板手动配置 | [Docker Compose 部署](./DOCKER_COMPOSE_DEPLOYMENT.md) |
 | 备份、迁移与故障恢复 | [数据持久化、备份与恢复](./DOCKER_DATA_AND_BACKUP.md) |

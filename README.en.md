@@ -12,7 +12,7 @@
   <img src="./docs/images/library.jpg" alt="ScrapeFun media library: continue watching, category filters, and poster browsing" width="960" />
 </div>
 
-> Updated: 2026-11-01. Platforms ship independently. Check the relevant release for its version, system requirements, and installation notes.
+> Updated: 2026-11-03. Platforms ship independently. Check the relevant release for its version, system requirements, and installation notes.
 
 ScrapeFun brings metadata scraping, resource browsing, playback, reading, and user management into a self-hosted service. Deploy Server on Linux / NAS, macOS, or Windows, then connect through a browser or a dedicated Client.
 
@@ -115,6 +115,8 @@ View artwork, metadata, descriptions, characters, and reading actions together.
 
 | Task | Guide |
 | --- | --- |
+| API integration and automation | [Authentication, media, and tasks](./docs/developers/api.en.md) · [OpenAPI](./docs/developers/openapi.json) |
+| Author and manage scrapers | [Methods and data formats](./docs/developers/scrapers.en.md) · [Testing and management API](./docs/developers/scraper-api.en.md) |
 | Linux installation, updates, and channel changes | [Docker deployment and operations](./DOCKER_GUIDE.en.md) |
 | Manual NAS configuration | [Docker Compose deployment](./DOCKER_COMPOSE_DEPLOYMENT.en.md) |
 | Backup, migration, and recovery | [Persistent data, backup, and recovery](./DOCKER_DATA_AND_BACKUP.en.md) |

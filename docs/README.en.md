@@ -2,7 +2,7 @@
 
 [简体中文](./README.md) · **English**
 
-> Updated: 2026-10-20
+> Updated: 2026-11-03
 
 Start with your deployment method. Server manages data and libraries; Client connects to an existing Server. Installers and update channels are released independently for each platform.
 
@@ -22,6 +22,9 @@ Start with your deployment method. Server manages data and libraries; Client con
 - Client: [Linux](https://github.com/HaoweiLi97/scrapefun-client-linux/blob/main/README.en.md) · [macOS](https://github.com/HaoweiLi97/scrapefun-client-macos/blob/main/README.en.md) · [Windows](https://github.com/HaoweiLi97/scrapefun-client-windows/blob/main/README.en.md) · [Android](https://github.com/HaoweiLi97/scrapefun-client-android/blob/main/README.en.md)
 
 ## Extensions and support
+
+- [API integration reference](developers/api.en.md) · [OpenAPI](developers/openapi.json)
+- [Scraper development](developers/scrapers.en.md) · [Testing and management API](developers/scraper-api.en.md) · [Extension examples](developers/examples/)
 
 - [Custom scraper development (English)](../server/SCRAPER_GUIDE.md)
 - [Custom scraper development (Chinese)](../server/SCRAPER_GUIDE.zh-CN.md)
