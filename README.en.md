@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./docs/images/favicon.png" alt="ScrapeFun" width="80" />
+  <img src="./docs/images/server-icon.png" alt="ScrapeFun Server" width="80" />
   <h1>ScrapeFun</h1>
   <p>Self-hosted media server · Movies, comics, and remote media in one place</p>
   <p><a href="./README.md">简体中文</a> · <strong>English</strong></p>

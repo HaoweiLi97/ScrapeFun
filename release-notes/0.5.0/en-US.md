@@ -6,7 +6,6 @@ Improve playback, comic and book reading, and library browsing, while fixing con
 
 - Improve loading of media details and related content, reducing waits while browsing and returning to the library.
 - Unify image cropping for easier previews and saving of posters, backdrops, and avatars.
-- Clients and servers share the `0.5.0` base version. Future stable fixes for an individual app use `0.5.0-patch.N` and are offered in the correct update order.
 
 ## Fixes
 
@@ -17,7 +16,6 @@ Improve playback, comic and book reading, and library browsing, while fixing con
 
 ## Before updating
 
-- Install this base release before receiving fixes named `0.5.0-patch.N`; older clients need this base upgrade first.
 - Follow the normal upgrade process for your existing app and platform, retaining your connection settings and data locations.
 - Updating the server restarts it and briefly interrupts connections. Keep a complete data backup beforehand.
 - Windows downloads on GitHub use EXE installers; Microsoft Store uses MSIX/APPX. Keep your existing installation channel and back up your data before changing channels.

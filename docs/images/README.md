@@ -2,7 +2,7 @@
 
 **简体中文** · [English](./README.en.md)
 
-> 更新日期：2026-09-28
+> 更新日期：2026-11-03
 
 本目录用于 GitHub 产品文档。界面截图与产品网站使用同一套原图，保持真实界面和原始比例，不附加模拟设备边框。
 
@@ -13,8 +13,9 @@
 | [books.png](./books.png) | 书籍库与阅读进度 |
 | [webdav.jpg](./webdav.jpg) | WebDAV 目录与资源浏览 |
 | [media-detail.jpg](./media-detail.jpg) | 漫画作品资料与角色 |
-| [favicon.png](./favicon.png) | 当前 ScrapeFun 品牌图标 |
-| [logo.png](./logo.png) | ScrapeFun 品牌标识 |
+| [server-icon.png](./server-icon.png) | ScrapeFun Server 蓝色图标（文档页首） |
+| [favicon.png](./favicon.png) | ScrapeFun Server 蓝色图标 |
+| [logo.png](./logo.png) | ScrapeFun Server 品牌标识 |
 
 截图是产品界面示例，不代表所有客户端版本都具有相同布局。展示的媒体封面与作品资料属于各自权利人，软件许可不授予这些第三方内容的版权。
 
