@@ -9,7 +9,7 @@
     <a href="#下载与部署">软件下载</a> ·
     <a href="./SUPPORT.md">支持与反馈</a>
   </p>
-  <img src="./docs/images/library.jpg" alt="ScrapeFun 影视库：继续观看、分类筛选与海报浏览" width="960" />
+  <img src="./docs/images/library-2026-11-03.webp" alt="ScrapeFun 影视首页：沉浸式继续观看与作品切换" width="960" />
 </div>
 
 > 文档更新：2026-11-03。各平台独立发布，具体版本、系统要求及安装注意事项以对应 Release 为准。
@@ -73,14 +73,14 @@ http://服务器IP:8096
 
 ## 界面预览
 
-以下为产品实际界面，与[产品网站](https://scrapefun.com/#/product)使用同一套截图。不同平台、版本和个人设置可能影响显示效果。
+以下截图于 2026-11-03 从正在运行的 ScrapeFun 截取。不同平台、版本和个人设置可能影响显示效果。
 
 <details>
   <summary>漫画库与阅读进度</summary>
 
-按作品浏览漫画和卷册，并查看继续阅读内容。
+查看漫画封面、卷册和阅读进度，继续上次阅读。
 
-<img src="./docs/images/comics.jpg" alt="ScrapeFun 漫画库：继续阅读、卷册封面与漫画筛选" width="960" />
+<img src="./docs/images/comics-2026-11-03.webp" alt="ScrapeFun 漫画首页：继续阅读、卷册封面与进度" width="960" />
 
 </details>
 
@@ -89,25 +89,25 @@ http://服务器IP:8096
 
 通过封面浏览书籍，集中查看阅读中的作品。
 
-<img src="./docs/images/books.png" alt="ScrapeFun 书籍库：继续阅读与书籍封面" width="960" />
+<img src="./docs/images/books-2026-11-03.webp" alt="ScrapeFun 书籍首页：继续阅读、书籍封面与进度" width="960" />
 
 </details>
 
 <details>
-  <summary>WebDAV 远程资源</summary>
+  <summary>远程资源浏览</summary>
 
 浏览远程目录，以海报或列表查看媒体资源。
 
-<img src="./docs/images/webdav.jpg" alt="ScrapeFun WebDAV：目录导航、文件搜索与海报视图" width="960" />
+<img src="./docs/images/webdav-2026-11-03.webp" alt="ScrapeFun 远程文件：路径导航、刮削筛选与媒体海报" width="960" />
 
 </details>
 
 <details>
   <summary>作品详情</summary>
 
-集中查看作品资料、简介、角色和阅读操作。
+集中查看作品资料、简介、阅读进度与卷册入口。
 
-<img src="./docs/images/media-detail.jpg" alt="ScrapeFun 漫画作品详情：封面、资料、简介与角色" width="960" />
+<img src="./docs/images/media-detail-2026-11-03.webp" alt="ScrapeFun 漫画作品详情：封面、资料、阅读进度与卷册" width="960" />
 
 </details>
 

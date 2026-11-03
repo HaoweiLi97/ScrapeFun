@@ -4,15 +4,15 @@
 
 > Updated: 2026-11-03
 
-This directory supplies images for GitHub product documentation. Screenshots use the same original files as the product website, with the actual interface and original aspect ratios, without simulated device frames.
+This directory supplies images for GitHub product documentation. Screenshots were captured from the running ScrapeFun application on November 3, 2026. They retain the actual interface and original aspect ratios, without simulated device frames.
 
 | Image | Content |
 | --- | --- |
-| [library.jpg](./library.jpg) | Movie and TV library, continue watching, and poster browsing |
-| [comics.jpg](./comics.jpg) | Comic library, continue reading, and volume browsing |
-| [books.png](./books.png) | Book library and reading progress |
-| [webdav.jpg](./webdav.jpg) | WebDAV directories and resource browsing |
-| [media-detail.jpg](./media-detail.jpg) | Comic title metadata and characters |
+| [library-2026-11-03.webp](./library-2026-11-03.webp) | Movie and TV home, immersive continue watching, and title switching |
+| [comics-2026-11-03.webp](./comics-2026-11-03.webp) | Comic home, continue reading, and volume covers |
+| [books-2026-11-03.webp](./books-2026-11-03.webp) | Book home and reading progress |
+| [webdav-2026-11-03.webp](./webdav-2026-11-03.webp) | Remote directories, metadata filters, and media posters |
+| [media-detail-2026-11-03.webp](./media-detail-2026-11-03.webp) | Comic metadata, reading progress, and volume controls |
 | [server-icon.png](./server-icon.png) | Blue ScrapeFun Server icon used in document headers |
 | [favicon.png](./favicon.png) | ScrapeFun Server blue icon |
 | [logo.png](./logo.png) | ScrapeFun Server wordmark |

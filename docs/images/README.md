@@ -4,15 +4,15 @@
 
 > 更新日期：2026-11-03
 
-本目录用于 GitHub 产品文档。界面截图与产品网站使用同一套原图，保持真实界面和原始比例，不附加模拟设备边框。
+本目录用于 GitHub 产品文档。界面截图于 2026-11-03 从正在运行的 ScrapeFun 截取，保持真实界面和原始比例，不附加模拟设备边框。
 
 | 图片 | 内容 |
 | --- | --- |
-| [library.jpg](./library.jpg) | 影视库、继续观看与海报浏览 |
-| [comics.jpg](./comics.jpg) | 漫画库、继续阅读与卷册浏览 |
-| [books.png](./books.png) | 书籍库与阅读进度 |
-| [webdav.jpg](./webdav.jpg) | WebDAV 目录与资源浏览 |
-| [media-detail.jpg](./media-detail.jpg) | 漫画作品资料与角色 |
+| [library-2026-11-03.webp](./library-2026-11-03.webp) | 影视首页、沉浸式继续观看与作品切换 |
+| [comics-2026-11-03.webp](./comics-2026-11-03.webp) | 漫画首页、继续阅读与卷册封面 |
+| [books-2026-11-03.webp](./books-2026-11-03.webp) | 书籍首页与阅读进度 |
+| [webdav-2026-11-03.webp](./webdav-2026-11-03.webp) | 远程目录、刮削筛选与媒体海报 |
+| [media-detail-2026-11-03.webp](./media-detail-2026-11-03.webp) | 漫画作品资料、阅读进度与卷册入口 |
 | [server-icon.png](./server-icon.png) | ScrapeFun Server 蓝色图标（文档页首） |
 | [favicon.png](./favicon.png) | ScrapeFun Server 蓝色图标 |
 | [logo.png](./logo.png) | ScrapeFun Server 品牌标识 |

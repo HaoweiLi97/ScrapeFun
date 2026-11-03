@@ -9,7 +9,7 @@
     <a href="#downloads-and-deployment">Downloads</a> ·
     <a href="./SUPPORT.en.md">Support</a>
   </p>
-  <img src="./docs/images/library.jpg" alt="ScrapeFun media library: continue watching, category filters, and poster browsing" width="960" />
+  <img src="./docs/images/library-2026-11-03.webp" alt="ScrapeFun media home: immersive continue watching and title switching" width="960" />
 </div>
 
 > Updated: 2026-11-03. Platforms ship independently. Check the relevant release for its version, system requirements, and installation notes.
@@ -73,14 +73,14 @@ Some advanced features require a valid ScrapeFun Pro entitlement. Feature scope 
 
 ## Interface previews
 
-These are actual product screenshots, shared with the [product website](https://scrapefun.com/?lang=en#/product). They show the Chinese interface; appearance can vary with platform, version, and personal settings.
+These screenshots were captured from the running ScrapeFun application on November 3, 2026. They show the Chinese interface; appearance can vary with platform, version, and personal settings.
 
 <details>
   <summary>Comic library and reading progress</summary>
 
-Browse titles and volumes, and see what you are currently reading.
+View comic covers, volumes, and reading progress, then continue where you left off.
 
-<img src="./docs/images/comics.jpg" alt="ScrapeFun comic library: continue reading, volume covers, and filters" width="960" />
+<img src="./docs/images/comics-2026-11-03.webp" alt="ScrapeFun comic home: continue reading, volume covers, and progress" width="960" />
 
 </details>
 
@@ -89,25 +89,25 @@ Browse titles and volumes, and see what you are currently reading.
 
 Browse books by cover and view titles in progress.
 
-<img src="./docs/images/books.png" alt="ScrapeFun book library: continue reading and book covers" width="960" />
+<img src="./docs/images/books-2026-11-03.webp" alt="ScrapeFun book home: continue reading, book covers, and progress" width="960" />
 
 </details>
 
 <details>
-  <summary>Remote WebDAV resources</summary>
+  <summary>Remote resource browsing</summary>
 
 Browse remote directories and switch between posters and file lists.
 
-<img src="./docs/images/webdav.jpg" alt="ScrapeFun WebDAV: directory navigation, file search, and poster view" width="960" />
+<img src="./docs/images/webdav-2026-11-03.webp" alt="ScrapeFun remote files: path navigation, metadata filters, and media posters" width="960" />
 
 </details>
 
 <details>
   <summary>Title details</summary>
 
-View artwork, metadata, descriptions, characters, and reading actions together.
+View artwork, metadata, descriptions, reading progress, and volume controls together.
 
-<img src="./docs/images/media-detail.jpg" alt="ScrapeFun comic details: cover, metadata, description, and characters" width="960" />
+<img src="./docs/images/media-detail-2026-11-03.webp" alt="ScrapeFun comic details: cover, metadata, reading progress, and volumes" width="960" />
 
 </details>
 
