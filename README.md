@@ -27,10 +27,10 @@ ScrapeFun 将媒体刮削、资源浏览、播放、阅读和多用户管理集�
 | Server | Linux / NAS | Docker，默认构建 `linux/amd64` | [Docker 部署](./DOCKER_GUIDE.md) |
 | Server | Linux | 原生 systemd / amd64 0.5.0 | [安装说明](./DOCKER_GUIDE.md#原生-systemd-安装) · [v0.5.0](https://github.com/HaoweiLi97/scrapefun-server-linux/releases/tag/v0.5.0) |
 | Server | Android | arm64-v8a APK | [安装说明](https://github.com/HaoweiLi97/scrapefun-server-android) · [稳定版](https://github.com/HaoweiLi97/scrapefun-server-android/releases/latest) |
-| Server | macOS | Apple Silicon / arm64 DMG 0.5.2 | [0.5.2 手动下载](https://github.com/HaoweiLi97/scrapefun-server-macos/releases/tag/v0.5.2) |
+| Server | macOS | Apple Silicon / arm64 DMG 0.5.4 | [0.5.4 手动下载](https://github.com/HaoweiLi97/scrapefun-server-macos/releases/tag/v0.5.4) |
 | Server | Windows | x64 EXE / Microsoft Store MSIX | [GitHub 下载](https://github.com/HaoweiLi97/scrapefun-server-windows/releases/tag/v0.5.0) · [Microsoft Store](https://apps.microsoft.com/detail/9N83B6RSWG01) |
 | Client | Linux | x64 deb / AppImage 0.5.0 | [安装说明](https://github.com/HaoweiLi97/scrapefun-client-linux) · [v0.5.0](https://github.com/HaoweiLi97/scrapefun-client-linux/releases/tag/v0.5.0) |
-| Client | macOS | Apple Silicon / arm64 DMG 0.5.2 | [0.5.2 手动下载](https://github.com/HaoweiLi97/scrapefun-client-macos/releases/tag/v0.5.2) |
+| Client | macOS | Apple Silicon / arm64 DMG 0.5.4 | [0.5.4 手动下载](https://github.com/HaoweiLi97/scrapefun-client-macos/releases/tag/v0.5.4) |
 | Client | Windows | x64 EXE / Microsoft Store APPX | [GitHub 下载](https://github.com/HaoweiLi97/scrapefun-client-windows/releases/tag/v0.5.0) · [Microsoft Store](https://apps.microsoft.com/detail/9NM3HPS675QH) |
 | Client | Android | arm64-v8a / armeabi-v7a APK | [安装说明](https://github.com/HaoweiLi97/scrapefun-client-android) · [稳定版](https://github.com/HaoweiLi97/scrapefun-client-android/releases/latest) |
 
@@ -140,7 +140,7 @@ volumes:
 
 更新会重启 Server，并中断正在进行的播放和后台任务。先备份，再更新，最后检查登录、媒体库、图片、播放与阅读进度。`latest` 是稳定版频道别名，`beta` 是测试版频道别名；需要固定版本时使用明确的版本标签。
 
-macOS Server [0.5.2](https://github.com/HaoweiLi97/scrapefun-server-macos/releases/tag/v0.5.2) 仅提供 Apple Silicon 版本，需要 macOS 27.0 或更新系统；macOS Client [0.5.2](https://github.com/HaoweiLi97/scrapefun-client-macos/releases/tag/v0.5.2) 面向 Apple Silicon，需要 macOS 26.0 或更新系统。两者均使用 ad-hoc 完整性签名，未经 Developer ID 签名和 Apple 公证；本版请手动下载安装，首次打开按对应 Release 说明解除隔离。
+macOS Server [0.5.4](https://github.com/HaoweiLi97/scrapefun-server-macos/releases/tag/v0.5.4) 仅提供 Apple Silicon 版本，需要 macOS 27.0 或更新系统；macOS Client [0.5.4](https://github.com/HaoweiLi97/scrapefun-client-macos/releases/tag/v0.5.4) 面向 Apple Silicon，需要 macOS 26.0 或更新系统。两者均使用 ad-hoc 完整性签名，未经 Developer ID 签名和 Apple 公证；本版请手动下载安装，首次打开按对应 Release 说明解除隔离。
 
 ## 联系与授权
 
