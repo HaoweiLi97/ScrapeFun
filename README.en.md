@@ -26,19 +26,19 @@ Deploy a Server first, then install a Client if needed. Server stores libraries,
 | --- | --- | --- | --- |
 | Server | Linux / NAS | Docker, builds default to `linux/amd64` | [Docker deployment](./DOCKER_GUIDE.en.md) |
 | Server | Linux | Native systemd / amd64 0.5.4 | [Installation](./DOCKER_GUIDE.en.md#native-systemd-installation) · [v0.5.4](https://github.com/HaoweiLi97/scrapefun-server-linux/releases/tag/v0.5.4) |
-| Server | Android | arm64-v8a APK | [Installation](https://github.com/HaoweiLi97/scrapefun-server-android) · [Stable release](https://github.com/HaoweiLi97/scrapefun-server-android/releases/latest) |
+| Server | Android | arm64-v8a APK 0.5.4 | [Installation](https://github.com/HaoweiLi97/scrapefun-server-android) · [Stable release](https://github.com/HaoweiLi97/scrapefun-server-android/releases/tag/v0.5.4) |
 | Server | macOS | Apple Silicon / arm64 DMG 0.5.4 | [0.5.4 manual download](https://github.com/HaoweiLi97/scrapefun-server-macos/releases/tag/v0.5.4) |
 | Server | Windows | x64 EXE / Microsoft Store MSIX | [GitHub release](https://github.com/HaoweiLi97/scrapefun-server-windows/releases/tag/v0.5.4) · [Microsoft Store](https://apps.microsoft.com/detail/9N83B6RSWG01) |
 | Client | Linux | x64 DEB / AppImage 0.5.4 | [Installation](https://github.com/HaoweiLi97/scrapefun-client-linux) · [v0.5.4](https://github.com/HaoweiLi97/scrapefun-client-linux/releases/tag/v0.5.4) |
 | Client | macOS | Apple Silicon / arm64 DMG 0.5.4 | [0.5.4 manual download](https://github.com/HaoweiLi97/scrapefun-client-macos/releases/tag/v0.5.4) |
 | Client | Windows | x64 EXE / Microsoft Store APPX | [GitHub release](https://github.com/HaoweiLi97/scrapefun-client-windows/releases/tag/v0.5.4) · [Microsoft Store](https://apps.microsoft.com/detail/9NM3HPS675QH) |
-| Client | Android | arm64-v8a / armeabi-v7a APK | [Installation](https://github.com/HaoweiLi97/scrapefun-client-android/blob/main/README.en.md) · [Stable release](https://github.com/HaoweiLi97/scrapefun-client-android/releases/latest) |
+| Client | Android | arm64-v8a / armeabi-v7a APK 0.5.4 | [Installation](https://github.com/HaoweiLi97/scrapefun-client-android/blob/main/README.en.md) · [Stable release](https://github.com/HaoweiLi97/scrapefun-client-android/releases/tag/v0.5.4) |
 
 Available architectures and formats follow the actual Release Assets and Docker tag manifests.
 
-Android Client [0.5.1 stable](https://github.com/HaoweiLi97/scrapefun-client-android/releases/tag/v0.5.1) is available with improved remote connection maintenance and automatic reconnection, in ARM64 and ARMv7 APKs. It retains the 0.5.0 signing identity for in-place updates. See the [Android Client release notes](./release-notes/android-client/0.5.1/en-US.md).
+Android Client [0.5.4 stable](https://github.com/HaoweiLi97/scrapefun-client-android/releases/tag/v0.5.4) is available in ARM64 and ARMv7 APKs. It retains the 0.5.0 signing identity for in-place updates. See the [Android Client release notes](./release-notes/android-client/0.5.4/en-US.md).
 
-Server 0.5.4 is available for Windows, Linux and Docker; Client 0.5.4 is available for Windows and Linux, improving media scanning, task status and home page stability. Windows GitHub EXEs are unsigned and may trigger SmartScreen; Client and Server 0.5.4 have been submitted to Microsoft Store for review. Linux Client provides x64 DEB / AppImage and requires glibc 2.34+ and X11/XWayland.
+Server 0.5.4 is available for Windows, Linux, Docker and Android; Client 0.5.4 is available for Windows, Linux and Android, improving media scanning, task status and home page stability. Windows GitHub EXEs are unsigned and may trigger SmartScreen; Client and Server 0.5.4 have passed review and been published to Microsoft Store. Linux Client provides x64 DEB / AppImage and requires glibc 2.34+ and X11/XWayland.
 
 ## Quick start
 
