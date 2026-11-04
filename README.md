@@ -25,20 +25,20 @@ ScrapeFun 将媒体刮削、资源浏览、播放、阅读和多用户管理集�
 | 类型 | 平台 | 公开安装方式 | 入口 |
 | --- | --- | --- | --- |
 | Server | Linux / NAS | Docker，默认构建 `linux/amd64` | [Docker 部署](./DOCKER_GUIDE.md) |
-| Server | Linux | 原生 systemd / amd64 0.5.0 | [安装说明](./DOCKER_GUIDE.md#原生-systemd-安装) · [v0.5.0](https://github.com/HaoweiLi97/scrapefun-server-linux/releases/tag/v0.5.0) |
+| Server | Linux | 原生 systemd / amd64 0.5.4 | [安装说明](./DOCKER_GUIDE.md#原生-systemd-安装) · [v0.5.4](https://github.com/HaoweiLi97/scrapefun-server-linux/releases/tag/v0.5.4) |
 | Server | Android | arm64-v8a APK | [安装说明](https://github.com/HaoweiLi97/scrapefun-server-android) · [稳定版](https://github.com/HaoweiLi97/scrapefun-server-android/releases/latest) |
 | Server | macOS | Apple Silicon / arm64 DMG 0.5.4 | [0.5.4 手动下载](https://github.com/HaoweiLi97/scrapefun-server-macos/releases/tag/v0.5.4) |
-| Server | Windows | x64 EXE / Microsoft Store MSIX | [GitHub 下载](https://github.com/HaoweiLi97/scrapefun-server-windows/releases/tag/v0.5.0) · [Microsoft Store](https://apps.microsoft.com/detail/9N83B6RSWG01) |
-| Client | Linux | x64 deb / AppImage 0.5.0 | [安装说明](https://github.com/HaoweiLi97/scrapefun-client-linux) · [v0.5.0](https://github.com/HaoweiLi97/scrapefun-client-linux/releases/tag/v0.5.0) |
+| Server | Windows | x64 EXE / Microsoft Store MSIX | [GitHub 下载](https://github.com/HaoweiLi97/scrapefun-server-windows/releases/tag/v0.5.4) · [Microsoft Store](https://apps.microsoft.com/detail/9N83B6RSWG01) |
+| Client | Linux | x64 deb / AppImage 0.5.4 | [安装说明](https://github.com/HaoweiLi97/scrapefun-client-linux) · [v0.5.4](https://github.com/HaoweiLi97/scrapefun-client-linux/releases/tag/v0.5.4) |
 | Client | macOS | Apple Silicon / arm64 DMG 0.5.4 | [0.5.4 手动下载](https://github.com/HaoweiLi97/scrapefun-client-macos/releases/tag/v0.5.4) |
-| Client | Windows | x64 EXE / Microsoft Store APPX | [GitHub 下载](https://github.com/HaoweiLi97/scrapefun-client-windows/releases/tag/v0.5.0) · [Microsoft Store](https://apps.microsoft.com/detail/9NM3HPS675QH) |
+| Client | Windows | x64 EXE / Microsoft Store APPX | [GitHub 下载](https://github.com/HaoweiLi97/scrapefun-client-windows/releases/tag/v0.5.4) · [Microsoft Store](https://apps.microsoft.com/detail/9NM3HPS675QH) |
 | Client | Android | arm64-v8a / armeabi-v7a APK | [安装说明](https://github.com/HaoweiLi97/scrapefun-client-android) · [稳定版](https://github.com/HaoweiLi97/scrapefun-client-android/releases/latest) |
 
 可用架构与包格式以实际 Release 资产和 Docker 标签的镜像清单为准。
 
 Android Client [0.5.1 正式版](https://github.com/HaoweiLi97/scrapefun-client-android/releases/tag/v0.5.1) 已发布，改善远程连接保活和自动重连，提供 ARM64、ARMv7 APK。沿用 0.5.0 正式签名，可直接覆盖升级。见 [Android 客户端更新说明](./release-notes/android-client/0.5.1/zh-CN.md)。
 
-0.5.0 的 Windows、Linux、Android 服务端和客户端现已提供下载。Windows 的 GitHub 下载为 EXE，商店安装由 Microsoft Store 提供 MSIX/APPX；商店客户端 0.5.0 已上架，服务端 0.5.0 正在审核。Windows EXE 尚未签名，可能显示 SmartScreen 提示。Android 客户端使用新的签名密钥，旧签名版本无法直接覆盖安装，请先保存配置与进度。Linux 客户端需要 glibc 2.34+ 和 X11/XWayland。详情见 [服务端更新说明](./release-notes/0.5.0/zh-CN.md)。
+Server 0.5.4 已在 Windows、Linux 和 Docker 发布，Client 0.5.4 已在 Windows 和 Linux 发布，改善媒体库扫描、任务状态和首页显示稳定性。Windows GitHub 下载为未签名 EXE，可能显示 SmartScreen 提示；Client 与 Server 的 Microsoft Store 0.5.4 已提交审核。Linux Client 提供 x64 DEB / AppImage，需要 glibc 2.34+ 和 X11/XWayland。
 
 ## 快速开始
 
