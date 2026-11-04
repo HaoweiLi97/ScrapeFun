@@ -27,10 +27,10 @@ Deploy a Server first, then install a Client if needed. Server stores libraries,
 | Server | Linux / NAS | Docker, builds default to `linux/amd64` | [Docker deployment](./DOCKER_GUIDE.en.md) |
 | Server | Linux | Native systemd / amd64 0.5.0 | [Installation](./DOCKER_GUIDE.en.md#native-systemd-installation) · [v0.5.0](https://github.com/HaoweiLi97/scrapefun-server-linux/releases/tag/v0.5.0) |
 | Server | Android | arm64-v8a APK | [Installation](https://github.com/HaoweiLi97/scrapefun-server-android) · [Stable release](https://github.com/HaoweiLi97/scrapefun-server-android/releases/latest) |
-| Server | macOS | Apple Silicon / arm64 DMG 0.5.0 | [0.5.0 manual download](https://github.com/HaoweiLi97/scrapefun-server-macos/releases/tag/v0.5.0) |
+| Server | macOS | Apple Silicon / arm64 DMG 0.5.2 | [0.5.2 manual download](https://github.com/HaoweiLi97/scrapefun-server-macos/releases/tag/v0.5.2) |
 | Server | Windows | x64 EXE / Microsoft Store MSIX | [GitHub release](https://github.com/HaoweiLi97/scrapefun-server-windows/releases/tag/v0.5.0) · [Microsoft Store](https://apps.microsoft.com/detail/9N83B6RSWG01) |
 | Client | Linux | x64 DEB / AppImage 0.5.0 | [Installation](https://github.com/HaoweiLi97/scrapefun-client-linux) · [v0.5.0](https://github.com/HaoweiLi97/scrapefun-client-linux/releases/tag/v0.5.0) |
-| Client | macOS | Apple Silicon / arm64 DMG 0.5.0 | [0.5.0 manual download](https://github.com/HaoweiLi97/scrapefun-client-macos/releases/tag/v0.5.0) |
+| Client | macOS | Apple Silicon / arm64 DMG 0.5.2 | [0.5.2 manual download](https://github.com/HaoweiLi97/scrapefun-client-macos/releases/tag/v0.5.2) |
 | Client | Windows | x64 EXE / Microsoft Store APPX | [GitHub release](https://github.com/HaoweiLi97/scrapefun-client-windows/releases/tag/v0.5.0) · [Microsoft Store](https://apps.microsoft.com/detail/9NM3HPS675QH) |
 | Client | Android | arm64-v8a / armeabi-v7a APK | [Installation](https://github.com/HaoweiLi97/scrapefun-client-android/blob/main/README.en.md) · [Stable release](https://github.com/HaoweiLi97/scrapefun-client-android/releases/latest) |
 
@@ -140,7 +140,7 @@ volumes:
 
 Updating restarts Server and interrupts playback and background tasks. Back up first, update, then check login, libraries, images, and playback and reading progress. `latest` follows stable releases and `beta` follows prereleases; use an explicit version tag when you need a fixed version.
 
-macOS Server [0.5.0](https://github.com/HaoweiLi97/scrapefun-server-macos/releases/tag/v0.5.0) requires Apple Silicon and macOS 27.0 or later; macOS Client [0.5.0](https://github.com/HaoweiLi97/scrapefun-client-macos/releases/tag/v0.5.0) requires Apple Silicon and macOS 26.5 or later. Both use ad-hoc integrity signatures without Developer ID signing or Apple notarization. Install this version manually and follow its Release instructions to remove quarantine if needed.
+macOS Server [0.5.2](https://github.com/HaoweiLi97/scrapefun-server-macos/releases/tag/v0.5.2) requires Apple Silicon and macOS 27.0 or later; macOS Client [0.5.2](https://github.com/HaoweiLi97/scrapefun-client-macos/releases/tag/v0.5.2) requires Apple Silicon and macOS 26.0 or later. Both use ad-hoc integrity signatures without Developer ID signing or Apple notarization. Install this version manually and follow its Release instructions to remove quarantine if needed.
 
 ## Contact and licensing
 
