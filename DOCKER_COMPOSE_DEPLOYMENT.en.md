@@ -2,9 +2,9 @@
 
 [简体中文](./DOCKER_COMPOSE_DEPLOYMENT.md) · **English**
 
-> Updated: 2026-10-20
+> Updated: 2026-11-09
 
-For Synology Container Manager, QNAP Container Station, 1Panel, CasaOS, and other environments supporting Docker Compose.
+For Synology Container Manager, QNAP Container Station, 1Panel, CasaOS, and other environments supporting Docker Compose. The images support `linux/amd64` only; use an x86-64 host.
 
 This example uses `docker-compose.yml`, `server.env`, and `.env`. App reads `server.env` through `env_file`; Compose reads `.env` for variable substitution. The one-click installer instead uses `docker-compose.remote.yml` / `.updater.env`. Choose operations commands for the files in your actual deployment.
 

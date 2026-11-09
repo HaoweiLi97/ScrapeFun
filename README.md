@@ -12,7 +12,7 @@
   <img src="./docs/images/library-2026-11-03.webp" alt="ScrapeFun 影视首页：沉浸式继续观看与作品切换" width="960" />
 </div>
 
-> 文档更新：2026-11-03。各平台独立发布，具体版本、系统要求及安装注意事项以对应 Release 为准。
+> 文档更新：2026-11-09。各平台独立发布，具体版本、系统要求及安装注意事项以对应 Release 为准。
 
 ScrapeFun 将媒体刮削、资源浏览、播放、阅读和多用户管理集中在一个自托管服务中。你可以在 Linux / NAS、Mac 或 Windows 电脑上部署 Server，再通过浏览器或专用客户端连接。
 
@@ -24,25 +24,23 @@ ScrapeFun 将媒体刮削、资源浏览、播放、阅读和多用户管理集�
 
 | 类型 | 平台 | 公开安装方式 | 入口 |
 | --- | --- | --- | --- |
-| Server | Linux / NAS | Docker，默认构建 `linux/amd64` | [Docker 部署](./DOCKER_GUIDE.md) |
-| Server | Linux | 原生 systemd / amd64 0.5.4 | [安装说明](./DOCKER_GUIDE.md#原生-systemd-安装) · [v0.5.4](https://github.com/HaoweiLi97/scrapefun-server-linux/releases/tag/v0.5.4) |
-| Server | Android | arm64-v8a APK 0.5.4 | [安装说明](https://github.com/HaoweiLi97/scrapefun-server-android) · [稳定版](https://github.com/HaoweiLi97/scrapefun-server-android/releases/tag/v0.5.4) |
+| Server | Linux / NAS | Docker，仅支持 `linux/amd64` | [Docker 部署](./DOCKER_GUIDE.md) |
+| Server | Linux | 原生 systemd / amd64 0.5.9 | [安装说明](./DOCKER_GUIDE.md#原生-systemd-安装) · [v0.5.9](https://github.com/HaoweiLi97/scrapefun-server-linux/releases/tag/v0.5.9) |
+| Server | Android | arm64-v8a APK 0.5.9 | [安装说明](https://github.com/HaoweiLi97/scrapefun-server-android) · [稳定版](https://github.com/HaoweiLi97/scrapefun-server-android/releases/tag/v0.5.9) |
 | Server | macOS | Apple Silicon / arm64 DMG 0.5.4 | [0.5.4 手动下载](https://github.com/HaoweiLi97/scrapefun-server-macos/releases/tag/v0.5.4) |
-| Server | Windows | x64 EXE / Microsoft Store MSIX | [GitHub 下载](https://github.com/HaoweiLi97/scrapefun-server-windows/releases/tag/v0.5.4) · [Microsoft Store](https://apps.microsoft.com/detail/9N83B6RSWG01) |
-| Client | Linux | x64 deb / AppImage 0.5.4 | [安装说明](https://github.com/HaoweiLi97/scrapefun-client-linux) · [v0.5.4](https://github.com/HaoweiLi97/scrapefun-client-linux/releases/tag/v0.5.4) |
+| Server | Windows | x64 EXE / Microsoft Store MSIX | [GitHub 下载](https://github.com/HaoweiLi97/scrapefun-server-windows/releases/tag/v0.5.9) · [Microsoft Store](https://apps.microsoft.com/detail/9N83B6RSWG01) |
+| Client | Linux | x64 deb / AppImage 0.5.9 | [安装说明](https://github.com/HaoweiLi97/scrapefun-client-linux) · [v0.5.9](https://github.com/HaoweiLi97/scrapefun-client-linux/releases/tag/v0.5.9) |
 | Client | macOS | Apple Silicon / arm64 DMG 0.5.4 | [0.5.4 手动下载](https://github.com/HaoweiLi97/scrapefun-client-macos/releases/tag/v0.5.4) |
-| Client | Windows | x64 EXE / Microsoft Store APPX | [GitHub 下载](https://github.com/HaoweiLi97/scrapefun-client-windows/releases/tag/v0.5.4) · [Microsoft Store](https://apps.microsoft.com/detail/9NM3HPS675QH) |
-| Client | Android | arm64-v8a / armeabi-v7a APK 0.5.4 | [安装说明](https://github.com/HaoweiLi97/scrapefun-client-android) · [稳定版](https://github.com/HaoweiLi97/scrapefun-client-android/releases/tag/v0.5.4) |
+| Client | Windows | x64 EXE / Microsoft Store APPX | [GitHub 下载](https://github.com/HaoweiLi97/scrapefun-client-windows/releases/tag/v0.5.9) · [Microsoft Store](https://apps.microsoft.com/detail/9NM3HPS675QH) |
+| Client | Android | arm64-v8a / armeabi-v7a APK 0.5.9 | [安装说明](https://github.com/HaoweiLi97/scrapefun-client-android) · [稳定版](https://github.com/HaoweiLi97/scrapefun-client-android/releases/tag/v0.5.9) |
 
 可用架构与包格式以实际 Release 资产和 Docker 标签的镜像清单为准。
 
-Android Client [0.5.4 正式版](https://github.com/HaoweiLi97/scrapefun-client-android/releases/tag/v0.5.4) 已发布，提供 ARM64、ARMv7 APK。沿用 0.5.0 正式签名，可直接覆盖升级。见 [Android 客户端更新说明](./release-notes/android-client/0.5.4/zh-CN.md)。
-
-Server 0.5.4 已在 Windows、Linux、Docker 和 Android 发布，Client 0.5.4 已在 Windows、Linux 和 Android 发布，改善媒体库扫描、任务状态和首页显示稳定性。Windows GitHub 下载为未签名 EXE，可能显示 SmartScreen 提示；Client 与 Server 的 Microsoft Store 0.5.4 已通过审核并发布。Linux Client 提供 x64 DEB / AppImage，需要 glibc 2.34+ 和 X11/XWayland。
+Server 0.5.9 已发布 Docker、Linux、Windows 和 Android 版本；Client 0.5.9 已发布 Linux、Windows 和 Android 版本。新版增加 SMB、SFTP、S3 兼容存储、资料和图片语言设置，并改善播放和账号体验。Windows GitHub EXE 未签名，安装时可能显示 Microsoft Defender SmartScreen 提示。Microsoft Store 的版本以各商店页面为准。
 
 ## 快速开始
 
-Linux 主机安装 Docker 和 Docker Compose 插件后，运行：
+在 x86-64 Linux 主机安装 Docker、Docker Compose 插件和 `flock`（通常由 `util-linux` 提供）后，运行：
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-compose-deploy.sh | bash -s -- stable

@@ -2,9 +2,9 @@
 
 [简体中文](./DOCKER_GUIDE.md) · **English**
 
-> Updated: 2026-10-20
+> Updated: 2026-11-09
 
-For Linux hosts and NAS systems. The current release pipeline defaults to `linux/amd64`; verify the selected tag’s manifest before deploying to another architecture. Choose an installation method, then complete setup. [Back up](./DOCKER_DATA_AND_BACKUP.en.md) before updating an existing instance.
+Docker images support `linux/amd64` only, for x86-64 Linux hosts and NAS devices. The one-click script also requires `flock` (usually provided by `util-linux`). Choose an installation method, then complete setup. [Back up](./DOCKER_DATA_AND_BACKUP.en.md) before updating an existing instance.
 
 | Method | Environment | Guide |
 | --- | --- | --- |
@@ -136,7 +136,7 @@ Also check login, libraries, artwork, playback, and reading progress. If somethi
 
 For existing installations, upgrade once to native Linux Server 0.5.0 using the command below or `sudo scrapefun update`. This installs the components required to manually install updates from the web interface. Keep the existing `--config-dir` for custom instances.
 
-Native releases support glibc Linux amd64. Requires running systemd, Node.js 20/22/24, Python 3, curl, FFmpeg, and FFprobe. The script downloads a release for the selected channel and verifies SHA-256 without compiling source on the host. It exits if no matching release is available.
+Native releases support glibc Linux amd64. Requires running systemd, Node.js 22 (22.13 or later) or 24, Python 3, curl, FFmpeg, and FFprobe. The script downloads a release for the selected channel and verifies SHA-256 without compiling source on the host. It exits if no matching release is available.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-native-deploy.sh | sudo bash

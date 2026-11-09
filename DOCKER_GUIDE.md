@@ -2,9 +2,9 @@
 
 **简体中文** · [English](./DOCKER_GUIDE.en.md)
 
-> 文档更新：2026-10-20
+> 文档更新：2026-11-09
 
-适用于 Linux 主机和 NAS，当前发布流程默认构建 `linux/amd64`；其他架构先核对所选标签的镜像清单。先选择部署方式，再进行初始化；更新已有实例前先[备份](./DOCKER_DATA_AND_BACKUP.md)。
+Docker 镜像仅支持 `linux/amd64`，适用于 x86-64 Linux 主机和 NAS。一键脚本还要求 `flock`（通常由 `util-linux` 提供）。先选择部署方式，再进行初始化；更新已有实例前先[备份](./DOCKER_DATA_AND_BACKUP.md)。
 
 | 方式 | 适用环境 | 入口 |
 | --- | --- | --- |
@@ -136,7 +136,7 @@ curl -fsS http://127.0.0.1:8096/health/ready
 
 已有安装请先通过下方命令或 `sudo scrapefun update` 升级一次到 Linux 原生 Server 0.5.0，安装网页手动更新所需组件。自定义实例请沿用已有 `--config-dir`。
 
-原生包支持 glibc Linux amd64，要求运行中的 systemd、Node.js 20/22/24、Python 3、curl、FFmpeg 和 FFprobe。脚本下载对应渠道的发布包并校验 SHA-256，不在主机编译源码；没有匹配发布包时退出。
+原生包支持 glibc Linux amd64，要求运行中的 systemd、Node.js 22（22.13+）或 24、Python 3、curl、FFmpeg 和 FFprobe。脚本下载对应渠道的发布包并校验 SHA-256，不在主机编译源码；没有匹配发布包时退出。
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-native-deploy.sh | sudo bash

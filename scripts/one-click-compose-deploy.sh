@@ -160,6 +160,12 @@ validate_app_host_port() {
 # Reject explicit invalid ports before creating files or querying Docker.
 if [[ -n "$APP_HOST_PORT" ]]; then validate_app_host_port; fi
 
+machine="$(uname -m)"
+case "$machine" in
+  x86_64|amd64) ;;
+  *) echo "Error: ScrapeFun Docker images support only linux/amd64 (host: $machine)." >&2; exit 1 ;;
+esac
+
 print_permission_help() {
   local path="$1"
   local chown_paths="${DEPLOY_DIR}"
@@ -282,6 +288,15 @@ if ! docker compose version >/dev/null 2>&1; then
 fi
 
 mkdir -p "${DEPLOY_DIR}"
+if ! command -v flock >/dev/null 2>&1; then
+  echo 'Error: flock is required for safe Docker deployment. Install util-linux or enable the BusyBox flock command.' >&2
+  exit 1
+fi
+exec 8<"${DEPLOY_DIR}"
+if ! flock -n 8; then
+  echo 'Error: another Docker deployment operation is running, or this filesystem does not support flock.' >&2
+  exit 1
+fi
 if [[ -f "${COMPOSE_TARGET}" || -f "${UPDATER_ENV_FILE}" ]]; then
   ACTION="update"
 fi
@@ -743,19 +758,25 @@ normalize_repository_list() {
   printf '%s\n' "${IMAGE_REPOSITORIES//,/ }"
 }
 
+random_hex() {
+  local bytes="$1" value
+  if command -v openssl >/dev/null 2>&1; then
+    value="$(openssl rand -hex "$bytes")" || return 1
+  else
+    value="$(od -An -v -N "$bytes" -tx1 /dev/urandom | tr -d '[:space:]')" || return 1
+  fi
+  [[ "${#value}" -eq "$((bytes * 2))" && "$value" =~ ^[0-9a-f]+$ ]] || return 1
+  printf '%s\n' "$value"
+}
+
 write_server_env_file() {
   local repository="$1"
 
   if [[ ! -f "${SERVER_ENV_FILE}" ]]; then
-    if command -v openssl >/dev/null 2>&1; then
-      UPDATER_TOKEN="$(openssl rand -hex 24)"
-      APP_AUTH_SECRET="$(openssl rand -hex 32)"
-    else
-      UPDATER_TOKEN="$(date +%s | sha256sum | cut -d' ' -f1 | cut -c1-48)"
-      APP_AUTH_SECRET="$(date +%s%N | sha256sum | cut -d' ' -f1)"
-    fi
+    UPDATER_TOKEN="$(random_hex 24)" || { echo 'Error: could not generate a random updater token.' >&2; exit 1; }
+    APP_AUTH_SECRET="$(random_hex 32)" || { echo 'Error: could not generate an authentication secret.' >&2; exit 1; }
 
-    cat > "${SERVER_ENV_FILE}" <<EOF
+    (umask 077; cat > "${SERVER_ENV_FILE}") <<EOF
 NODE_ENV=production
 DATABASE_URL=file:/app/data/db/dev.db
 SCRAPETAB_UPDATER_TOKEN=${UPDATER_TOKEN}
@@ -768,11 +789,7 @@ EOF
   else
     echo -e "${YELLOW}Keeping existing ${SERVER_ENV_FILE}${NC}"
     if [[ -z "$(read_env_value "APP_AUTH_SECRET" "${SERVER_ENV_FILE}")" && -z "$(read_env_value "JWT_SECRET" "${SERVER_ENV_FILE}")" ]]; then
-      if command -v openssl >/dev/null 2>&1; then
-        APP_AUTH_SECRET="$(openssl rand -hex 32)"
-      else
-        APP_AUTH_SECRET="$(date +%s%N | sha256sum | cut -d' ' -f1)"
-      fi
+      APP_AUTH_SECRET="$(random_hex 32)" || { echo 'Error: could not generate an authentication secret.' >&2; exit 1; }
       upsert_env_value "APP_AUTH_SECRET" "${APP_AUTH_SECRET}" "${SERVER_ENV_FILE}"
     fi
     upsert_env_value "UPDATE_REPOSITORY" "${repository}" "${SERVER_ENV_FILE}"
@@ -913,29 +930,13 @@ try_pull_images() {
   return "${pull_failed}"
 }
 
-detect_bundle_arch() {
-  local machine
-  machine="$(uname -m)"
-
-  case "${machine}" in
-    x86_64|amd64) echo "amd64" ;;
-    aarch64|arm64) echo "arm64" ;;
-    *)
-      echo -e "${RED}Error: unsupported architecture for offline bundle: ${machine}.${NC}" >&2
-      return 1
-      ;;
-  esac
-}
-
 resolve_bundle_url() {
   if [[ -n "${IMAGE_BUNDLE_URL}" ]]; then
     printf '%s\n' "${IMAGE_BUNDLE_URL}"
     return
   fi
 
-  local arch
-  arch="$(detect_bundle_arch)"
-  printf '%s/scrapefun-image-linux-%s-%s.tar.gz\n' "${IMAGE_BUNDLE_BASE_URL%/}" "${arch}" "${CHANNEL}"
+  printf '%s/scrapefun-image-linux-amd64-%s.tar.gz\n' "${IMAGE_BUNDLE_BASE_URL%/}" "${CHANNEL}"
 }
 
 load_image_bundle() {

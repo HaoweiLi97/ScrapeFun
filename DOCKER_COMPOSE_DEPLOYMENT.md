@@ -2,9 +2,9 @@
 
 **简体中文** · [English](./DOCKER_COMPOSE_DEPLOYMENT.en.md)
 
-> 文档更新：2026-10-20
+> 文档更新：2026-11-09
 
-适用于群晖 Container Manager、威联通 Container Station、1Panel、CasaOS 及其他支持 Docker Compose 的环境。
+适用于群晖 Container Manager、威联通 Container Station、1Panel、CasaOS 及其他支持 Docker Compose 的环境。镜像仅支持 `linux/amd64`，请使用 x86-64 主机。
 
 本文示例使用 `docker-compose.yml`、`server.env` 和 `.env`。`server.env` 由 app 的 `env_file` 消费；`.env` 用于 Compose 的变量替换。它们与一键脚本的 `docker-compose.remote.yml` / `.updater.env` 文件组合不同，运维命令应按实际部署方式选择。
 
