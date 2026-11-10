@@ -27,6 +27,8 @@ Usage: scrapefun [--deploy-dir PATH] [--mode docker|native] COMMAND [OPTIONS]
   wait-ready           等待应用就绪（默认 180 秒）
   url                  显示访问地址
   update [stable|beta] 更新；省略渠道时沿用当前渠道
+  uninstall --yes      移除 Docker 容器与网络，保留数据和配置
+  uninstall --dry-run  查看 Docker 卸载范围，不执行
   backup [OPTIONS]     Docker 沿用现有备份选项；原生支持 --output-dir PATH
   restore FILE         验证备份后恢复数据（原生配置保留当前值）
   doctor               检查依赖、配置、端口和数据目录
@@ -168,6 +170,17 @@ update() {
       bash "$OPS/one-click-native-deploy.sh" "$channel"
   fi
 }
+uninstall() {
+  [[ "$MODE" == docker ]] || fail 'uninstall currently supports only Docker deployments'
+  [[ $# -eq 1 && ( "$1" == --dry-run || "$1" == --yes ) ]] || fail 'use uninstall --dry-run to review, or uninstall --yes to remove'
+  printf '移除 ScrapeFun Compose 容器与网络: %s\n保留数据: %s\n保留部署配置和备份。\n' "$DEPLOY_DIR" "$DATA_DIR"
+  [[ "$1" == --yes ]] || return 0
+  command -v flock >/dev/null || fail 'flock is required for safe Docker deployment operations'
+  exec 8<"$DEPLOY_DIR"
+  flock -n 8 || fail 'another Docker deployment operation is running (or this filesystem does not support flock)'
+  compose config --quiet
+  compose down
+}
 doctor() {
   local missing=0 dependency
   for dependency in curl python3 "$([[ "$MODE" == docker ]] && printf docker || printf systemctl)"; do
@@ -192,6 +205,7 @@ case "$COMMAND" in
     follow=(); [[ $# -eq 0 ]] || follow=(-f)
     if [[ "$MODE" == docker ]]; then compose logs --tail 100 "${follow[@]}" app updater; else root_exec journalctl --no-pager -n 100 -u "$SERVICE" "${follow[@]}"; fi ;;
   update) update "$@" ;;
+  uninstall) uninstall "$@" ;;
   backup|restore)
     if [[ "$MODE" == docker ]]; then
       if [[ "$COMMAND" == backup ]]; then bash "$OPS/backup-docker.sh" --deploy-dir "$DEPLOY_DIR" "$@"; else

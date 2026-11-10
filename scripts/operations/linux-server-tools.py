@@ -296,17 +296,22 @@ def check_port(port):
             raise ValueError(f'TCP port {port} is unavailable: {error}; choose --port PORT') from error
 
 
+BACKUP_CACHE_DIRECTORIES = {
+    'cache', 'temp', 'logs', 'book-cache', 'book-tts-cache', 'comic-cache', 'image-cache',
+    'video-proxy-cache', 'video-startup-cache', 'transcode-cache', 'image-upscale-cache',
+    'media-probe', 'media-probe-v2', 'subtitle-mirror',
+}
+
+
 def backup_space(data, config):
     # A snapshot temporarily holds the inner and outer archive together.
     # Estimate conservatively without counting regenerable caches.
     data = Path(data)
-    caches = {'cache', 'temp', 'logs', 'book-cache', 'book-tts-cache', 'comic-cache', 'image-cache',
-              'video-proxy-cache', 'transcode-cache', 'image-upscale-cache', 'media-probe', 'subtitle-mirror'}
     size = 0
     if data.is_dir():
         for root, directories, files in os.walk(data, followlinks=False):
             if Path(root) == data:
-                directories[:] = [name for name in directories if name not in caches]
+                directories[:] = [name for name in directories if name not in BACKUP_CACHE_DIRECTORIES]
             for name in files:
                 file = Path(root) / name
                 if not file.is_symlink(): size += file.stat().st_size
@@ -324,12 +329,10 @@ def backup(data, config, output):
         raise ValueError("backup destination must be outside the data directory")
     output.mkdir(parents=True, exist_ok=True, mode=0o700)
     check_db(data)
-    caches = {"cache", "temp", "logs", "book-cache", "book-tts-cache", "comic-cache", "image-cache",
-              "video-proxy-cache", "transcode-cache", "image-upscale-cache", "media-probe", "subtitle-mirror"}
     with tempfile.TemporaryDirectory(dir=output) as scratch:
         scratch = Path(scratch)
         def include(entry):
-            if PurePosixPath(entry.name).parts[0] in caches:
+            if PurePosixPath(entry.name).parts[0] in BACKUP_CACHE_DIRECTORIES:
                 return None
             if not (entry.isfile() or entry.isdir()):
                 raise ValueError(f"data backup refuses links/special files: {entry.name}")

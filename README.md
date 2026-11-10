@@ -25,18 +25,18 @@ ScrapeFun 将媒体刮削、资源浏览、播放、阅读和多用户管理集�
 | 类型 | 平台 | 公开安装方式 | 入口 |
 | --- | --- | --- | --- |
 | Server | Linux / NAS | Docker，仅支持 `linux/amd64` | [Docker 部署](./DOCKER_GUIDE.md) |
-| Server | Linux | 原生 systemd / amd64 0.5.9 | [安装说明](./DOCKER_GUIDE.md#原生-systemd-安装) · [v0.5.9](https://github.com/HaoweiLi97/scrapefun-server-linux/releases/tag/v0.5.9) |
-| Server | Android | arm64-v8a APK 0.5.9 | [安装说明](https://github.com/HaoweiLi97/scrapefun-server-android) · [稳定版](https://github.com/HaoweiLi97/scrapefun-server-android/releases/tag/v0.5.9) |
+| Server | Linux | 原生 systemd / amd64 0.5.10 | [安装说明](./DOCKER_GUIDE.md#原生-systemd-安装) · [v0.5.10](https://github.com/HaoweiLi97/scrapefun-server-linux/releases/tag/v0.5.10) |
+| Server | Android | arm64-v8a APK 0.5.10 | [安装说明](https://github.com/HaoweiLi97/scrapefun-server-android) · [稳定版](https://github.com/HaoweiLi97/scrapefun-server-android/releases/tag/v0.5.10) |
 | Server | macOS | Apple Silicon / arm64 DMG 0.5.4 | [0.5.4 手动下载](https://github.com/HaoweiLi97/scrapefun-server-macos/releases/tag/v0.5.4) |
-| Server | Windows | x64 EXE / Microsoft Store MSIX | [GitHub 下载](https://github.com/HaoweiLi97/scrapefun-server-windows/releases/tag/v0.5.9) · [Microsoft Store](https://apps.microsoft.com/detail/9N83B6RSWG01) |
-| Client | Linux | x64 deb / AppImage 0.5.9 | [安装说明](https://github.com/HaoweiLi97/scrapefun-client-linux) · [v0.5.9](https://github.com/HaoweiLi97/scrapefun-client-linux/releases/tag/v0.5.9) |
+| Server | Windows | x64 EXE / Microsoft Store MSIX | [GitHub 下载](https://github.com/HaoweiLi97/scrapefun-server-windows/releases/tag/v0.5.10) · [Microsoft Store](https://apps.microsoft.com/detail/9N83B6RSWG01) |
+| Client | Linux | x64 deb / AppImage 0.5.10 | [安装说明](https://github.com/HaoweiLi97/scrapefun-client-linux) · [v0.5.10](https://github.com/HaoweiLi97/scrapefun-client-linux/releases/tag/v0.5.10) |
 | Client | macOS | Apple Silicon / arm64 DMG 0.5.4 | [0.5.4 手动下载](https://github.com/HaoweiLi97/scrapefun-client-macos/releases/tag/v0.5.4) |
-| Client | Windows | x64 EXE / Microsoft Store APPX | [GitHub 下载](https://github.com/HaoweiLi97/scrapefun-client-windows/releases/tag/v0.5.9) · [Microsoft Store](https://apps.microsoft.com/detail/9NM3HPS675QH) |
-| Client | Android | arm64-v8a / armeabi-v7a APK 0.5.9 | [安装说明](https://github.com/HaoweiLi97/scrapefun-client-android) · [稳定版](https://github.com/HaoweiLi97/scrapefun-client-android/releases/tag/v0.5.9) |
+| Client | Windows | x64 EXE / Microsoft Store APPX | [GitHub 下载](https://github.com/HaoweiLi97/scrapefun-client-windows/releases/tag/v0.5.10) · [Microsoft Store](https://apps.microsoft.com/detail/9NM3HPS675QH) |
+| Client | Android | arm64-v8a / armeabi-v7a APK 0.5.10 | [安装说明](https://github.com/HaoweiLi97/scrapefun-client-android) · [稳定版](https://github.com/HaoweiLi97/scrapefun-client-android/releases/tag/v0.5.10) |
 
 可用架构与包格式以实际 Release 资产和 Docker 标签的镜像清单为准。
 
-Server 0.5.9 已发布 Docker、Linux、Windows 和 Android 版本；Client 0.5.9 已发布 Linux、Windows 和 Android 版本。新版增加 SMB、SFTP、S3 兼容存储、资料和图片语言设置，并改善播放和账号体验。Windows GitHub EXE 未签名，安装时可能显示 Microsoft Defender SmartScreen 提示。Microsoft Store 的版本以各商店页面为准。
+Server 0.5.10 提供 Docker、Linux、Windows 和 Android 版本，Client 0.5.10 提供 Linux、Windows 和 Android 版本。服务端改善媒体库扫描、详情加载和续播。Windows 和 Linux 客户端在退出播放器后恢复原来的浏览窗口状态，并修复 Linux 播放画面和控制栏缩放不同步以及最大化露边的问题。Windows GitHub EXE 未签名，安装时可能显示 Microsoft Defender SmartScreen 提示。Microsoft Store 的版本以各商店页面为准。
 
 ## 快速开始
 
