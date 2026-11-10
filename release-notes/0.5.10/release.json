@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "version": "0.5.10",
+  "channel": "stable",
+  "releaseDate": "2026-11-10",
+  "targetPlatforms": [
+    "docker",
+    "linux-server",
+    "windows-server",
+    "android-server"
+  ],
+  "restartRequired": true,
+  "minimumVersion": null,
+  "notes": {
+    "zh-CN": "zh-CN.md",
+    "en-US": "en-US.md"
+  }
+}
