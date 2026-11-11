@@ -2,11 +2,23 @@
 
 **简体中文** · [English](./DOCKER_COMPOSE_DEPLOYMENT.en.md)
 
-> 文档更新：2026-11-09
+> 文档更新：2026-11-11
 
 适用于群晖 Container Manager、威联通 Container Station、1Panel、CasaOS 及其他支持 Docker Compose 的环境。镜像仅支持 `linux/amd64`，请使用 x86-64 主机。
 
-本文示例使用 `docker-compose.yml`、`server.env` 和 `.env`。`server.env` 由 app 的 `env_file` 消费；`.env` 用于 Compose 的变量替换。它们与一键脚本的 `docker-compose.remote.yml` / `.updater.env` 文件组合不同，运维命令应按实际部署方式选择。
+## NAS 单文件部署
+
+面板只提供一个 YAML 输入框时，复制或下载[单文件 Compose 模板](./docker-compose.nas.yml)。启动只需要这份 YAML。
+
+1. 将 `x-project-dir` 改成面板保存 YAML 的目录。将 `app.volumes` 中 `/app/data` 左侧改成数据目录。两处都用 NAS 的绝对路径。项目名用 `scrapefun`，文件名用 `docker-compose.yml`。若面板使用其他文件名，在 `updater.environment` 中设置 `UPDATER_COMPOSE_FILE` 为该文件的绝对路径。
+2. 运行 `openssl rand -hex 24`。把 `x-updater-token` 引号里的整段 `${...}` 换成生成的 Token，保留引号和 `&updater-token`。两个服务中的 `*updater-token` 保持原样。
+3. 初次部署运行 `openssl rand -hex 32`。把 `APP_AUTH_SECRET` 引号里的整段 `${...}` 换成生成的登录密钥。已有部署沿用原登录密钥和 `/app/data` 的宿主机挂载路径。
+
+把填写后的 YAML 粘贴到面板并部署，访问 `http://NAS_IP:8096`。请限制 YAML 的访问权限。网页更新要求 Updater 能读取面板保存的 YAML，并能访问 Docker socket。面板手动重建时使用 YAML 中指定的镜像标签。
+
+## 使用项目环境文件部署
+
+以下示例使用 `docker-compose.yml`、`server.env` 和 `.env`。`server.env` 由 app 的 `env_file` 消费；`.env` 用于 Compose 的变量替换。它们与一键脚本的 `docker-compose.remote.yml` / `.updater.env` 文件组合不同，运维命令应按实际部署方式选择。
 
 ## 创建项目目录
 

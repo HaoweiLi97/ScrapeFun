@@ -2,11 +2,23 @@
 
 [简体中文](./DOCKER_COMPOSE_DEPLOYMENT.md) · **English**
 
-> Updated: 2026-11-09
+> Updated: 2026-11-11
 
 For Synology Container Manager, QNAP Container Station, 1Panel, CasaOS, and other environments supporting Docker Compose. The images support `linux/amd64` only; use an x86-64 host.
 
-This example uses `docker-compose.yml`, `server.env`, and `.env`. App reads `server.env` through `env_file`; Compose reads `.env` for variable substitution. The one-click installer instead uses `docker-compose.remote.yml` / `.updater.env`. Choose operations commands for the files in your actual deployment.
+## Deploy from a single Compose file
+
+If your NAS panel only accepts YAML, copy or download the [single-file Compose template](./docker-compose.nas.yml). This YAML is the only file required at startup.
+
+1. Set `x-project-dir` to the directory where the panel saves the YAML. In `app.volumes`, set the path to the left of `/app/data` to the data directory. Use absolute NAS paths for both. Use `scrapefun` as the project name and `docker-compose.yml` as the filename. If the panel uses a different filename, set `UPDATER_COMPOSE_FILE` in `updater.environment` to the absolute path of that file.
+2. Run `openssl rand -hex 24`. Replace the entire `${...}` inside the quotes for `x-updater-token` with the generated token. Keep the quotes, `&updater-token` and both `*updater-token` references.
+3. For a new installation, run `openssl rand -hex 32`. Replace the entire `${...}` inside the quotes for `APP_AUTH_SECRET` with the generated login secret. For an existing installation, reuse the login secret and host mount path for `/app/data`.
+
+Paste the edited YAML into your NAS panel, deploy the project and open `http://NAS_IP:8096`. Restrict access to the YAML. Updates from the web interface require the updater to read the YAML saved by the panel and access the Docker socket. Manual redeployments from the panel use the image tags specified in the YAML.
+
+## Deploy with project environment files
+
+The following example uses `docker-compose.yml`, `server.env`, and `.env`. App reads `server.env` through `env_file`; Compose reads `.env` for variable substitution. The one-click installer instead uses `docker-compose.remote.yml` / `.updater.env`. Choose operations commands for the files in your actual deployment.
 
 ## Create a project directory
 

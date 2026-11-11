@@ -1,0 +1,60 @@
+name: scrapefun
+
+# The NAS project directory must contain this file as docker-compose.yml.
+x-project-dir: &project-dir "/volume1/docker/scrapefun"
+# Replace the quoted value with the output of: openssl rand -hex 24
+x-updater-token: &updater-token "${SCRAPETAB_UPDATER_TOKEN:?Set a random token in x-updater-token}"
+
+services:
+  app:
+    image: ${SCRAPETAB_IMAGE:-haoweil/scrapefun:latest}
+    container_name: scrapefun
+    restart: unless-stopped
+    ports:
+      - "8096:8096"
+    environment:
+      NODE_ENV: production
+      PORT: 8096
+      DATABASE_URL: file:/app/data/db/dev.db
+      # Replace the quoted value with the output of: openssl rand -hex 32
+      APP_AUTH_SECRET: "${APP_AUTH_SECRET:?Set a random key in APP_AUTH_SECRET}"
+      UPDATE_CURRENT_TAG: ${UPDATE_CURRENT_TAG:-latest}
+      UPDATE_WEBHOOK_URL: http://updater:4182/update
+      UPDATE_WEBHOOK_TOKEN: *updater-token
+      UPDATE_DOCKERHUB_REPO: haoweil/scrapefun
+    volumes:
+      - /volume1/docker/scrapefun/scrapefun-data:/app/data
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  updater:
+    image: ${SCRAPETAB_UPDATER_IMAGE:-haoweil/scrapefun-updater:latest}
+    container_name: scrapefun-updater
+    restart: unless-stopped
+    working_dir: *project-dir
+    environment:
+      UPDATER_TOKEN: *updater-token
+      UPDATER_HEALTHCHECK_URL: http://app:8096/health/ready
+    volumes:
+      # Use the host path inside the updater so Compose resolves relative binds
+      # to the same source when it recreates app through the host Docker socket.
+      - type: bind
+        source: *project-dir
+        target: *project-dir
+      - /var/run/docker.sock:/var/run/docker.sock
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
