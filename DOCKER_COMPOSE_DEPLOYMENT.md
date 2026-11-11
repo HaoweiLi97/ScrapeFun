@@ -10,9 +10,13 @@
 
 面板只提供一个 YAML 输入框时，复制或下载[单文件 Compose 模板](./docker-compose.nas.yml)。启动只需要这份 YAML。初次部署也可在[官网 NAS 部署页](https://scrapefun.com/#/docs/nas#single-compose)点击**生成并填入密钥**，然后复制已填好两项密钥的 YAML。
 
-1. 将 `x-project-dir` 改成面板保存 YAML 的目录。将 `app.volumes` 中 `/app/data` 左侧改成数据目录。两处都用 NAS 的绝对路径。项目名用 `scrapefun`，文件名用 `docker-compose.yml`。若面板使用其他文件名，在 `updater.environment` 中设置 `UPDATER_COMPOSE_FILE` 为该文件的绝对路径。
+1. 将 `x-project-dir` 改成面板保存 YAML 的 NAS 绝对目录。项目名用 `scrapefun`，文件名用 `docker-compose.yml`。若面板使用其他文件名，在 `updater.environment` 中设置 `UPDATER_COMPOSE_FILE` 为该文件的绝对路径。
 2. 运行 `openssl rand -hex 24`。把 `x-updater-token` 引号里的整段 `${...}` 换成生成的 Token，保留引号和 `&updater-token`。两个服务中的 `*updater-token` 保持原样。
-3. 初次部署运行 `openssl rand -hex 32`。把 `APP_AUTH_SECRET` 引号里的整段 `${...}` 换成生成的登录密钥。已有部署沿用原登录密钥和 `/app/data` 的宿主机挂载路径。
+3. 初次部署运行 `openssl rand -hex 32`。把 `APP_AUTH_SECRET` 引号里的整段 `${...}` 换成生成的登录密钥。
+
+首次部署时，Docker 会自动创建 `scrapefun-data` 命名卷来保存数据库和应用文件，无需手动创建数据目录。重建项目时请保留该卷。
+
+已有部署请沿用原密钥和 `/app/data` 挂载。若原来绑定的是 NAS 目录，把 `app.volumes` 中 `/app/data` 左侧改回原绝对路径，并确保容器用户（UID 1000）可写。若要切换到命名卷，请先迁移数据。
 
 把填写后的 YAML 粘贴到面板并部署，访问 `http://NAS_IP:8096`。请限制 YAML 的访问权限。网页更新要求 Updater 能读取面板保存的 YAML，并能访问 Docker socket。面板手动重建时使用 YAML 中指定的镜像标签。
 

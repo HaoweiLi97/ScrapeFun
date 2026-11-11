@@ -23,7 +23,7 @@ services:
       UPDATE_WEBHOOK_TOKEN: *updater-token
       UPDATE_DOCKERHUB_REPO: haoweil/scrapefun
     volumes:
-      - /volume1/docker/scrapefun/scrapefun-data:/app/data
+      - scrapefun-data:/app/data
     init: true
     security_opt:
       - no-new-privileges:true
@@ -58,3 +58,6 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+volumes:
+  scrapefun-data:

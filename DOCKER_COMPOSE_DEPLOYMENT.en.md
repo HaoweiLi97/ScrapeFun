@@ -10,9 +10,13 @@ For Synology Container Manager, QNAP Container Station, 1Panel, CasaOS, and othe
 
 If your NAS panel only accepts YAML, copy or download the [single-file Compose template](./docker-compose.nas.yml). This YAML is the only file required at startup. For a new installation, you can also select **Generate and fill credentials** on the [NAS deployment page](https://scrapefun.com/#/docs/nas#single-compose) and copy the YAML with both credentials filled in.
 
-1. Set `x-project-dir` to the directory where the panel saves the YAML. In `app.volumes`, set the path to the left of `/app/data` to the data directory. Use absolute NAS paths for both. Use `scrapefun` as the project name and `docker-compose.yml` as the filename. If the panel uses a different filename, set `UPDATER_COMPOSE_FILE` in `updater.environment` to the absolute path of that file.
+1. Set `x-project-dir` to the absolute NAS directory where the panel saves the YAML. Use `scrapefun` as the project name and `docker-compose.yml` as the filename. If the panel uses a different filename, set `UPDATER_COMPOSE_FILE` in `updater.environment` to the absolute path of that file.
 2. Run `openssl rand -hex 24`. Replace the entire `${...}` inside the quotes for `x-updater-token` with the generated token. Keep the quotes, `&updater-token` and both `*updater-token` references.
-3. For a new installation, run `openssl rand -hex 32`. Replace the entire `${...}` inside the quotes for `APP_AUTH_SECRET` with the generated login secret. For an existing installation, reuse the login secret and host mount path for `/app/data`.
+3. For a new installation, run `openssl rand -hex 32`. Replace the entire `${...}` inside the quotes for `APP_AUTH_SECRET` with the generated login secret.
+
+On first deployment, Docker creates the `scrapefun-data` named volume for the database and application files. Keep this volume when recreating the project.
+
+For an existing installation, keep its credentials and `/app/data` mount. If it uses a NAS directory, restore the original absolute path to the left of `/app/data` in `app.volumes`. Make sure the container user (UID 1000) can write to that directory. Migrate your data before switching to a named volume.
 
 Paste the edited YAML into your NAS panel, deploy the project and open `http://NAS_IP:8096`. Restrict access to the YAML. Updates from the web interface require the updater to read the YAML saved by the panel and access the Docker socket. Manual redeployments from the panel use the image tags specified in the YAML.
 
