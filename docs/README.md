@@ -12,6 +12,7 @@
 | --- | --- |
 | [Docker 部署与运维](../DOCKER_GUIDE.md) | Linux 一键安装、频道切换、升级与健康检查 |
 | [Docker Compose 部署](../DOCKER_COMPOSE_DEPLOYMENT.md) | NAS 或管理面板手动配置 |
+| [飞牛 fnOS 图文安装教程](fnos-docker-install.md) | 从官网复制配置并在飞牛 Docker 部署 |
 | [数据持久化、备份与恢复](../DOCKER_DATA_AND_BACKUP.md) | 数据目录、旧挂载迁移、备份和恢复演练 |
 | [生产 Compose 模板](../docker-compose.remote.yml) | 核对实际服务、挂载与 updater 配置 |
 | [环境变量示例](../.env.example) | 查找配置项；生产密钥需自行生成 |
