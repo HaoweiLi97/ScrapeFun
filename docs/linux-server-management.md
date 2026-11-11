@@ -1,6 +1,6 @@
 # Linux 服务端安装与管理
 
-Linux 服务端保留两种安装方式，两者提供同一套 Web 管理界面和 API。普通 Linux 主机可选 Docker Compose 或原生 systemd；NAS 可使用 Docker；ARM64 设备必须先确认对应标签提供 ARM64 镜像，不能直接使用 amd64 镜像。原生发布包目前仅支持 glibc Linux amd64，需要 Node.js 22.13+ 或 24、Python 3、curl、systemd、FFmpeg 和 FFprobe，硬件加速还需要主机驱动。
+Linux 服务端保留两种安装方式，两者提供同一套 Web 管理界面和 API。普通 Linux 主机可选 Docker Compose 或原生 systemd；amd64 NAS 可使用 Docker。Docker 镜像仅支持 `linux/amd64`。原生发布包目前仅支持 glibc Linux amd64，需要 Node.js 22.13+ 或 24、Python 3、curl、systemd、FFmpeg 和 FFprobe，硬件加速还需要主机驱动。
 
 一键安装脚本和部署说明随公共部署仓库发布；下列公网命令使用 main 分支当前版本。
 
