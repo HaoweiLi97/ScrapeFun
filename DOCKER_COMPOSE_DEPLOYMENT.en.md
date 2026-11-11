@@ -8,7 +8,7 @@ For Synology Container Manager, QNAP Container Station, 1Panel, CasaOS, and othe
 
 ## Deploy from a single Compose file
 
-If your NAS panel only accepts YAML, copy or download the [single-file Compose template](./docker-compose.nas.yml). This YAML is the only file required at startup.
+If your NAS panel only accepts YAML, copy or download the [single-file Compose template](./docker-compose.nas.yml). This YAML is the only file required at startup. For a new installation, you can also select **Generate and fill credentials** on the [NAS deployment page](https://scrapefun.com/#/docs/nas#single-compose) and copy the YAML with both credentials filled in.
 
 1. Set `x-project-dir` to the directory where the panel saves the YAML. In `app.volumes`, set the path to the left of `/app/data` to the data directory. Use absolute NAS paths for both. Use `scrapefun` as the project name and `docker-compose.yml` as the filename. If the panel uses a different filename, set `UPDATER_COMPOSE_FILE` in `updater.environment` to the absolute path of that file.
 2. Run `openssl rand -hex 24`. Replace the entire `${...}` inside the quotes for `x-updater-token` with the generated token. Keep the quotes, `&updater-token` and both `*updater-token` references.

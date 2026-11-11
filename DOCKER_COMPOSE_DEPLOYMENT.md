@@ -8,7 +8,7 @@
 
 ## NAS 单文件部署
 
-面板只提供一个 YAML 输入框时，复制或下载[单文件 Compose 模板](./docker-compose.nas.yml)。启动只需要这份 YAML。
+面板只提供一个 YAML 输入框时，复制或下载[单文件 Compose 模板](./docker-compose.nas.yml)。启动只需要这份 YAML。初次部署也可在[官网 NAS 部署页](https://scrapefun.com/#/docs/nas#single-compose)点击**生成并填入密钥**，然后复制已填好两项密钥的 YAML。
 
 1. 将 `x-project-dir` 改成面板保存 YAML 的目录。将 `app.volumes` 中 `/app/data` 左侧改成数据目录。两处都用 NAS 的绝对路径。项目名用 `scrapefun`，文件名用 `docker-compose.yml`。若面板使用其他文件名，在 `updater.environment` 中设置 `UPDATER_COMPOSE_FILE` 为该文件的绝对路径。
 2. 运行 `openssl rand -hex 24`。把 `x-updater-token` 引号里的整段 `${...}` 换成生成的 Token，保留引号和 `&updater-token`。两个服务中的 `*updater-token` 保持原样。
