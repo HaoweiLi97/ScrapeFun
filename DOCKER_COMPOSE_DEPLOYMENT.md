@@ -8,6 +8,11 @@
 
 ## NAS 单文件部署
 
+飞牛和群晖可以直接用对应教程里的生成器。飞牛保存为 `docker-compose.yml`，群晖教程会为本次实操中保存的 `compose.yaml` 自动填入 `UPDATER_COMPOSE_FILE`。
+
+- [飞牛 fnOS 图文安装教程](./docs/fnos-docker-install.md)
+- [群晖 DSM 图文安装教程](./docs/synology-docker-install.md)
+
 面板只提供一个 YAML 输入框时，复制或下载[单文件 Compose 模板](./docker-compose.nas.yml)。启动只需要这份 YAML。初次部署也可在[官网 NAS 部署页](https://scrapefun.com/#/docs/nas#single-compose)点击**生成并填入密钥**，然后复制已填好两项密钥的 YAML。
 
 1. 将 `x-project-dir` 改成面板保存 YAML 的 NAS 绝对目录。项目名用 `scrapefun`，文件名用 `docker-compose.yml`。若面板使用其他文件名，在 `updater.environment` 中设置 `UPDATER_COMPOSE_FILE` 为该文件的绝对路径。

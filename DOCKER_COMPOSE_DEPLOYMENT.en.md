@@ -8,6 +8,11 @@ For Synology Container Manager, QNAP Container Station, 1Panel, CasaOS, and othe
 
 ## Deploy from a single Compose file
 
+The platform guides include Compose generators. fnOS saves `docker-compose.yml`, while the Synology guide sets `UPDATER_COMPOSE_FILE` to the path of `compose.yaml` saved in the walkthrough.
+
+- [fnOS Docker installation guide](https://scrapefun.com/#/docs/fnos-docker)
+- [Synology DSM Docker installation guide](https://scrapefun.com/#/docs/synology-docker)
+
 If your NAS panel only accepts YAML, copy or download the [single-file Compose template](./docker-compose.nas.yml). This YAML is the only file required at startup. For a new installation, you can also select **Generate and fill credentials** on the [NAS deployment page](https://scrapefun.com/#/docs/nas#single-compose) and copy the YAML with both credentials filled in.
 
 1. Set `x-project-dir` to the absolute NAS directory where the panel saves the YAML. Use `scrapefun` as the project name and `docker-compose.yml` as the filename. If the panel uses a different filename, set `UPDATER_COMPOSE_FILE` in `updater.environment` to the absolute path of that file.

@@ -18,23 +18,15 @@
 
 教程里的示例路径是 `/vol1/1000/scrapefun`。每个人的存储空间和用户目录可能不一样，后面填写 **NAS 项目目录** 时，记得用你刚才复制并确认的路径。
 
-## 2. 从 ScrapeFun 官网复制 Compose 配置
+## 2. 生成并复制 Compose 配置
 
-打开 [ScrapeFun 官网](https://scrapefun.com/)，点击顶部 **文档**。
+打开官网的[飞牛 Compose 生成器](https://scrapefun.com/#/docs/fnos-docker#copy-config)。
 
-![ScrapeFun 官网顶部导航中的文档入口](https://assets.scrapefun.com/docs/fnos-docker/v1/02-site-docs.jpg)
+1. 在 **NAS 项目目录** 里填入第一步确认的完整路径。
+2. 点 **生成并填入密钥**，网页会把登录密钥和更新 Token 填进配置。
+3. 点 **复制代码**，看到 **已复制** 后切回 NAS。复制的配置里有密钥，请妥善保管。
 
-在 **安装与部署** 里找到 **NAS Docker Compose**，打开后进入 **单文件 Compose 部署**。也可以直接打开 [官网 NAS 部署文档](https://scrapefun.com/#/docs/nas#single-compose)。
-
-![文档中心安装与部署区域的 NAS Docker Compose 卡片](https://assets.scrapefun.com/docs/fnos-docker/v1/03-nas-doc.jpg)
-
-1. 把第一步确认的完整路径粘贴到 **NAS 项目目录**，替换网页里默认的 `/volume1/docker/scrapefun`。
-2. 点 **生成并填入密钥**，网页会自动把登录密钥和更新 Token 填进配置。
-3. 点代码框右上角的 **复制代码**。看到 **已复制** 后，切回飞牛页面。复制的配置里有密钥，请妥善保管。
-
-![官网单文件配置区中的 NAS 项目目录、生成并填入密钥和复制代码](https://assets.scrapefun.com/docs/fnos-docker/v1/06-generate-copy.jpg)
-
-截图展示的是点击「生成并填入密钥」之前的页面。
+飞牛这次实操保存的文件名是 `docker-compose.yml`，更新器会在项目目录里找这个文件。
 
 ## 3. 在飞牛创建 Compose 项目
 

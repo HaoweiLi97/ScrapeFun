@@ -20,23 +20,15 @@
 
 本次实操的路径是 `/volume1/docker/scrapefun`。你的存储空间和文件夹名称可能不同，下面请填写自己的完整路径。
 
-## 2. 从官网下载配置
+## 2. 生成并复制 Compose 配置
 
-打开 [ScrapeFun 官网](https://scrapefun.com/)，点顶部 **文档**。
+打开官网的[群晖 Compose 生成器](https://scrapefun.com/#/docs/synology-docker#config)。
 
-![ScrapeFun 官网文档入口](https://assets.scrapefun.com/docs/fnos-docker/v1/02-site-docs.jpg)
+1. 在 **NAS 项目目录** 里填入第一步确认的完整路径。
+2. 点 **生成并填入密钥**，网页会把登录密钥和更新 Token 填进配置。
+3. 点 **复制代码**，看到 **已复制** 后切回 NAS。复制的配置里有密钥，请妥善保管。
 
-在 **安装与部署** 里找到 **NAS Docker Compose**，然后进入 **单文件 Compose 部署**。也可以直接打开 [NAS 部署文档](https://scrapefun.com/#/docs/nas#single-compose)。
-
-![官网 NAS Docker Compose 文档入口](https://assets.scrapefun.com/docs/fnos-docker/v1/03-nas-doc.jpg)
-
-1. 在 **NAS 项目目录** 里填入刚才查看到的完整路径。
-2. 点 **生成并填入密钥**。
-3. 点 **复制代码**，看到 **已复制** 后切回群晖页面。配置中包含密钥，请妥善保管。
-
-![官网 NAS 项目目录、生成密钥和复制代码](https://assets.scrapefun.com/docs/synology-docker/v1/04-config-before.jpg)
-
-截图展示的是生成密钥之前的页面。
+这次实操中，群晖向导显示 `docker-compose.yml`，实际保存的是 `compose.yaml`。生成器会按你填写的目录，把完整文件路径写入 `UPDATER_COMPOSE_FILE`。如果你的 DSM 保存成其他文件名，把这一项改成实际文件的完整路径。
 
 ## 3. 创建 Container Manager 项目
 
@@ -54,21 +46,13 @@
 2. 检查 **Path（路径）** 指向刚才选择的文件夹。群晖这里显示的是共享文件夹路径 `/docker/scrapefun`，官网配置中的 `x-project-dir` 要填写属性里看到的完整路径 `/volume1/docker/scrapefun`。
 3. 在 **Source（来源）** 中选择 **Create docker-compose.yml（创建 docker-compose.yml）**。
 4. 把官网复制的整段配置粘贴到编辑区。
-5. 按下方说明补充更新器的配置文件路径，再点击 **Next（下一步）**。
+5. 点击 **Next（下一步）**。
 
 ![创建项目窗口中的名称、路径、来源和编辑区域](https://assets.scrapefun.com/docs/synology-docker/v1/07-project-empty.jpg)
 
 截图中的编辑区展示的是粘贴之前的状态。粘贴后请检查 `x-project-dir` 和第一步的完整路径一致。
 
-本次实操中，群晖向导显示的文件名是 `docker-compose.yml`，实际保存的文件却是 `compose.yaml`。为了让网页更新找到这个文件，在粘贴的配置里找到 `updater` 下的 `environment`，添加 `UPDATER_COMPOSE_FILE` 这一行。路径要换成你自己的项目完整路径，并以 `/compose.yaml` 结尾。
-
-```yaml
-  updater:
-    environment:
-      UPDATER_COMPOSE_FILE: /volume1/docker/scrapefun/compose.yaml
-```
-
-在原有的 `updater` 和 `environment` 下添加这一行，保留原来的其他配置。如果 NAS 的 `8096` 端口已经被占用，可以把端口映射改为 `"18096:8096"`，之后用 `18096` 访问。
+如果 NAS 的 `8096` 端口已经被占用，可以把端口映射改为 `"18096:8096"`，之后用 `18096` 访问。
 
 在 **Web portal settings（Web 门户设置）** 页面，保持 **Set up web portal via Web Station** 不勾选，点击 **Next**。
 
