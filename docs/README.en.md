@@ -12,6 +12,7 @@ Start with your deployment method. Server manages data and libraries; Client con
 | --- | --- |
 | [Docker deployment and operations](../DOCKER_GUIDE.en.md) | One-click Linux installation, channel changes, upgrades, and health checks |
 | [Ubuntu native installation](https://scrapefun.com/?lang=en#/docs/ubuntu-native) | Install ScrapeFun on a fresh Ubuntu system and check the service |
+| [Debian native installation](https://scrapefun.com/?lang=en#/docs/debian-native) | Install ScrapeFun in a Debian virtual machine without GPU passthrough |
 | [Docker Compose deployment](../DOCKER_COMPOSE_DEPLOYMENT.en.md) | Manual configuration for NAS devices or management panels |
 | [Persistent data, backup, and recovery](../DOCKER_DATA_AND_BACKUP.en.md) | Data directories, old mount migration, backups, and recovery drills |
 | [Production Compose template](../docker-compose.remote.yml) | Check actual services, mounts, and updater configuration |
