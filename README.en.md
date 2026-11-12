@@ -25,18 +25,18 @@ Deploy a Server first, then install a Client if needed. Server stores libraries,
 | Type | Platform | Published installation format | Links |
 | --- | --- | --- | --- |
 | Server | Linux / NAS | Docker, supports only `linux/amd64` | [Docker deployment](./DOCKER_GUIDE.en.md) |
-| Server | Linux | Native systemd / amd64 0.5.10 | [Installation](./DOCKER_GUIDE.en.md#native-systemd-installation) · [v0.5.10](https://github.com/HaoweiLi97/scrapefun-server-linux/releases/tag/v0.5.10) |
+| Server | Linux | Native systemd / amd64 0.6.0 | [Installation](./DOCKER_GUIDE.en.md#native-systemd-installation) · [v0.6.0](https://github.com/HaoweiLi97/scrapefun-server-linux/releases/tag/v0.6.0) |
 | Server | Android | arm64-v8a APK 0.5.10 | [Installation](https://github.com/HaoweiLi97/scrapefun-server-android) · [Stable release](https://github.com/HaoweiLi97/scrapefun-server-android/releases/tag/v0.5.10) |
 | Server | macOS | Apple Silicon / arm64 DMG 0.5.4 | [0.5.4 manual download](https://github.com/HaoweiLi97/scrapefun-server-macos/releases/tag/v0.5.4) |
-| Server | Windows | x64 EXE / Microsoft Store MSIX | [GitHub release](https://github.com/HaoweiLi97/scrapefun-server-windows/releases/tag/v0.5.10) · [Microsoft Store](https://apps.microsoft.com/detail/9N83B6RSWG01) |
-| Client | Linux | x64 DEB / AppImage 0.5.10 | [Installation](https://github.com/HaoweiLi97/scrapefun-client-linux) · [v0.5.10](https://github.com/HaoweiLi97/scrapefun-client-linux/releases/tag/v0.5.10) |
+| Server | Windows | x64 EXE / Microsoft Store MSIX | [GitHub release](https://github.com/HaoweiLi97/scrapefun-server-windows/releases/tag/v0.6.0) · [Microsoft Store](https://apps.microsoft.com/detail/9N83B6RSWG01) |
+| Client | Linux | x64 DEB / AppImage 0.6.0 | [Installation](https://github.com/HaoweiLi97/scrapefun-client-linux) · [v0.6.0](https://github.com/HaoweiLi97/scrapefun-client-linux/releases/tag/v0.6.0) |
 | Client | macOS | Apple Silicon / arm64 DMG 0.5.4 | [0.5.4 manual download](https://github.com/HaoweiLi97/scrapefun-client-macos/releases/tag/v0.5.4) |
-| Client | Windows | x64 EXE / Microsoft Store APPX | [GitHub release](https://github.com/HaoweiLi97/scrapefun-client-windows/releases/tag/v0.5.10) · [Microsoft Store](https://apps.microsoft.com/detail/9NM3HPS675QH) |
-| Client | Android | arm64-v8a / armeabi-v7a APK 0.5.10 | [Installation](https://github.com/HaoweiLi97/scrapefun-client-android/blob/main/README.en.md) · [Stable release](https://github.com/HaoweiLi97/scrapefun-client-android/releases/tag/v0.5.10) |
+| Client | Windows | x64 EXE / Microsoft Store APPX | [GitHub release](https://github.com/HaoweiLi97/scrapefun-client-windows/releases/tag/v0.6.0) · [Microsoft Store](https://apps.microsoft.com/detail/9NM3HPS675QH) |
+| Client | Android | arm64-v8a / armeabi-v7a APK 0.6.0 | [Installation](https://github.com/HaoweiLi97/scrapefun-client-android/blob/main/README.en.md) · [Stable release](https://github.com/HaoweiLi97/scrapefun-client-android/releases/tag/v0.6.0) |
 
 Available architectures and formats follow the actual Release Assets and Docker tag manifests.
 
-Server 0.5.10 is available for Docker, Linux, Windows, and Android. Client 0.5.10 is available for Linux, Windows, and Android. This release improves library scanning, detail loading, and playback resume. The Windows and Linux clients restore the browsing window when you leave the player. On Linux, the picture and controls resize together, and maximizing covers the window edges. Windows GitHub EXEs are unsigned and may trigger Microsoft Defender SmartScreen. Check the Microsoft Store listings for their available versions.
+Server 0.6.0 is available for Docker, native Linux, and Windows EXE. Client 0.6.0 is available for Linux, Windows EXE, and Android. This release adds custom metadata and per-library detail layouts and improves detail loading. Windows GitHub installers are unsigned and may trigger Microsoft Defender SmartScreen. Check the Microsoft Store listings for their available versions.
 
 ## Quick start
 
