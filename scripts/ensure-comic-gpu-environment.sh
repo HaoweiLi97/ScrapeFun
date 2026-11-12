@@ -2,6 +2,7 @@
 # Called by both installers. The output directory contains no credentials.
 set -euo pipefail
 MODE="${1:?GPU mode required}" TARGET="${2:?native or docker required}" OUTPUT="${3:?output directory required}"
+REQUESTED_MODE="${4:-$MODE}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 run_root() {
   if [[ "$EUID" == 0 ]]; then "$@"; else sudo "$@"; fi
@@ -23,24 +24,33 @@ case "$MODE" in
   *) echo "Unsupported GPU environment mode: $MODE" >&2; exit 2 ;;
 esac
 if [[ "$TARGET" == native ]]; then
-  if ! command -v vulkaninfo >/dev/null || ! vulkaninfo --summary 2>/dev/null | grep -Eq 'deviceType.*(DISCRETE_GPU|INTEGRATED_GPU|VIRTUAL_GPU)'; then
+  hardware_vulkan_available() {
+    command -v vulkaninfo >/dev/null &&
+      vulkaninfo --summary 2>/dev/null | grep -E 'deviceType.*(DISCRETE_GPU|INTEGRATED_GPU|VIRTUAL_GPU)' >/dev/null
+  }
+  if ! hardware_vulkan_available; then
     apt_install libvulkan1 vulkan-tools mesa-vulkan-drivers
     if command -v nvidia-smi >/dev/null && nvidia-smi -L >/dev/null 2>&1; then
       # Install only the userspace Vulkan/GL package matching the running driver.
       DRIVER="$(nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -n 1)"
       MAJOR="${DRIVER%%.*}"
       [[ "$MAJOR" =~ ^[0-9]+$ ]] || { echo 'Cannot identify the NVIDIA driver version.' >&2; exit 1; }
-      if ! vulkaninfo --summary 2>/dev/null | grep -Eiq 'deviceName.*NVIDIA'; then
+      if ! vulkaninfo --summary 2>/dev/null | grep -Ei 'deviceName.*NVIDIA' >/dev/null; then
         PACKAGE="libnvidia-gl-${MAJOR}"
         MATCH="$(apt-cache madison "$PACKAGE" | awk -v driver="$DRIVER" '$3 ~ "^" driver "-" { print $3; exit }')"
         [[ -n "$MATCH" ]] || { echo "No $PACKAGE matching running driver $DRIVER; refusing a mismatched driver upgrade." >&2; exit 1; }
         apt_install "$PACKAGE=$MATCH"
       fi
     fi
+    if ! hardware_vulkan_available; then
+      if [[ "$REQUESTED_MODE" == auto ]]; then
+        printf '未检测到硬件 Vulkan 设备，跳过 GPU 配置，继续安装。\n'
+        exit 0
+      fi
+      echo 'No hardware Vulkan device after dependency installation. Check the host GPU driver.' >&2
+      exit 1
+    fi
   fi
-  vulkaninfo --summary 2>/dev/null | grep -Eq 'deviceType.*(DISCRETE_GPU|INTEGRATED_GPU|VIRTUAL_GPU)' || {
-    echo 'No hardware Vulkan device after dependency installation. Check the host GPU driver.' >&2; exit 1;
-  }
 fi
 if [[ "$TARGET" == docker && "$MODE" == nvidia ]]; then
   if docker info --format '{{json .Runtimes}}' | grep -q '"nvidia"'; then exit 0; fi

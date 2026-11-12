@@ -136,7 +136,7 @@ curl -fsS http://127.0.0.1:8096/health/ready
 
 在全新 Ubuntu 上安装时，请按 [Ubuntu 原生安装教程](./docs/ubuntu-native-install.md)复制命令。教程中的安装命令会自动补齐缺少的依赖。
 
-在没有 GPU 直通的 Debian 虚拟机上安装时，请使用 [Debian 原生安装教程](./docs/debian-native-install.md)中带 `--gpu-mode none` 的命令。
+在没有 GPU 直通的 Debian 虚拟机上，可以直接使用 [Debian 原生安装教程](./docs/debian-native-install.md)中的命令。检测不到硬件 Vulkan 时，原生安装器会跳过 GPU 配置并继续安装。
 
 已有安装请先通过下方命令或 `sudo scrapefun update` 升级一次到 Linux 原生 Server 0.5.0，安装网页手动更新所需组件。自定义实例请沿用已有 `--config-dir`。
 

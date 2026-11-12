@@ -80,6 +80,44 @@ load_saved_gpu_settings
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(list(pathlib.Path(temp).iterdir()), [])
 
+    def test_native_drm_probe_ignores_display_only_card(self):
+        source = (ROOT / 'scripts/one-click-native-deploy.sh').read_text()
+        probe = re.search(r'^has_drm_render_node\(\) \{.*?^\}', source, re.M | re.S)[0]
+        with tempfile.TemporaryDirectory() as temp:
+            dri = pathlib.Path(temp)
+            (dri / 'card0').symlink_to('/dev/null')
+            probe = probe.replace('/dev/dri', f'"{dri}"')
+            self.assertEqual(self.bash(probe + '\n! has_drm_render_node').returncode, 0)
+            (dri / 'renderD128').symlink_to('/dev/null')
+            self.assertEqual(self.bash(probe + '\nhas_drm_render_node').returncode, 0)
+
+    def test_native_software_vulkan_only_falls_back_in_auto_mode(self):
+        with tempfile.TemporaryDirectory() as temp:
+            mock_bin = pathlib.Path(temp) / 'bin'
+            mock_bin.mkdir()
+            for name, command in {
+                'apt-get': 'exit "${APT_EXIT:-0}"',
+                'sudo': 'exec "$@"',
+                'vulkaninfo': 'echo "deviceType = ${DEVICE_TYPE:-PHYSICAL_DEVICE_TYPE_CPU}"',
+                'nvidia-smi': 'exit 1',
+            }.items():
+                executable = mock_bin / name
+                executable.write_text('#!/bin/bash\n' + command + '\n')
+                executable.chmod(0o755)
+            helper = ['bash', str(ROOT / 'scripts/ensure-comic-gpu-environment.sh'), 'native', 'native', temp]
+            env = dict(os.environ, PATH=f'{mock_bin}:{os.environ["PATH"]}')
+            automatic = subprocess.run([*helper, 'auto'], env=env, capture_output=True, text=True)
+            self.assertEqual(automatic.returncode, 0, automatic.stderr)
+            self.assertIn('跳过 GPU 配置', automatic.stdout)
+            strict = subprocess.run(helper, env=env, capture_output=True, text=True)
+            self.assertNotEqual(strict.returncode, 0)
+            self.assertIn('No hardware Vulkan device', strict.stderr)
+            apt_failure = subprocess.run([*helper, 'auto'], env=dict(env, APT_EXIT='42'), capture_output=True, text=True)
+            self.assertEqual(apt_failure.returncode, 42)
+            hardware = subprocess.run([*helper, 'auto'], env=dict(env, DEVICE_TYPE='PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU', APT_EXIT='42'), capture_output=True, text=True)
+            self.assertEqual(hardware.returncode, 0, hardware.stderr)
+            self.assertNotIn('跳过 GPU 配置', hardware.stdout)
+
     def test_native_release_accepts_published_combined_checksums(self):
         source = (ROOT/'scripts/one-click-native-deploy.sh').read_text()
         selector = re.search(r'python3 - "\$stage/releases.json".*?<<\x27PY\x27\n(.*?)\nPY', source, re.S)[1]

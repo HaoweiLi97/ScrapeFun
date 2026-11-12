@@ -351,20 +351,33 @@ export SCRAPEFUN_OPERATION_SOURCE="$stage/operations"
 export SCRAPEFUN_START_SOURCE="$stage/release/start-scrapefun-linux-server.sh"
 export SCRAPEFUN_NATIVE_CHANNEL="$CHANNEL"
 # GPU setup happens before the installer stops or replaces the existing service.
-gpu_mode="${SCRAPEFUN_GPU_MODE:-auto}"
+has_drm_render_node() {
+  local node
+  for node in /dev/dri/renderD*; do
+    [[ ! -c "$node" ]] || return 0
+  done
+  return 1
+}
+gpu_request="${SCRAPEFUN_GPU_MODE:-auto}"
+gpu_mode="$gpu_request"
 [[ "$gpu_mode" == auto || "$gpu_mode" == none || "$gpu_mode" == native || "$gpu_mode" == wsl ]] || fail 'GPU mode must be auto, none, native or wsl'
-if [[ "$gpu_mode" == auto ]]; then
-  if [[ -c /dev/dxg && -r /usr/lib/wsl/lib/libd3d12.so ]]; then gpu_mode=wsl
-  elif [[ -d /dev/dri ]] || { command -v nvidia-smi >/dev/null && nvidia-smi -L >/dev/null 2>&1; }; then gpu_mode=native
-  else gpu_mode=none; fi
-fi
-mkdir -p "$stage/gpu"
-: > "$stage/gpu/vulkan.env"
 if [[ -n "${SCRAPEFUN_GPU_MODE+x}" || ! -f "$SCRAPEFUN_CONFIG_DIR/gpu.env" ]]; then
+  if [[ "$gpu_mode" == auto ]]; then
+    if [[ -c /dev/dxg && -r /usr/lib/wsl/lib/libd3d12.so ]]; then
+      gpu_mode=wsl
+    elif has_drm_render_node || { command -v nvidia-smi >/dev/null && nvidia-smi -L >/dev/null 2>&1; }; then
+      gpu_mode=native
+    else
+      gpu_mode=none
+      printf '未检测到可用的 GPU 渲染设备，跳过 GPU 配置，继续安装。\n'
+    fi
+  fi
+  mkdir -p "$stage/gpu"
+  : > "$stage/gpu/vulkan.env"
   if [[ "$gpu_mode" != none ]]; then
     printf '%s  %s\n' "$expected" "$archive" | sha256sum --check --strict -
     for file in ensure-comic-gpu-environment.sh setup-wsl-comic-gpu.sh; do fetch_script "$file"; done
-    bash "$stage/ensure-comic-gpu-environment.sh" "$gpu_mode" native "$stage/gpu"
+    bash "$stage/ensure-comic-gpu-environment.sh" "$gpu_mode" native "$stage/gpu" "$gpu_request"
   fi
   export SCRAPEFUN_GPU_ENV_FILE="$stage/gpu/vulkan.env"
 fi

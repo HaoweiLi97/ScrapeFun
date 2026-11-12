@@ -18,17 +18,17 @@ sudo apt update && sudo apt install -y curl
 
 ## 2. 复制命令并安装
 
-**没有 GPU 直通的虚拟机请保留 `--gpu-mode none`。** 这个参数会跳过漫画增强的硬件 GPU 检测。
+没有 GPU 直通的虚拟机可以直接使用下面的命令。安装器会自动跳过不可用的硬件 Vulkan 配置。
 
 点代码块右上角的 **复制代码**，把整条命令粘贴到 Debian 终端，再按回车。首次安装默认使用稳定版和 `8096` 端口。
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-native-deploy.sh | sudo bash -s -- --install-deps --non-interactive --gpu-mode none
+curl -fsSL https://raw.githubusercontent.com/HaoweiLi97/ScrapeFun/main/scripts/one-click-native-deploy.sh | sudo bash -s -- --install-deps --non-interactive
 ```
 
 `--install-deps` 会安装缺少的依赖，`--non-interactive` 会直接使用默认或已保存的设置。实测中，脚本从 Debian 软件源安装了 FFmpeg 和 FFprobe，并下载和校验了 ScrapeFun 使用的独立 Node.js 22。首次下载依赖和安装包可能需要几分钟。
 
-这次实测中，默认 GPU 检测报了 `No hardware Vulkan device`，安装随即停止。遇到这个提示时，复制上面的命令重试。需要启用 GPU 漫画增强时，先让 Debian 能访问支持 Vulkan 的硬件，再按[显卡环境说明](https://scrapefun.com/#/docs/linux#gpu)设置。
+在这台 Debian 13 虚拟机上，安装器提示「未检测到可用的 GPU 渲染设备」，随后继续安装并启动服务。需要启用 GPU 漫画增强时，先让 Debian 能访问支持 Vulkan 的硬件，再按[显卡环境说明](https://scrapefun.com/#/docs/linux#gpu)设置。
 
 实测时预检显示 `unverified distribution/version`，随后返回了 `PASS` 并继续安装。看到「ScrapeFun 原生服务已就绪」后，检查服务状态。
 
