@@ -134,6 +134,8 @@ curl -fsS http://127.0.0.1:8096/health/ready
 
 ## 原生 systemd 安装
 
+在全新 Ubuntu 上安装时，请按 [Ubuntu 原生安装教程](./docs/ubuntu-native-install.md)复制命令。教程中的安装命令会自动补齐缺少的依赖。
+
 已有安装请先通过下方命令或 `sudo scrapefun update` 升级一次到 Linux 原生 Server 0.5.0，安装网页手动更新所需组件。自定义实例请沿用已有 `--config-dir`。
 
 原生包支持 glibc Linux amd64，要求运行中的 systemd、Node.js 22（22.13+）或 24、Python 3、curl、FFmpeg 和 FFprobe。脚本下载对应渠道的发布包并校验 SHA-256，不在主机编译源码；没有匹配发布包时退出。

@@ -11,6 +11,7 @@
 | 文档 | 适用任务 |
 | --- | --- |
 | [Docker 部署与运维](../DOCKER_GUIDE.md) | Linux 一键安装、频道切换、升级与健康检查 |
+| [Ubuntu 原生安装](ubuntu-native-install.md) | 从全新 Ubuntu 安装 ScrapeFun 并检查服务 |
 | [Docker Compose 部署](../DOCKER_COMPOSE_DEPLOYMENT.md) | NAS 或管理面板手动配置 |
 | [飞牛 fnOS 图文安装教程](fnos-docker-install.md) | 从官网复制配置并在飞牛 Docker 部署 |
 | [群晖 DSM 图文安装教程](synology-docker-install.md) | 从官网复制配置并在群晖 Container Manager 部署 |
